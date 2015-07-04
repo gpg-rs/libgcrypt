@@ -1,0 +1,16 @@
+[package]
+name = "gcrypt"
+description = "Libgcrypt bindings for Rust"
+version = "0.1.0"
+authors = ["John Schug <john.ips.schug@gmail.com>"]
+license = "LGPL-2.1"
+keywords = ["crypto", "cryptography"]
+
+[dependencies]
+libc = "0.1"
+bitflags = "0.3"
+lazy_static = "0.1"
+
+[dependencies.libgcrypt-sys]
+path = "libgcrypt-sys"
+version = "0.1.0"

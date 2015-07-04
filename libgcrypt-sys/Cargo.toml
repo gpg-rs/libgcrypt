@@ -1,0 +1,17 @@
+[package]
+name = "libgcrypt-sys"
+description = "Raw bindings for libgcrypt"
+version = "0.1.0"
+authors = ["John Schug <john.ips.schug@gmail.com>"]
+license = "LGPL-2.1"
+keywords = ["crypto", "cryptography"]
+links = "gcrypt"
+build = "build.rs"
+
+[lib]
+name = "libgcrypt_sys"
+path = "lib.rs"
+
+[dependencies]
+libc = "0.1"
+libgpg-error-sys = "*"
