@@ -12,6 +12,7 @@ keywords = ["crypto", "cryptography"]
 libc = "0.1"
 bitflags = "0.3"
 lazy_static = "0.1"
+gpg-error = "0.1"
 
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"

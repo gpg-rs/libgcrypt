@@ -1,67 +1,49 @@
 use std::ffi::CString;
-use std::mem;
 use std::ptr;
 
 use libc;
 use ffi;
 
-use Token;
+use Wrapper;
 use utils;
 use error::Result;
 
-pub const CIPHER_IDEA: Algorithm = Algorithm(ffi::GCRY_CIPHER_IDEA as libc::c_int);
-pub const CIPHER_3DES: Algorithm = Algorithm(ffi::GCRY_CIPHER_3DES as libc::c_int);
-pub const CIPHER_CAST5: Algorithm = Algorithm(ffi::GCRY_CIPHER_CAST5 as libc::c_int);
-pub const CIPHER_BLOWFISH: Algorithm = Algorithm(ffi::GCRY_CIPHER_BLOWFISH as libc::c_int);
-pub const CIPHER_SAFER_SK128: Algorithm = Algorithm(ffi::GCRY_CIPHER_SAFER_SK128 as libc::c_int);
-pub const CIPHER_DES_SK: Algorithm = Algorithm(ffi::GCRY_CIPHER_DES_SK as libc::c_int);
-pub const CIPHER_AES: Algorithm = Algorithm(ffi::GCRY_CIPHER_AES as libc::c_int);
-pub const CIPHER_AES192: Algorithm = Algorithm(ffi::GCRY_CIPHER_AES192 as libc::c_int);
-pub const CIPHER_AES256: Algorithm = Algorithm(ffi::GCRY_CIPHER_AES256 as libc::c_int);
-pub const CIPHER_TWOFISH: Algorithm = Algorithm(ffi::GCRY_CIPHER_TWOFISH as libc::c_int);
-pub const CIPHER_ARCFOUR: Algorithm = Algorithm(ffi::GCRY_CIPHER_ARCFOUR as libc::c_int);
-pub const CIPHER_DES: Algorithm = Algorithm(ffi::GCRY_CIPHER_DES as libc::c_int);
-pub const CIPHER_TWOFISH128: Algorithm = Algorithm(ffi::GCRY_CIPHER_TWOFISH128 as libc::c_int);
-pub const CIPHER_SERPENT128: Algorithm = Algorithm(ffi::GCRY_CIPHER_SERPENT128 as libc::c_int);
-pub const CIPHER_SERPENT192: Algorithm = Algorithm(ffi::GCRY_CIPHER_SERPENT192 as libc::c_int);
-pub const CIPHER_SERPENT256: Algorithm = Algorithm(ffi::GCRY_CIPHER_SERPENT256 as libc::c_int);
-pub const CIPHER_RFC2268_40: Algorithm = Algorithm(ffi::GCRY_CIPHER_RFC2268_40 as libc::c_int);
-pub const CIPHER_RFC2268_128: Algorithm = Algorithm(ffi::GCRY_CIPHER_RFC2268_128 as libc::c_int);
-pub const CIPHER_SEED: Algorithm = Algorithm(ffi::GCRY_CIPHER_SEED as libc::c_int);
-pub const CIPHER_CAMELLIA128: Algorithm = Algorithm(ffi::GCRY_CIPHER_CAMELLIA128 as libc::c_int);
-pub const CIPHER_CAMELLIA192: Algorithm = Algorithm(ffi::GCRY_CIPHER_CAMELLIA192 as libc::c_int);
-pub const CIPHER_CAMELLIA256: Algorithm = Algorithm(ffi::GCRY_CIPHER_CAMELLIA256 as libc::c_int);
-pub const CIPHER_SALSA20: Algorithm = Algorithm(ffi::GCRY_CIPHER_SALSA20 as libc::c_int);
-pub const CIPHER_SALSA20R12: Algorithm = Algorithm(ffi::GCRY_CIPHER_SALSA20R12 as libc::c_int);
-pub const CIPHER_GOST28147: Algorithm = Algorithm(ffi::GCRY_CIPHER_GOST28147 as libc::c_int);
-pub const CIPHER_AES128: Algorithm = Algorithm(ffi::GCRY_CIPHER_AES128 as libc::c_int);
-pub const CIPHER_RIJNDAEL: Algorithm = Algorithm(ffi::GCRY_CIPHER_RIJNDAEL as libc::c_int);
-pub const CIPHER_RIJNDAEL128: Algorithm = Algorithm(ffi::GCRY_CIPHER_RIJNDAEL128 as libc::c_int);
-pub const CIPHER_RIJNDAEL192: Algorithm = Algorithm(ffi::GCRY_CIPHER_RIJNDAEL192 as libc::c_int);
-pub const CIPHER_RIJNDAEL256: Algorithm = Algorithm(ffi::GCRY_CIPHER_RIJNDAEL256 as libc::c_int);
-
-pub const MODE_ECB: Mode = Mode(ffi::GCRY_CIPHER_MODE_ECB as libc::c_int);
-pub const MODE_CFB: Mode = Mode(ffi::GCRY_CIPHER_MODE_CFB as libc::c_int);
-pub const MODE_CBC: Mode = Mode(ffi::GCRY_CIPHER_MODE_CBC as libc::c_int);
-pub const MODE_STREAM: Mode = Mode(ffi::GCRY_CIPHER_MODE_STREAM as libc::c_int);
-pub const MODE_OFB: Mode = Mode(ffi::GCRY_CIPHER_MODE_OFB as libc::c_int);
-pub const MODE_CTR: Mode = Mode(ffi::GCRY_CIPHER_MODE_CTR as libc::c_int);
-pub const MODE_AESWRAP: Mode = Mode(ffi::GCRY_CIPHER_MODE_AESWRAP as libc::c_int);
-pub const MODE_CCM: Mode = Mode(ffi::GCRY_CIPHER_MODE_CCM as libc::c_int);
-pub const MODE_GCM: Mode = Mode(ffi::GCRY_CIPHER_MODE_GCM as libc::c_int);
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Algorithm(libc::c_int);
+enum_wrapper! {
+    pub enum Algorithm: libc::c_int {
+        CIPHER_IDEA = ffi::GCRY_CIPHER_IDEA,
+        CIPHER_3DES = ffi::GCRY_CIPHER_3DES,
+        CIPHER_CAST5 = ffi::GCRY_CIPHER_CAST5,
+        CIPHER_BLOWFISH = ffi::GCRY_CIPHER_BLOWFISH,
+        CIPHER_SAFER_SK128 = ffi::GCRY_CIPHER_SAFER_SK128,
+        CIPHER_DES_SK = ffi::GCRY_CIPHER_DES_SK,
+        CIPHER_AES = ffi::GCRY_CIPHER_AES,
+        CIPHER_AES192 = ffi::GCRY_CIPHER_AES192,
+        CIPHER_AES256 = ffi::GCRY_CIPHER_AES256,
+        CIPHER_TWOFISH = ffi::GCRY_CIPHER_TWOFISH,
+        CIPHER_ARCFOUR = ffi::GCRY_CIPHER_ARCFOUR,
+        CIPHER_DES = ffi::GCRY_CIPHER_DES,
+        CIPHER_TWOFISH128 = ffi::GCRY_CIPHER_TWOFISH128,
+        CIPHER_SERPENT128 = ffi::GCRY_CIPHER_SERPENT128,
+        CIPHER_SERPENT192 = ffi::GCRY_CIPHER_SERPENT192,
+        CIPHER_SERPENT256 = ffi::GCRY_CIPHER_SERPENT256,
+        CIPHER_RFC2268_40 = ffi::GCRY_CIPHER_RFC2268_40,
+        CIPHER_RFC2268_128 = ffi::GCRY_CIPHER_RFC2268_128,
+        CIPHER_SEED = ffi::GCRY_CIPHER_SEED,
+        CIPHER_CAMELLIA128 = ffi::GCRY_CIPHER_CAMELLIA128,
+        CIPHER_CAMELLIA192 = ffi::GCRY_CIPHER_CAMELLIA192,
+        CIPHER_CAMELLIA256 = ffi::GCRY_CIPHER_CAMELLIA256,
+        CIPHER_SALSA20 = ffi::GCRY_CIPHER_SALSA20,
+        CIPHER_SALSA20R12 = ffi::GCRY_CIPHER_SALSA20R12,
+        CIPHER_GOST28147 = ffi::GCRY_CIPHER_GOST28147,
+        CIPHER_AES128 = ffi::GCRY_CIPHER_AES128,
+        CIPHER_RIJNDAEL = ffi::GCRY_CIPHER_RIJNDAEL,
+        CIPHER_RIJNDAEL128 = ffi::GCRY_CIPHER_RIJNDAEL128,
+        CIPHER_RIJNDAEL192 = ffi::GCRY_CIPHER_RIJNDAEL192,
+        CIPHER_RIJNDAEL256 = ffi::GCRY_CIPHER_RIJNDAEL256,
+    }
+}
 
 impl Algorithm {
-    pub fn from_raw(raw: ffi::gcry_cipher_algos) -> Algorithm {
-        Algorithm(raw as libc::c_int)
-    }
-
-    pub fn as_raw(&self) -> ffi::gcry_cipher_algos {
-        self.0 as ffi::gcry_cipher_algos
-    }
-
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe {
@@ -100,18 +82,21 @@ impl Algorithm {
     }
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Mode(libc::c_int);
+enum_wrapper! {
+    pub enum Mode: libc::c_int {
+        MODE_ECB = ffi::GCRY_CIPHER_MODE_ECB,
+        MODE_CFB = ffi::GCRY_CIPHER_MODE_CFB,
+        MODE_CBC = ffi::GCRY_CIPHER_MODE_CBC,
+        MODE_STREAM = ffi::GCRY_CIPHER_MODE_STREAM,
+        MODE_OFB = ffi::GCRY_CIPHER_MODE_OFB,
+        MODE_CTR = ffi::GCRY_CIPHER_MODE_CTR,
+        MODE_AESWRAP = ffi::GCRY_CIPHER_MODE_AESWRAP,
+        MODE_CCM = ffi::GCRY_CIPHER_MODE_CCM,
+        MODE_GCM = ffi::GCRY_CIPHER_MODE_GCM,
+    }
+}
 
 impl Mode {
-    pub fn from_raw(raw: ffi::gcry_cipher_modes) -> Mode {
-        Mode(raw as libc::c_int)
-    }
-
-    pub fn as_raw(&self) -> ffi::gcry_cipher_modes {
-        self.0 as ffi::gcry_cipher_modes
-    }
-
     pub fn from_oid<S: Into<String>>(name: S) -> Option<Mode> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe {
@@ -147,16 +132,21 @@ impl Drop for Cipher {
     }
 }
 
-impl Cipher {
-    pub unsafe fn from_raw(raw: ffi::gcry_cipher_hd_t) -> Cipher {
+unsafe impl Wrapper for Cipher {
+    type Raw = ffi::gcry_cipher_hd_t;
+
+    unsafe fn from_raw(raw: ffi::gcry_cipher_hd_t) -> Cipher {
+        debug_assert!(!raw.is_null());
         Cipher { raw: raw }
     }
 
-    pub fn as_raw(&self) -> ffi::gcry_cipher_hd_t {
+    fn as_raw(&self) -> ffi::gcry_cipher_hd_t {
         self.raw
     }
+}
 
-    pub fn new(_: Token, algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
+impl Cipher {
+    pub fn new(algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
         let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_cipher_open(&mut handle, algo.0, mode.0,
@@ -168,7 +158,7 @@ impl Cipher {
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: &B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
-            return_err!(ffi::gcry_cipher_setkey(self.raw, mem::transmute(key.as_ptr()),
+            return_err!(ffi::gcry_cipher_setkey(self.raw, key.as_ptr() as *const _,
                                                 key.len() as libc::size_t));
         }
         Ok(())
@@ -177,7 +167,7 @@ impl Cipher {
     pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: &B) -> Result<()> {
         let iv = iv.as_ref();
         unsafe {
-            return_err!(ffi::gcry_cipher_setiv(self.raw, mem::transmute(iv.as_ptr()),
+            return_err!(ffi::gcry_cipher_setiv(self.raw, iv.as_ptr() as *const _,
                                                iv.len() as libc::size_t));
         }
         Ok(())
@@ -186,7 +176,7 @@ impl Cipher {
     pub fn set_ctr<B: AsRef<[u8]>>(&mut self, ctr: &B) -> Result<()> {
         let ctr = ctr.as_ref();
         unsafe {
-            return_err!(ffi::gcry_cipher_setctr(self.raw, mem::transmute(ctr.as_ptr()),
+            return_err!(ffi::gcry_cipher_setctr(self.raw, ctr.as_ptr() as *const _,
                                                 ctr.len() as libc::size_t));
         }
         Ok(())
@@ -202,7 +192,7 @@ impl Cipher {
 
     pub fn authenticate(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_cipher_authenticate(self.raw, mem::transmute(bytes.as_ptr()),
+            return_err!(ffi::gcry_cipher_authenticate(self.raw, bytes.as_ptr() as *const _,
                                                       bytes.len() as libc::size_t));
         }
         Ok(())
@@ -210,7 +200,7 @@ impl Cipher {
 
     pub fn get_tag(&mut self, tag: &mut [u8]) -> Result<()> {
         unsafe {
-            let tag = (mem::transmute(tag.as_mut_ptr()), tag.len());
+            let tag = (tag.as_mut_ptr() as *mut _, tag.len());
             return_err!(ffi::gcry_cipher_gettag(self.raw, tag.0, tag.1 as libc::size_t));
         }
         Ok(())
@@ -218,7 +208,7 @@ impl Cipher {
 
     pub fn check_tag(&mut self, tag: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_cipher_checktag(self.raw, mem::transmute(tag.as_ptr()),
+            return_err!(ffi::gcry_cipher_checktag(self.raw, tag.as_ptr() as *const _,
                                                   tag.len() as libc::size_t));
         }
         Ok(())
@@ -226,8 +216,8 @@ impl Cipher {
 
     pub fn encrypt(&mut self, input: &[u8], output: &mut [u8]) -> Result<()> {
         unsafe {
-            let input = (mem::transmute(input.as_ptr()), input.len());
-            let output = (mem::transmute(output.as_mut_ptr()), output.len());
+            let input = (input.as_ptr() as *const _, input.len());
+            let output = (output.as_mut_ptr() as *mut _, output.len());
             return_err!(ffi::gcry_cipher_encrypt(self.raw, output.0, output.1 as libc::size_t,
                                                  input.0, input.1 as libc::size_t));
         }
@@ -236,8 +226,8 @@ impl Cipher {
 
     pub fn decrypt(&mut self, input: &[u8], output: &mut [u8]) -> Result<()> {
         unsafe {
-            let input = (mem::transmute(input.as_ptr()), input.len());
-            let output = (mem::transmute(output.as_mut_ptr()), output.len());
+            let input = (input.as_ptr() as *const _, input.len());
+            let output = (output.as_mut_ptr() as *mut _, output.len());
             return_err!(ffi::gcry_cipher_decrypt(self.raw, output.0, output.1 as libc::size_t,
                                                  input.0, input.1 as libc::size_t));
         }

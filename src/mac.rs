@@ -1,56 +1,48 @@
 use std::ffi::CString;
-use std::mem;
 use std::ptr;
 
 use libc;
 use ffi;
 
-use Token;
+use Wrapper;
 use utils;
 use error::Result;
 
-pub const HMAC_SHA256: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_SHA256 as libc::c_int);
-pub const HMAC_SHA224: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_SHA224 as libc::c_int);
-pub const HMAC_SHA512: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_SHA512 as libc::c_int);
-pub const HMAC_SHA384: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_SHA384 as libc::c_int);
-pub const HMAC_SHA1: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_SHA1 as libc::c_int);
-pub const HMAC_MD5: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_MD5 as libc::c_int);
-pub const HMAC_MD4: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_MD4 as libc::c_int);
-pub const HMAC_RMD160: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_RMD160 as libc::c_int);
-pub const HMAC_TIGER1: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_TIGER1 as libc::c_int);
-pub const HMAC_WHIRLPOOL: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_WHIRLPOOL as libc::c_int);
-pub const HMAC_GOSTR3411_94: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_GOSTR3411_94 as libc::c_int);
-pub const HMAC_STRIBOG256: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_STRIBOG256 as libc::c_int);
-pub const HMAC_STRIBOG512: Algorithm = Algorithm(ffi::GCRY_MAC_HMAC_STRIBOG512 as libc::c_int);
-pub const CMAC_AES: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_AES as libc::c_int);
-pub const CMAC_3DES: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_3DES as libc::c_int);
-pub const CMAC_CAMELLIA: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_CAMELLIA as libc::c_int);
-pub const CMAC_CAST5: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_CAST5 as libc::c_int);
-pub const CMAC_BLOWFISH: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_BLOWFISH as libc::c_int);
-pub const CMAC_TWOFISH: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_TWOFISH as libc::c_int);
-pub const CMAC_SERPENT: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_SERPENT as libc::c_int);
-pub const CMAC_SEED: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_SEED as libc::c_int);
-pub const CMAC_RFC2268: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_RFC2268 as libc::c_int);
-pub const CMAC_IDEA: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_IDEA as libc::c_int);
-pub const CMAC_GOST28147: Algorithm = Algorithm(ffi::GCRY_MAC_CMAC_GOST28147 as libc::c_int);
-pub const GMAC_AES: Algorithm = Algorithm(ffi::GCRY_MAC_GMAC_AES as libc::c_int);
-pub const GMAC_CAMELLIA: Algorithm = Algorithm(ffi::GCRY_MAC_GMAC_CAMELLIA as libc::c_int);
-pub const GMAC_TWOFISH: Algorithm = Algorithm(ffi::GCRY_MAC_GMAC_TWOFISH as libc::c_int);
-pub const GMAC_SERPENT: Algorithm = Algorithm(ffi::GCRY_MAC_GMAC_SERPENT as libc::c_int);
-pub const GMAC_SEED: Algorithm = Algorithm(ffi::GCRY_MAC_GMAC_SEED as libc::c_int);
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Algorithm(libc::c_int);
+enum_wrapper! {
+    pub enum Algorithm: libc::c_int {
+        HMAC_SHA256 = ffi::GCRY_MAC_HMAC_SHA256,
+        HMAC_SHA224 = ffi::GCRY_MAC_HMAC_SHA224,
+        HMAC_SHA512 = ffi::GCRY_MAC_HMAC_SHA512,
+        HMAC_SHA384 = ffi::GCRY_MAC_HMAC_SHA384,
+        HMAC_SHA1 = ffi::GCRY_MAC_HMAC_SHA1,
+        HMAC_MD5 = ffi::GCRY_MAC_HMAC_MD5,
+        HMAC_MD4 = ffi::GCRY_MAC_HMAC_MD4,
+        HMAC_RMD160 = ffi::GCRY_MAC_HMAC_RMD160,
+        HMAC_TIGER1 = ffi::GCRY_MAC_HMAC_TIGER1,
+        HMAC_WHIRLPOOL = ffi::GCRY_MAC_HMAC_WHIRLPOOL,
+        HMAC_GOSTR3411_94 = ffi::GCRY_MAC_HMAC_GOSTR3411_94,
+        HMAC_STRIBOG256 = ffi::GCRY_MAC_HMAC_STRIBOG256,
+        HMAC_STRIBOG512 = ffi::GCRY_MAC_HMAC_STRIBOG512,
+        CMAC_AES = ffi::GCRY_MAC_CMAC_AES,
+        CMAC_3DES = ffi::GCRY_MAC_CMAC_3DES,
+        CMAC_CAMELLIA = ffi::GCRY_MAC_CMAC_CAMELLIA,
+        CMAC_CAST5 = ffi::GCRY_MAC_CMAC_CAST5,
+        CMAC_BLOWFISH = ffi::GCRY_MAC_CMAC_BLOWFISH,
+        CMAC_TWOFISH = ffi::GCRY_MAC_CMAC_TWOFISH,
+        CMAC_SERPENT = ffi::GCRY_MAC_CMAC_SERPENT,
+        CMAC_SEED = ffi::GCRY_MAC_CMAC_SEED,
+        CMAC_RFC2268 = ffi::GCRY_MAC_CMAC_RFC2268,
+        CMAC_IDEA = ffi::GCRY_MAC_CMAC_IDEA,
+        CMAC_GOST28147 = ffi::GCRY_MAC_CMAC_GOST28147,
+        GMAC_AES = ffi::GCRY_MAC_GMAC_AES,
+        GMAC_CAMELLIA = ffi::GCRY_MAC_GMAC_CAMELLIA,
+        GMAC_TWOFISH = ffi::GCRY_MAC_GMAC_TWOFISH,
+        GMAC_SERPENT = ffi::GCRY_MAC_GMAC_SERPENT,
+        GMAC_SEED = ffi::GCRY_MAC_GMAC_SEED,
+    }
+}
 
 impl Algorithm {
-    pub fn from_raw(raw: ffi::gcry_mac_algos) -> Algorithm {
-        Algorithm(raw as libc::c_int)
-    }
-
-    pub fn as_raw(&self) -> ffi::gcry_mac_algos {
-        self.0 as ffi::gcry_mac_algos
-    }
-
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe {
@@ -108,16 +100,21 @@ impl Drop for Mac {
     }
 }
 
-impl Mac {
-    pub unsafe fn from_raw(raw: ffi::gcry_mac_hd_t) -> Mac {
+unsafe impl Wrapper for Mac {
+    type Raw = ffi::gcry_mac_hd_t;
+
+    unsafe fn from_raw(raw: ffi::gcry_mac_hd_t) -> Mac {
+        debug_assert!(!raw.is_null());
         Mac { raw: raw }
     }
 
-    pub fn as_raw(&self) -> ffi::gcry_mac_hd_t {
+    fn as_raw(&self) -> ffi::gcry_mac_hd_t {
         self.raw
     }
+}
 
-    pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<Mac> {
+impl Mac {
+    pub fn new(algo: Algorithm, flags: Flags) -> Result<Mac> {
         let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_mac_open(&mut handle, algo.0, flags.bits(), ptr::null_mut()));
@@ -128,7 +125,7 @@ impl Mac {
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: &B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
-            return_err!(ffi::gcry_mac_setkey(self.raw, mem::transmute(key.as_ptr()),
+            return_err!(ffi::gcry_mac_setkey(self.raw, key.as_ptr() as *const _,
                                             key.len() as libc::size_t));
         }
         Ok(())
@@ -137,7 +134,7 @@ impl Mac {
     pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: &B) -> Result<()> {
         let iv = iv.as_ref();
         unsafe {
-            return_err!(ffi::gcry_mac_setiv(self.raw, mem::transmute(iv.as_ptr()),
+            return_err!(ffi::gcry_mac_setiv(self.raw, iv.as_ptr() as *const _,
                                             iv.len() as libc::size_t));
         }
         Ok(())
@@ -153,7 +150,7 @@ impl Mac {
 
     pub fn write(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_write(self.raw, mem::transmute(bytes.as_ptr()),
+            return_err!(ffi::gcry_mac_write(self.raw, bytes.as_ptr() as *const _,
                                bytes.len() as libc::size_t));
         }
         Ok(())
@@ -162,7 +159,7 @@ impl Mac {
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let mut len = buf.len() as libc::size_t;
         unsafe {
-            return_err!(ffi::gcry_mac_read(self.raw, mem::transmute(buf.as_mut_ptr()),
+            return_err!(ffi::gcry_mac_read(self.raw, buf.as_mut_ptr() as *mut _,
                                            &mut len));
         }
         Ok(len as usize)
@@ -170,7 +167,7 @@ impl Mac {
 
     pub fn verify(&mut self, buf: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_verify(self.raw, mem::transmute(buf.as_ptr()),
+            return_err!(ffi::gcry_mac_verify(self.raw, buf.as_ptr() as *mut _,
                                              buf.len() as libc::size_t));
         }
         Ok(())

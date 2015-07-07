@@ -1,49 +1,41 @@
 use std::ffi::CString;
-use std::mem;
 use std::ptr;
 use std::slice;
 
 use libc;
 use ffi;
 
-use Token;
+use Wrapper;
 use utils;
 use error::Result;
 
-pub const MD_NONE: Algorithm = Algorithm(ffi::GCRY_MD_NONE as libc::c_int);
-pub const MD_MD5: Algorithm = Algorithm(ffi::GCRY_MD_MD5 as libc::c_int);
-pub const MD_SHA1: Algorithm = Algorithm(ffi::GCRY_MD_SHA1 as libc::c_int);
-pub const MD_RMD160: Algorithm = Algorithm(ffi::GCRY_MD_RMD160 as libc::c_int);
-pub const MD_MD2: Algorithm = Algorithm(ffi::GCRY_MD_MD2 as libc::c_int);
-pub const MD_TIGER: Algorithm = Algorithm(ffi::GCRY_MD_TIGER as libc::c_int);
-pub const MD_HAVAL: Algorithm = Algorithm(ffi::GCRY_MD_HAVAL as libc::c_int);
-pub const MD_SHA256: Algorithm = Algorithm(ffi::GCRY_MD_SHA256 as libc::c_int);
-pub const MD_SHA384: Algorithm = Algorithm(ffi::GCRY_MD_SHA384 as libc::c_int);
-pub const MD_SHA512: Algorithm = Algorithm(ffi::GCRY_MD_SHA512 as libc::c_int);
-pub const MD_SHA224: Algorithm = Algorithm(ffi::GCRY_MD_SHA224 as libc::c_int);
-pub const MD_MD4: Algorithm = Algorithm(ffi::GCRY_MD_MD4 as libc::c_int);
-pub const MD_CRC32: Algorithm = Algorithm(ffi::GCRY_MD_CRC32 as libc::c_int);
-pub const MD_CRC32_RFC1510: Algorithm = Algorithm(ffi::GCRY_MD_CRC32_RFC1510 as libc::c_int);
-pub const MD_CRC24_RFC2440: Algorithm = Algorithm(ffi::GCRY_MD_CRC24_RFC2440 as libc::c_int);
-pub const MD_WHIRLPOOL: Algorithm = Algorithm(ffi::GCRY_MD_WHIRLPOOL as libc::c_int);
-pub const MD_TIGER1: Algorithm = Algorithm(ffi::GCRY_MD_TIGER1 as libc::c_int);
-pub const MD_TIGER2: Algorithm = Algorithm(ffi::GCRY_MD_TIGER2 as libc::c_int);
-pub const MD_GOSTR3411_94: Algorithm = Algorithm(ffi::GCRY_MD_GOSTR3411_94 as libc::c_int);
-pub const MD_STRIBOG256: Algorithm = Algorithm(ffi::GCRY_MD_STRIBOG256 as libc::c_int);
-pub const MD_STRIBOG512: Algorithm = Algorithm(ffi::GCRY_MD_STRIBOG512 as libc::c_int);
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub struct Algorithm(libc::c_int);
+enum_wrapper! {
+    pub enum Algorithm: libc::c_int {
+        MD_NONE = ffi::GCRY_MD_NONE,
+        MD_MD5 = ffi::GCRY_MD_MD5,
+        MD_SHA1 = ffi::GCRY_MD_SHA1,
+        MD_RMD160 = ffi::GCRY_MD_RMD160,
+        MD_MD2 = ffi::GCRY_MD_MD2,
+        MD_TIGER = ffi::GCRY_MD_TIGER,
+        MD_HAVAL = ffi::GCRY_MD_HAVAL,
+        MD_SHA256 = ffi::GCRY_MD_SHA256,
+        MD_SHA384 = ffi::GCRY_MD_SHA384,
+        MD_SHA512 = ffi::GCRY_MD_SHA512,
+        MD_SHA224 = ffi::GCRY_MD_SHA224,
+        MD_MD4 = ffi::GCRY_MD_MD4,
+        MD_CRC32 = ffi::GCRY_MD_CRC32,
+        MD_CRC32_RFC1510 = ffi::GCRY_MD_CRC32_RFC1510,
+        MD_CRC24_RFC2440 = ffi::GCRY_MD_CRC24_RFC2440,
+        MD_WHIRLPOOL = ffi::GCRY_MD_WHIRLPOOL,
+        MD_TIGER1 = ffi::GCRY_MD_TIGER1,
+        MD_TIGER2 = ffi::GCRY_MD_TIGER2,
+        MD_GOSTR3411_94 = ffi::GCRY_MD_GOSTR3411_94,
+        MD_STRIBOG256 = ffi::GCRY_MD_STRIBOG256,
+        MD_STRIBOG512 = ffi::GCRY_MD_STRIBOG512,
+    }
+}
 
 impl Algorithm {
-    pub fn from_raw(raw: ffi::gcry_md_algos) -> Algorithm {
-        Algorithm(raw as libc::c_int)
-    }
-
-    pub fn as_raw(&self) -> ffi::gcry_md_algos {
-        self.0 as ffi::gcry_md_algos
-    }
-
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe {
@@ -97,16 +89,21 @@ impl Drop for MessageDigest {
     }
 }
 
-impl MessageDigest {
-    pub unsafe fn from_raw(raw: ffi::gcry_md_hd_t) -> MessageDigest {
+unsafe impl Wrapper for MessageDigest {
+    type Raw = ffi::gcry_md_hd_t;
+
+    unsafe fn from_raw(raw: ffi::gcry_md_hd_t) -> MessageDigest {
+        debug_assert!(!raw.is_null());
         MessageDigest { raw: raw }
     }
 
-    pub fn as_raw(&self) -> ffi::gcry_md_hd_t {
+    fn as_raw(&self) -> ffi::gcry_md_hd_t {
         self.raw
     }
+}
 
-    pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
+impl MessageDigest {
+    pub fn new(algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
         let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_md_open(&mut handle, algo.0, flags.bits()));
@@ -144,7 +141,7 @@ impl MessageDigest {
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: &B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
-            return_err!(ffi::gcry_md_setkey(self.raw, mem::transmute(key.as_ptr()),
+            return_err!(ffi::gcry_md_setkey(self.raw, key.as_ptr() as *const _,
                                             key.len() as libc::size_t));
         }
         Ok(())
@@ -158,7 +155,7 @@ impl MessageDigest {
 
     pub fn write(&mut self, bytes: &[u8]) {
         unsafe {
-            ffi::gcry_md_write(self.raw, mem::transmute(bytes.as_ptr()),
+            ffi::gcry_md_write(self.raw, bytes.as_ptr() as *const _,
                                bytes.len() as libc::size_t);
         }
     }

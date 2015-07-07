@@ -3,21 +3,26 @@ extern crate libc;
 extern crate bitflags;
 #[macro_use]
 extern crate lazy_static;
+#[macro_use]
+extern crate gpg_error;
 extern crate libgcrypt_sys as ffi;
 
 use std::ffi::CString;
+use std::mem;
 use std::ptr;
-use std::result;
 use std::sync::{Mutex, MutexGuard};
 
+pub use gpg_error as error;
 pub use error::{Error, Result};
 pub use buffer::Buffer;
 
 #[macro_use]
 mod utils;
 mod buffer;
-pub mod error;
 pub mod rand;
+pub mod mpi;
+pub mod sexp;
+pub mod pkey;
 pub mod cipher;
 pub mod digest;
 pub mod mac;
@@ -62,21 +67,9 @@ impl Initializer {
         Ok(self)
     }
 
-    pub fn finish(self) -> Token {
+    pub fn finish(self) {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
-            Token
-        }
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct Token;
-
-impl Token {
-    pub fn version(&self) -> &'static str {
-        unsafe {
-            utils::from_cstr(ffi::gcry_check_version(ptr::null())).unwrap()
         }
     }
 }
@@ -87,7 +80,7 @@ pub fn is_initialized() -> bool {
     }
 }
 
-pub fn init() -> result::Result<Initializer, Token> {
+pub fn init() -> Option<Initializer> {
     let lock = CONTROL_LOCK.lock().unwrap();
     if !is_initialized() {
         unsafe {
@@ -96,8 +89,31 @@ pub fn init() -> result::Result<Initializer, Token> {
             }
             ffi::gcry_check_version(ptr::null());
         }
-        Ok(Initializer { _lock: lock })
+        Some(Initializer { _lock: lock })
     } else {
-        Err(Token)
+        None
+    }
+}
+
+pub fn version() -> Option<&'static str> {
+    let _lock = CONTROL_LOCK.lock().unwrap();
+    if is_initialized() {
+        unsafe {
+            Some(utils::from_cstr(ffi::gcry_check_version(ptr::null())).unwrap())
+        }
+    } else {
+        None
+    }
+}
+
+pub unsafe trait Wrapper {
+    type Raw: Copy;
+
+    unsafe fn from_raw(raw: Self::Raw) -> Self;
+    fn as_raw(&self) -> Self::Raw;
+    fn into_raw(self) -> Self::Raw where Self: Sized {
+        let raw = self.as_raw();
+        mem::forget(self);
+        raw
     }
 }

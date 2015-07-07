@@ -1,11 +1,9 @@
-use std::mem;
 use std::ops;
 use std::slice;
 
 use libc;
 use ffi;
 
-use Token;
 use error::{Error, Result};
 use rand::Level;
 
@@ -17,22 +15,23 @@ pub struct Buffer {
 impl Drop for Buffer {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_free(mem::transmute(self.buf));
+            ffi::gcry_free(self.buf as *mut _);
         }
     }
 }
 
 impl Buffer {
     pub unsafe fn from_raw(buf: *mut u8, len: usize) -> Buffer {
+        debug_assert!(!buf.is_null());
         Buffer {
             buf: buf,
             len: len,
         }
     }
 
-    pub fn new(_: Token, len: usize) -> Result<Buffer> {
+    pub fn new(len: usize) -> Result<Buffer> {
         unsafe {
-            let buf: *mut u8 = mem::transmute(ffi::gcry_malloc(len as libc::size_t));
+            let buf = ffi::gcry_malloc(len as libc::size_t) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -41,9 +40,9 @@ impl Buffer {
         }
     }
 
-    pub fn new_secure(_: Token, len: usize) -> Result<Buffer> {
+    pub fn new_secure(len: usize) -> Result<Buffer> {
         unsafe {
-            let buf: *mut u8 = mem::transmute(ffi::gcry_malloc_secure(len as libc::size_t));
+            let buf = ffi::gcry_malloc_secure(len as libc::size_t) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -52,10 +51,9 @@ impl Buffer {
         }
     }
 
-    pub fn random(_: Token, len: usize, level: Level) -> Result<Buffer> {
+    pub fn random(len: usize, level: Level) -> Result<Buffer> {
         unsafe {
-            let buf: *mut u8 = mem::transmute(ffi::gcry_random_bytes(len as libc::size_t,
-                                                                     level.0));
+            let buf = ffi::gcry_random_bytes(len as libc::size_t, level.raw()) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -64,10 +62,9 @@ impl Buffer {
         }
     }
 
-    pub fn random_secure(_: Token, len: usize, level: Level) -> Result<Buffer> {
+    pub fn random_secure(len: usize, level: Level) -> Result<Buffer> {
         unsafe {
-            let buf: *mut u8 = mem::transmute(ffi::gcry_random_bytes_secure(len as libc::size_t,
-                                                                            level.0));
+            let buf = ffi::gcry_random_bytes_secure(len as libc::size_t, level.raw()) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -78,7 +75,7 @@ impl Buffer {
 
     pub fn is_secure(&self) -> bool {
         unsafe {
-            ffi::gcry_is_secure(mem::transmute(self.buf)) != 0
+            ffi::gcry_is_secure(self.buf as *const _) != 0
         }
     }
 }
