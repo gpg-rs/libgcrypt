@@ -4,7 +4,7 @@ use std::ptr;
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use utils;
 use error::Result;
 
@@ -55,7 +55,7 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self) -> bool {
+    pub fn is_available(&self, _: Token) -> bool {
         unsafe {
             ffi::gcry_mac_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
                                    ptr::null_mut(), ptr::null_mut()) == 0
@@ -114,7 +114,7 @@ unsafe impl Wrapper for Mac {
 }
 
 impl Mac {
-    pub fn new(algo: Algorithm, flags: Flags) -> Result<Mac> {
+    pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<Mac> {
         let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_mac_open(&mut handle, algo.0, flags.bits(), ptr::null_mut()));
@@ -122,8 +122,7 @@ impl Mac {
         Ok(Mac { raw: handle })
     }
 
-    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: &B) -> Result<()> {
-        let key = key.as_ref();
+    pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_mac_setkey(self.raw, key.as_ptr() as *const _,
                                             key.len() as libc::size_t));
@@ -131,8 +130,7 @@ impl Mac {
         Ok(())
     }
 
-    pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: &B) -> Result<()> {
-        let iv = iv.as_ref();
+    pub fn set_iv(&mut self, iv: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_mac_setiv(self.raw, iv.as_ptr() as *const _,
                                             iv.len() as libc::size_t));

@@ -1,10 +1,11 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::ptr;
+use std::str;
 
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use utils;
 use error::Result;
 use sexp::SExpression;
@@ -36,7 +37,7 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self) -> bool {
+    pub fn is_available(&self, _: Token) -> bool {
         unsafe {
             ffi::gcry_pk_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
                                    ptr::null_mut(), ptr::null_mut()) == 0
@@ -50,11 +51,75 @@ impl Algorithm {
     }
 }
 
+pub struct Curve {
+    name: &'static CStr,
+    nbits: usize,
+}
+
+impl Curve {
+    pub fn name(&self) -> &'static str {
+        str::from_utf8(self.name.to_bytes()).unwrap()
+    }
+
+    pub fn num_bits(&self) -> usize {
+        self.nbits
+    }
+
+    pub fn parameters(&self) -> Option<SExpression> {
+        unsafe {
+            let result = ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr());
+            if !result.is_null() {
+                Some(SExpression::from_raw(result))
+            } else {
+                None
+            }
+        }
+    }
+}
+
+pub struct Curves<'a> {
+    key: Option<&'a SExpression>,
+    idx: usize,
+}
+
+impl<'a> Curves<'a> {
+    pub fn all() -> Curves<'static>{
+        Curves { key: None, idx: 0 }
+    }
+
+    pub fn get(name: &str) -> Option<Curve> {
+        SExpression::from_bytes(&format!("(curve {})", name)).ok().and_then(|s| s.curve())
+    }
+}
+
+impl<'a> Iterator for Curves<'a> {
+    type Item = Curve;
+
+    fn next(&mut self) -> Option<Curve> {
+        unsafe {
+            let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
+            let mut nbits = 0;
+            let result = ffi::gcry_pk_get_curve(key, self.idx as libc::c_int, &mut nbits);
+            if !result.is_null() {
+                self.idx += 1;
+                Some(Curve { name: CStr::from_ptr(result), nbits: nbits as usize })
+            } else {
+                None
+            }
+        }
+    }
+
+    fn nth(&mut self, n: usize) -> Option<Curve> {
+        self.idx = self.idx.saturating_add(n);
+        self.next()
+    }
+}
+
 impl SExpression {
-    pub fn generate_key(parms: &SExpression) -> Result<SExpression> {
+    pub fn generate_key(&self) -> Result<SExpression> {
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_pk_genkey(&mut result, parms.as_raw()));
+            return_err!(ffi::gcry_pk_genkey(&mut result, self.as_raw()));
             Ok(SExpression::from_raw(result))
         }
     }
@@ -72,13 +137,17 @@ impl SExpression {
 
     pub fn key_grip(&self) -> Option<[u8; 20]> {
         unsafe {
-            let mut buffer = [0 as u8; 20];
+            let mut buffer = [0u8; 20];
             if !ffi::gcry_pk_get_keygrip(self.as_raw(), buffer.as_mut_ptr()).is_null() {
                 Some(buffer)
             } else {
                 None
             }
         }
+    }
+
+    pub fn curve(&self) -> Option<Curve> {
+        (Curves { key: Some(self), idx: 0 }).next()
     }
 
     pub fn test_key(&self) -> Result<()> {
@@ -119,4 +188,3 @@ impl SExpression {
         }
     }
 }
-

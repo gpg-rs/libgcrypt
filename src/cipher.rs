@@ -4,7 +4,7 @@ use std::ptr;
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use utils;
 use error::Result;
 
@@ -17,8 +17,13 @@ enum_wrapper! {
         CIPHER_SAFER_SK128 = ffi::GCRY_CIPHER_SAFER_SK128,
         CIPHER_DES_SK = ffi::GCRY_CIPHER_DES_SK,
         CIPHER_AES = ffi::GCRY_CIPHER_AES,
+        CIPHER_AES128 = ffi::GCRY_CIPHER_AES128,
         CIPHER_AES192 = ffi::GCRY_CIPHER_AES192,
         CIPHER_AES256 = ffi::GCRY_CIPHER_AES256,
+        CIPHER_RIJNDAEL = ffi::GCRY_CIPHER_RIJNDAEL,
+        CIPHER_RIJNDAEL128 = ffi::GCRY_CIPHER_RIJNDAEL128,
+        CIPHER_RIJNDAEL192 = ffi::GCRY_CIPHER_RIJNDAEL192,
+        CIPHER_RIJNDAEL256 = ffi::GCRY_CIPHER_RIJNDAEL256,
         CIPHER_TWOFISH = ffi::GCRY_CIPHER_TWOFISH,
         CIPHER_ARCFOUR = ffi::GCRY_CIPHER_ARCFOUR,
         CIPHER_DES = ffi::GCRY_CIPHER_DES,
@@ -35,11 +40,6 @@ enum_wrapper! {
         CIPHER_SALSA20 = ffi::GCRY_CIPHER_SALSA20,
         CIPHER_SALSA20R12 = ffi::GCRY_CIPHER_SALSA20R12,
         CIPHER_GOST28147 = ffi::GCRY_CIPHER_GOST28147,
-        CIPHER_AES128 = ffi::GCRY_CIPHER_AES128,
-        CIPHER_RIJNDAEL = ffi::GCRY_CIPHER_RIJNDAEL,
-        CIPHER_RIJNDAEL128 = ffi::GCRY_CIPHER_RIJNDAEL128,
-        CIPHER_RIJNDAEL192 = ffi::GCRY_CIPHER_RIJNDAEL192,
-        CIPHER_RIJNDAEL256 = ffi::GCRY_CIPHER_RIJNDAEL256,
     }
 }
 
@@ -56,7 +56,7 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self) -> bool {
+    pub fn is_available(&self, _: Token) -> bool {
         unsafe {
             ffi::gcry_cipher_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
                                        ptr::null_mut(), ptr::null_mut()) == 0
@@ -146,7 +146,7 @@ unsafe impl Wrapper for Cipher {
 }
 
 impl Cipher {
-    pub fn new(algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
+    pub fn new(_: Token, algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
         let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_cipher_open(&mut handle, algo.0, mode.0,
@@ -155,8 +155,7 @@ impl Cipher {
         Ok(Cipher { raw: handle })
     }
 
-    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: &B) -> Result<()> {
-        let key = key.as_ref();
+    pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_setkey(self.raw, key.as_ptr() as *const _,
                                                 key.len() as libc::size_t));
@@ -164,8 +163,7 @@ impl Cipher {
         Ok(())
     }
 
-    pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: &B) -> Result<()> {
-        let iv = iv.as_ref();
+    pub fn set_iv(&mut self, iv: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_setiv(self.raw, iv.as_ptr() as *const _,
                                                iv.len() as libc::size_t));
@@ -173,8 +171,7 @@ impl Cipher {
         Ok(())
     }
 
-    pub fn set_ctr<B: AsRef<[u8]>>(&mut self, ctr: &B) -> Result<()> {
-        let ctr = ctr.as_ref();
+    pub fn set_ctr(&mut self, ctr: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_setctr(self.raw, ctr.as_ptr() as *const _,
                                                 ctr.len() as libc::size_t));
@@ -230,6 +227,24 @@ impl Cipher {
             let output = (output.as_mut_ptr() as *mut _, output.len());
             return_err!(ffi::gcry_cipher_decrypt(self.raw, output.0, output.1 as libc::size_t,
                                                  input.0, input.1 as libc::size_t));
+        }
+        Ok(())
+    }
+
+    pub fn encrypt_inplace(&mut self, plain: &mut [u8]) -> Result<()> {
+        unsafe {
+            let plain = (plain.as_mut_ptr() as *mut _, plain.len());
+            return_err!(ffi::gcry_cipher_encrypt(self.raw, plain.0, plain.1 as libc::size_t,
+                                                 ptr::null(), 0));
+        }
+        Ok(())
+    }
+
+    pub fn decrypt_inplace(&mut self, cipher: &mut [u8]) -> Result<()> {
+        unsafe {
+            let cipher = (cipher.as_mut_ptr() as *mut _, cipher.len());
+            return_err!(ffi::gcry_cipher_decrypt(self.raw, cipher.0, cipher.1 as libc::size_t,
+                                                 ptr::null(), 0));
         }
         Ok(())
     }

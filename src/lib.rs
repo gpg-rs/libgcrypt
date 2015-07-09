@@ -10,6 +10,7 @@ extern crate libgcrypt_sys as ffi;
 use std::ffi::CString;
 use std::mem;
 use std::ptr;
+use std::result;
 use std::sync::{Mutex, MutexGuard};
 
 pub use gpg_error as error;
@@ -67,9 +68,39 @@ impl Initializer {
         Ok(self)
     }
 
-    pub fn finish(self) {
+    pub fn finish(self)  -> Token {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
+        }
+        Token(0)
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+pub struct Token(isize);
+
+impl Token {
+    pub fn is_fips_mode_active(&self) -> bool {
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_FIPS_MODE_P, 0) != 0
+        }
+    }
+
+    pub fn version(&self) -> &'static str {
+        unsafe {
+            utils::from_cstr(ffi::gcry_check_version(ptr::null())).unwrap()
+        }
+    }
+
+    pub fn run_self_tests(&self) -> bool {
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_SELFTEST, 0) == 0
+        }
+    }
+
+    pub fn destroy_secmem(&self) {
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_TERM_SECMEM, 0);
         }
     }
 }
@@ -80,7 +111,7 @@ pub fn is_initialized() -> bool {
     }
 }
 
-pub fn init() -> Option<Initializer> {
+pub fn init() -> result::Result<Initializer, Token> {
     let lock = CONTROL_LOCK.lock().unwrap();
     if !is_initialized() {
         unsafe {
@@ -89,20 +120,9 @@ pub fn init() -> Option<Initializer> {
             }
             ffi::gcry_check_version(ptr::null());
         }
-        Some(Initializer { _lock: lock })
+        Ok(Initializer { _lock: lock })
     } else {
-        None
-    }
-}
-
-pub fn version() -> Option<&'static str> {
-    let _lock = CONTROL_LOCK.lock().unwrap();
-    if is_initialized() {
-        unsafe {
-            Some(utils::from_cstr(ffi::gcry_check_version(ptr::null())).unwrap())
-        }
-    } else {
-        None
+        Err(Token(0))
     }
 }
 

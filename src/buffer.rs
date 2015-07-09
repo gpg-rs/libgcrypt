@@ -1,5 +1,8 @@
 use std::ops;
+use std::ptr;
 use std::slice;
+use std::result;
+use std::str;
 
 use libc;
 use ffi;
@@ -51,6 +54,18 @@ impl Buffer {
         }
     }
 
+    pub fn try_clone(&self) -> Result<Buffer> {
+        let result = if self.is_secure() {
+            try!(Buffer::new_secure(self.len))
+        } else {
+            try!(Buffer::new(self.len))
+        };
+        unsafe {
+            ptr::copy_nonoverlapping(self.buf, result.buf, self.len);
+        }
+        Ok(result)
+    }
+
     pub fn random(len: usize, level: Level) -> Result<Buffer> {
         unsafe {
             let buf = ffi::gcry_random_bytes(len as libc::size_t, level.raw()) as *mut u8;
@@ -78,28 +93,40 @@ impl Buffer {
             ffi::gcry_is_secure(self.buf as *const _) != 0
         }
     }
+
+    pub fn as_bytes(&self) -> &[u8] {
+        unsafe {
+            slice::from_raw_parts(self.buf, self.len)
+        }
+    }
+
+    pub fn as_mut_bytes(&mut self) -> &mut [u8] {
+        unsafe {
+            slice::from_raw_parts_mut(self.buf, self.len)
+        }
+    }
+
+    pub fn to_str(&self) -> result::Result<&str, str::Utf8Error> {
+        str::from_utf8(self.as_bytes())
+    }
 }
 
 impl ops::Deref for Buffer {
     type Target = [u8];
 
     fn deref(&self) -> &[u8] {
-        self.as_ref()
+        self.as_bytes()
     }
 }
 
 impl ops::DerefMut for Buffer {
     fn deref_mut(&mut self) -> &mut [u8] {
-        unsafe {
-            slice::from_raw_parts_mut(self.buf, self.len)
-        }
+        self.as_mut_bytes()
     }
 }
 
 impl AsRef<[u8]> for Buffer {
     fn as_ref(&self) -> &[u8] {
-        unsafe {
-            slice::from_raw_parts(self.buf, self.len)
-        }
+        self.as_bytes()
     }
 }

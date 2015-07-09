@@ -9,11 +9,11 @@ use libc;
 use ffi;
 
 use Wrapper;
-use error::{Error, Result};
+use error::{self, Error, Result};
 use buffer::Buffer;
 use rand::Level;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Format {
     Standard = ffi::GCRYMPI_FMT_STD as isize,
     Unsigned = ffi::GCRYMPI_FMT_USG as isize,
@@ -87,13 +87,20 @@ impl Integer {
         }
     }
 
-    pub fn from_bytes(format: Format, bytes: &[u8]) -> Result<Integer> {
+    pub fn from_bytes<B: ?Sized + AsRef<[u8]>>(format: Format, bytes: &B) -> Result<Integer> {
+        let bytes = bytes.as_ref();
         let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
         unsafe {
+            let len = if format != Format::Hex {
+                bytes.len() as libc::size_t
+            } else if bytes.contains(&0) {
+                0
+            } else {
+                return Err(Error::from_code(error::GPG_ERR_INV_ARG))
+            };
             return_err!(ffi::gcry_mpi_scan(&mut raw, format as ffi::gcry_mpi_format,
                                            bytes.as_ptr() as *const _,
-                                           bytes.len() as libc::size_t,
-                                           ptr::null_mut()));
+                                           len, ptr::null_mut()));
             Ok(Integer::from_raw(raw))
         }
     }
@@ -105,6 +112,25 @@ impl Integer {
             return_err!(ffi::gcry_mpi_aprint(format as ffi::gcry_mpi_format, &mut buffer,
                                              &mut len, self.raw));
             Ok(Buffer::from_raw(buffer as *mut u8, len as usize))
+        }
+    }
+
+    pub fn len_encoded(&self, format: Format) -> Result<usize> {
+        unsafe {
+            let mut len = 0 as libc::size_t;
+            return_err!(ffi::gcry_mpi_print(format as ffi::gcry_mpi_format, ptr::null_mut(), 0,
+                                            &mut len, self.raw));
+            Ok(len as usize)
+        }
+    }
+
+    pub fn encode(&self, format: Format, buf: &mut [u8]) -> Result<usize> {
+        unsafe {
+            let mut written = 0 as libc::size_t;
+            return_err!(ffi::gcry_mpi_print(format as ffi::gcry_mpi_format,
+                                            buf.as_mut_ptr() as *mut _, buf.len() as libc::size_t,
+                                            &mut written, self.raw));
+            Ok(written as usize)
         }
     }
 
@@ -258,26 +284,14 @@ impl str::FromStr for Integer {
 
     fn from_str(s: &str) -> Result<Integer> {
         let s = try!(CString::new(s));
-        let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
-        unsafe {
-            return_err!(ffi::gcry_mpi_scan(&mut raw, ffi::GCRYMPI_FMT_HEX, s.as_ptr() as *const _,
-                                           0, ptr::null_mut()));
-            Ok(Integer::from_raw(raw))
-        }
+        Integer::from_bytes(Format::Hex, s.as_bytes_with_nul())
     }
 }
 
 impl fmt::Display for Integer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let buffer = unsafe {
-            let mut buffer = ptr::null_mut();
-            let mut len = 0 as libc::size_t;
-            if ffi::gcry_mpi_aprint(ffi::GCRYMPI_FMT_HEX, &mut buffer, &mut len, self.raw) != 0 {
-                return Err(fmt::Error);
-            }
-            Buffer::from_raw(buffer as *mut u8, (len - 1) as usize)
-        };
-        f.write_str(str::from_utf8(&*buffer).unwrap())
+        let buffer = try!(self.to_bytes(Format::Hex).or(Err(fmt::Error)));
+        f.write_str(str::from_utf8(&buffer[..(buffer.len() - 1)]).unwrap())
     }
 }
 
@@ -379,16 +393,5 @@ impl ops::Shr<usize> for Integer {
             ffi::gcry_mpi_rshift(self.raw, self.raw, other as libc::c_uint);
         }
         self
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Integer;
-
-    #[test]
-    fn test_print() {
-        assert_eq!(Integer::zero().to_string(), "00");
-        assert_eq!(Integer::from(0xabcdef).to_string(), "00ABCDEF");
     }
 }

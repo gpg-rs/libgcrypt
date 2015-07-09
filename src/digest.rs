@@ -5,7 +5,7 @@ use std::slice;
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use utils;
 use error::Result;
 
@@ -48,7 +48,7 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self) -> bool {
+    pub fn is_available(&self, _: Token) -> bool {
         unsafe {
             ffi::gcry_md_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
                                    ptr::null_mut(), ptr::null_mut()) == 0
@@ -103,7 +103,7 @@ unsafe impl Wrapper for MessageDigest {
 }
 
 impl MessageDigest {
-    pub fn new(algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
+    pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
         let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_md_open(&mut handle, algo.0, flags.bits()));
@@ -138,8 +138,7 @@ impl MessageDigest {
         }
     }
 
-    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: &B) -> Result<()> {
-        let key = key.as_ref();
+    pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_md_setkey(self.raw, key.as_ptr() as *const _,
                                             key.len() as libc::size_t));
@@ -178,6 +177,10 @@ impl MessageDigest {
     }
 
     pub fn get_digest(&mut self, algo: Algorithm) -> Option<&[u8]> {
+        if algo.digest_len() == 0 {
+            return None;
+        }
+
         unsafe {
             let result = ffi::gcry_md_read(self.raw, algo.0);
             if !result.is_null() {
