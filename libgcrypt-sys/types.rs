@@ -9,17 +9,7 @@ use consts::*;
 
 pub use libgpg_error_sys::gpg_error_t as gcry_error_t;
 
-#[repr(C)]
-pub struct gcry_thread_cbs {
-    pub option: c_uint,
-}
-
-pub static gcry_threads_pth: gcry_thread_cbs = gcry_thread_cbs {
-    option: GCRY_THREAD_OPTION_PTH | (GCRY_THREAD_OPTION_VERSION << 1),
-};
-pub static gcry_threads_pthread: gcry_thread_cbs = gcry_thread_cbs {
-    option: GCRY_THREAD_OPTION_PTHREAD | (GCRY_THREAD_OPTION_VERSION << 1),
-};
+pub enum gcry_thread_cbs {}
 
 pub enum gcry_context {}
 pub type gcry_ctx_t = *mut gcry_context;

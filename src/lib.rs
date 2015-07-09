@@ -86,6 +86,16 @@ impl Token {
         }
     }
 
+    pub fn check_version<S: Into<String>>(&self, version: S) -> bool {
+        let version = match CString::new(version.into()) {
+            Ok(v) => v,
+            Err(..) => return false,
+        };
+        unsafe {
+            !ffi::gcry_check_version(version.as_ptr()).is_null()
+        }
+    }
+
     pub fn version(&self) -> &'static str {
         unsafe {
             utils::from_cstr(ffi::gcry_check_version(ptr::null())).unwrap()
@@ -116,7 +126,7 @@ pub fn init() -> result::Result<Initializer, Token> {
     if !is_initialized() {
         unsafe {
             if cfg!(unix) {
-                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS, &ffi::gcry_threads_pthread);
+                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS, ffi::gcry_threads_pthread_shim());
             }
             ffi::gcry_check_version(ptr::null());
         }

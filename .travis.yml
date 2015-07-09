@@ -4,6 +4,7 @@ sudo: false
 addons:
   apt:
     packages:
+    - gcc
     - libgcrypt11-dev
 script:
 - cargo build --verbose

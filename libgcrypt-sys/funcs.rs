@@ -21,6 +21,8 @@ use consts::*;
 use types::*;
 
 extern {
+    pub fn gcry_threads_pthread_shim() -> *mut gcry_thread_cbs;
+
     pub fn gcry_check_version(req_version: *const c_char) -> *const c_char;
     pub fn gcry_control(cmd: gcry_ctl_cmds, ...) -> gcry_error_t;
 

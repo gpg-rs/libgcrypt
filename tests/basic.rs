@@ -99,7 +99,7 @@ fn test_block_ciphers() {
         check_cipher(token, algo, cipher::MODE_CBC, cipher::Flags::empty());
         check_cipher(token, algo, cipher::MODE_CBC, cipher::FLAG_CBC_CTS);
         check_cipher(token, algo, cipher::MODE_CTR, cipher::Flags::empty());
-        if algo.block_len() == 16 {
+        if algo.block_len() == 16 && token.check_version("1.6.0") {
             check_cipher(token, algo, cipher::MODE_GCM, cipher::Flags::empty());
         }
     }

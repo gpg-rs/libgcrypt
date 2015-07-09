@@ -13,6 +13,9 @@ build = "build.rs"
 name = "libgcrypt_sys"
 path = "lib.rs"
 
+[build-dependencies]
+gcc = "0.3"
+
 [dependencies]
 libc = "0.1"
 libgpg-error-sys = "*"
