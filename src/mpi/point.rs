@@ -21,7 +21,7 @@ impl Drop for Point {
 
 impl Clone for Point {
     fn clone(&self) -> Point {
-        let (x, y, z) = self.coords();
+        let (x, y, z) = self.to_coords();
         let point = unsafe {
             Point::from_raw(ffi::gcry_mpi_point_snatch_set(ptr::null_mut(), x.into_raw(),
                                                            y.into_raw(), z.into_raw()))
@@ -30,7 +30,7 @@ impl Clone for Point {
     }
 
     fn clone_from(&mut self, source: &Point) {
-        let (x, y, z) = source.coords();
+        let (x, y, z) = source.to_coords();
         unsafe {
             ffi::gcry_mpi_point_snatch_set(self.raw, x.into_raw(), y.into_raw(), z.into_raw());
         }
