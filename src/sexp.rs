@@ -397,7 +397,6 @@ mod tests {
         let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %b)(d %b)))").unwrap();
         let mut builder = Builder::from(&template);
         builder.add_bytes("Ed25519").add_bytes("124124").add_bytes("2324");
-        let result = builder.build().unwrap();
-        println!("{}", result);
+        builder.build().unwrap();
     }
 }

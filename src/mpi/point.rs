@@ -4,7 +4,7 @@ use libc;
 use ffi;
 
 use Wrapper;
-use super::Integer;
+use super::{Integer, Context};
 
 #[derive(Debug)]
 pub struct Point {
@@ -81,7 +81,7 @@ impl Point {
         }
     }
 
-    pub fn coords(&self) -> (Integer, Integer, Integer) {
+    pub fn to_coords(&self) -> (Integer, Integer, Integer) {
         let x = Integer::default();
         let y = Integer::default();
         let z = Integer::default();
@@ -99,6 +99,39 @@ impl Point {
             ffi::gcry_mpi_point_snatch_get(x.as_raw(), y.as_raw(), z.as_raw(), self.into_raw());
         }
         (x, y, z)
+    }
+
+    pub fn get_affine(&self, ctx: &Context) -> Option<(Integer, Integer)> {
+        let x = Integer::default();
+        let y = Integer::default();
+        let result = unsafe {
+            ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.raw, ctx.as_raw())
+        };
+        if result == 0 {
+            Some((x, y))
+        } else {
+            None
+        }
+    }
+
+    pub fn on_curve(&self, ctx: &Context) -> bool {
+        unsafe {
+            ffi::gcry_mpi_ec_curve_point(self.raw, ctx.as_raw()) != 0
+        }
+    }
+
+    pub fn add(self, other: &Point, ctx: &Context) -> Point {
+        unsafe {
+            ffi::gcry_mpi_ec_add(self.raw, self.raw, other.raw, ctx.as_raw());
+        }
+        self
+    }
+
+    pub fn mul(self, n: &Integer, ctx: &Context) -> Point {
+        unsafe {
+            ffi::gcry_mpi_ec_mul(self.raw, n.as_raw(), self.raw, ctx.as_raw());
+        }
+        self
     }
 }
 

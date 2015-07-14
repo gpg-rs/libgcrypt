@@ -1,6 +1,5 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CString;
 use std::ptr;
-use std::str;
 
 use libc;
 use ffi;
@@ -9,6 +8,7 @@ use {Wrapper, Token};
 use utils;
 use error::Result;
 use sexp::SExpression;
+use mpi::ec::{Curve, Curves};
 
 enum_wrapper! {
     pub enum Algorithm: libc::c_int {
@@ -51,70 +51,6 @@ impl Algorithm {
     }
 }
 
-pub struct Curve {
-    name: &'static CStr,
-    nbits: usize,
-}
-
-impl Curve {
-    pub fn name(&self) -> &'static str {
-        str::from_utf8(self.name.to_bytes()).unwrap()
-    }
-
-    pub fn num_bits(&self) -> usize {
-        self.nbits
-    }
-
-    pub fn parameters(&self) -> Option<SExpression> {
-        unsafe {
-            let result = ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr());
-            if !result.is_null() {
-                Some(SExpression::from_raw(result))
-            } else {
-                None
-            }
-        }
-    }
-}
-
-pub struct Curves<'a> {
-    key: Option<&'a SExpression>,
-    idx: usize,
-}
-
-impl<'a> Curves<'a> {
-    pub fn all() -> Curves<'static>{
-        Curves { key: None, idx: 0 }
-    }
-
-    pub fn get(name: &str) -> Option<Curve> {
-        SExpression::from_bytes(&format!("(curve {})", name)).ok().and_then(|s| s.curve())
-    }
-}
-
-impl<'a> Iterator for Curves<'a> {
-    type Item = Curve;
-
-    fn next(&mut self) -> Option<Curve> {
-        unsafe {
-            let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
-            let mut nbits = 0;
-            let result = ffi::gcry_pk_get_curve(key, self.idx as libc::c_int, &mut nbits);
-            if !result.is_null() {
-                self.idx += 1;
-                Some(Curve { name: CStr::from_ptr(result), nbits: nbits as usize })
-            } else {
-                None
-            }
-        }
-    }
-
-    fn nth(&mut self, n: usize) -> Option<Curve> {
-        self.idx = self.idx.saturating_add(n);
-        self.next()
-    }
-}
-
 impl SExpression {
     pub fn generate_key(&self) -> Result<SExpression> {
         unsafe {
@@ -147,7 +83,7 @@ impl SExpression {
     }
 
     pub fn curve(&self) -> Option<Curve> {
-        (Curves { key: Some(self), idx: 0 }).next()
+        Curves::from(self).next()
     }
 
     pub fn test_key(&self) -> Result<()> {

@@ -120,7 +120,7 @@ extern {
     pub fn gcry_mpi_ec_get_mpi(name: *const c_char, ctx: gcry_ctx_t, copy: c_int) -> gcry_mpi_t;
     pub fn gcry_mpi_ec_get_point(name: *const c_char, ctx: gcry_ctx_t,
                                  copy: c_int) -> gcry_mpi_point_t ;
-    pub fn gcry_mpi_ec_set_mpi(name: *const char, newvalue: gcry_mpi_t,
+    pub fn gcry_mpi_ec_set_mpi(name: *const c_char, newvalue: gcry_mpi_t,
                                ctx: gcry_ctx_t) -> gcry_error_t;
     pub fn gcry_mpi_ec_set_point(name: *const c_char, newvalue: gcry_mpi_point_t,
                                  ctx: gcry_ctx_t) -> gcry_error_t;
