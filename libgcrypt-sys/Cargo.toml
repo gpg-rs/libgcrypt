@@ -2,7 +2,7 @@
 name = "libgcrypt-sys"
 description = "Raw bindings for libgcrypt"
 repository = "https://github.com/johnschug/rust-gcrypt"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
 keywords = ["crypto", "cryptography"]
