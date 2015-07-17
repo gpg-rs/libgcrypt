@@ -11,7 +11,6 @@ use error::Result;
 
 enum_wrapper! {
     pub enum Algorithm: libc::c_int {
-        MD_NONE = ffi::GCRY_MD_NONE,
         MD_MD5 = ffi::GCRY_MD_MD5,
         MD_SHA1 = ffi::GCRY_MD_SHA1,
         MD_RMD160 = ffi::GCRY_MD_RMD160,

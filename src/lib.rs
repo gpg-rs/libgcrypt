@@ -27,6 +27,7 @@ pub mod pkey;
 pub mod cipher;
 pub mod digest;
 pub mod mac;
+pub mod kdf;
 
 lazy_static! {
     static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
