@@ -7,6 +7,7 @@ use std::str;
 use libc;
 use ffi;
 
+use Token;
 use error::{Error, Result};
 use rand::Level;
 
@@ -32,7 +33,7 @@ impl Buffer {
         }
     }
 
-    pub fn new(len: usize) -> Result<Buffer> {
+    pub fn new(_: Token, len: usize) -> Result<Buffer> {
         unsafe {
             let buf = ffi::gcry_malloc(len as libc::size_t) as *mut u8;
             if !buf.is_null() {
@@ -43,7 +44,7 @@ impl Buffer {
         }
     }
 
-    pub fn new_secure(len: usize) -> Result<Buffer> {
+    pub fn new_secure(_: Token, len: usize) -> Result<Buffer> {
         unsafe {
             let buf = ffi::gcry_malloc_secure(len as libc::size_t) as *mut u8;
             if !buf.is_null() {
@@ -55,10 +56,11 @@ impl Buffer {
     }
 
     pub fn try_clone(&self) -> Result<Buffer> {
+        let token = ::get_token().unwrap();
         let result = if self.is_secure() {
-            try!(Buffer::new_secure(self.len))
+            try!(Buffer::new_secure(token, self.len))
         } else {
-            try!(Buffer::new(self.len))
+            try!(Buffer::new(token, self.len))
         };
         unsafe {
             ptr::copy_nonoverlapping(self.buf, result.buf, self.len);
@@ -66,7 +68,7 @@ impl Buffer {
         Ok(result)
     }
 
-    pub fn random(len: usize, level: Level) -> Result<Buffer> {
+    pub fn random(_: Token, len: usize, level: Level) -> Result<Buffer> {
         unsafe {
             let buf = ffi::gcry_random_bytes(len as libc::size_t, level.raw()) as *mut u8;
             if !buf.is_null() {
@@ -77,7 +79,7 @@ impl Buffer {
         }
     }
 
-    pub fn random_secure(len: usize, level: Level) -> Result<Buffer> {
+    pub fn random_secure(_: Token, len: usize, level: Level) -> Result<Buffer> {
         unsafe {
             let buf = ffi::gcry_random_bytes_secure(len as libc::size_t, level.raw()) as *mut u8;
             if !buf.is_null() {

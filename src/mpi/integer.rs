@@ -8,7 +8,7 @@ use std::str;
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use error::{self, Error, Result};
 use buffer::Buffer;
 use rand::Level;
@@ -63,15 +63,15 @@ unsafe impl Wrapper for Integer {
 }
 
 impl Integer {
-    pub fn zero() -> Integer {
-        Integer::new(0)
+    pub fn zero(token: Token) -> Integer {
+        Integer::new(token, 0)
     }
 
-    pub fn one() -> Integer {
-        Integer::from(1)
+    pub fn one(token: Token) -> Integer {
+        Integer::from_uint(token, 1)
     }
 
-    pub fn new(nbits: usize) -> Integer {
+    pub fn new(_: Token, nbits: usize) -> Integer {
         unsafe {
             Integer {
                 raw: ffi::gcry_mpi_new(nbits as libc::c_uint)
@@ -79,7 +79,7 @@ impl Integer {
         }
     }
 
-    pub fn new_secure(nbits: usize) -> Integer {
+    pub fn new_secure(_: Token, nbits: usize) -> Integer {
         unsafe {
             Integer {
                 raw: ffi::gcry_mpi_snew(nbits as libc::c_uint)
@@ -87,7 +87,14 @@ impl Integer {
         }
     }
 
-    pub fn from_bytes<B: ?Sized + AsRef<[u8]>>(format: Format, bytes: &B) -> Result<Integer> {
+    pub fn from_uint(_: Token, n: usize) -> Integer {
+        unsafe {
+            Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n as libc::c_ulong))
+        }
+    }
+
+    pub fn from_bytes<B: ?Sized>(_: Token, format: Format, bytes: &B) -> Result<Integer>
+    where B: AsRef<[u8]> {
         let bytes = bytes.as_ref();
         let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
         unsafe {
@@ -103,6 +110,11 @@ impl Integer {
                                            len, ptr::null_mut()));
             Ok(Integer::from_raw(raw))
         }
+    }
+
+    pub fn from_str<S: Into<String>>(token: Token, s: S) -> Result<Integer> {
+        let s = try!(CString::new(s.into()));
+        Integer::from_bytes(token, Format::Hex, s.as_bytes_with_nul())
     }
 
     pub fn to_bytes(&self, format: Format) -> Result<Buffer> {
@@ -224,7 +236,7 @@ impl Integer {
     }
 
     pub fn div_rem(self, other: &Integer) -> (Integer, Integer) {
-        let rem = Integer::default();
+        let rem = Integer::zero(::get_token().unwrap());
         unsafe {
             ffi::gcry_mpi_div(self.raw, rem.raw, self.raw, other.raw, 0);
         }
@@ -232,7 +244,7 @@ impl Integer {
     }
 
     pub fn div_mod_floor(self, other: &Integer) -> (Integer, Integer) {
-        let rem = Integer::default();
+        let rem = Integer::zero(::get_token().unwrap());
         unsafe {
             ffi::gcry_mpi_div(self.raw, rem.raw, self.raw, other.raw, -1);
         }
@@ -262,29 +274,6 @@ impl Integer {
 
     pub fn lcm(self, other: &Integer) -> Integer {
         (self.clone() * other) / self.gcd(other)
-    }
-}
-
-impl Default for Integer {
-    fn default() -> Integer {
-        Integer::new(0)
-    }
-}
-
-impl From<usize> for Integer {
-    fn from(n: usize) -> Integer {
-        unsafe {
-            Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n as libc::c_ulong))
-        }
-    }
-}
-
-impl str::FromStr for Integer {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<Integer> {
-        let s = try!(CString::new(s));
-        Integer::from_bytes(Format::Hex, s.as_bytes_with_nul())
     }
 }
 

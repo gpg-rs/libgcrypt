@@ -3,7 +3,7 @@ use std::ptr;
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use super::{Integer, Context};
 
 #[derive(Debug)]
@@ -51,11 +51,11 @@ unsafe impl Wrapper for Point {
 }
 
 impl Point {
-    pub fn zero() -> Point {
-        Point::new(0)
+    pub fn zero(token: Token) -> Point {
+        Point::new(token, 0)
     }
 
-    pub fn new(nbits: usize) -> Point {
+    pub fn new(_: Token, nbits: usize) -> Point {
         unsafe {
             Point {
                 raw: ffi::gcry_mpi_point_new(nbits as libc::c_uint)
@@ -82,9 +82,10 @@ impl Point {
     }
 
     pub fn to_coords(&self) -> (Integer, Integer, Integer) {
-        let x = Integer::default();
-        let y = Integer::default();
-        let z = Integer::default();
+        let token = ::get_token().unwrap();
+        let x = Integer::zero(token);
+        let y = Integer::zero(token);
+        let z = Integer::zero(token);
         unsafe {
             ffi::gcry_mpi_point_get(x.as_raw(), y.as_raw(), z.as_raw(), self.raw);
         }
@@ -92,9 +93,10 @@ impl Point {
     }
 
     pub fn into_coords(self) -> (Integer, Integer, Integer) {
-        let x = Integer::default();
-        let y = Integer::default();
-        let z = Integer::default();
+        let token = ::get_token().unwrap();
+        let x = Integer::zero(token);
+        let y = Integer::zero(token);
+        let z = Integer::zero(token);
         unsafe {
             ffi::gcry_mpi_point_snatch_get(x.as_raw(), y.as_raw(), z.as_raw(), self.into_raw());
         }
@@ -102,8 +104,9 @@ impl Point {
     }
 
     pub fn get_affine(&self, ctx: &Context) -> Option<(Integer, Integer)> {
-        let x = Integer::default();
-        let y = Integer::default();
+        let token = ::get_token().unwrap();
+        let x = Integer::zero(token);
+        let y = Integer::zero(token);
         let result = unsafe {
             ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.raw, ctx.as_raw())
         };
@@ -132,11 +135,5 @@ impl Point {
             ffi::gcry_mpi_ec_mul(self.raw, n.as_raw(), self.raw, ctx.as_raw());
         }
         self
-    }
-}
-
-impl Default for Point {
-    fn default() -> Point {
-        Point::new(0)
     }
 }

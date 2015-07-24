@@ -50,9 +50,9 @@ And this in your crate root:
 extern crate gcrypt;
 ```
 
-The library **must** be initialized using the [result](https://johnschug.github.io/rust-gcrypt/gcrypt/struct.Initializer.html)
-from [```gcrypt::init```](https://johnschug.github.io/rust-gcrypt/gcrypt/fn.init.html) before 
-using any other function in the library or wrapper. An example of initialization can be found in
-the [```setup```](https://github.com/johnschug/rust-gcrypt/blob/master/tests/basic.rs#L17) function in tests/basic.rs
-(NB: the ```enable_quick_random``` option should **not** be used in most cases). More information on initialization
-can be found in the libgcrypt [documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).
+The library **must** be initialized using [```gcrypt::init```](https://johnschug.github.io/rust-gcrypt/gcrypt/fn.init.html) or
+[```gcrypt::init_fips_mode```](https://johnschug.github.io/rust-gcrypt/gcrypt/fn.init_fips_mode.html)
+before using any other function in the library or wrapper. An example of initialization can be found in
+the [```setup```](./tests/basic.rs#L17) function in tests/basic.rs
+(NB: the ```enable_quick_random``` option should **not** be used in most cases). More information on
+initialization can be found in the libgcrypt [documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).

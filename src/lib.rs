@@ -1,6 +1,6 @@
 //! ## Initialization
-//! The library **must** be initialized using the [result](struct.Initializer.html)
-//! from [``gcrypt::init``](fn.init.html) before
+//! The library **must** be initialized using [```gcrypt::init```](fn.init.html) or
+//! [```gcrypt::init_fips_mode```](fn.init_fips_mode.html) before
 //! using any other function in the library or wrapper. More information on initialization
 //! can be found in the libgcrypt
 //! [documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).
@@ -8,11 +8,13 @@
 //! An example:
 //!
 //! ```rust
-//! let token = gcrypt::init().map(|mut x| {
+//! let token = gcrypt::init(|mut x| {
 //!     x.disable_secmem();
-//!     x.finish()
-//! }).unwrap_or_else(|x| x);
+//! });
 //! ```
+//!
+//! The token returned by ```init``` is used as an argument to various functions in the library
+//! to ensure that initialization has been completed.
 
 extern crate libc;
 #[macro_use]
@@ -26,8 +28,7 @@ extern crate libgcrypt_sys as ffi;
 use std::ffi::CString;
 use std::mem;
 use std::ptr;
-use std::result;
-use std::sync::{Mutex, MutexGuard};
+use std::sync::Mutex;
 
 pub use gpg_error as error;
 pub use error::{Error, Result};
@@ -49,9 +50,7 @@ lazy_static! {
     static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
 }
 
-pub struct Initializer {
-    _lock: MutexGuard<'static, ()>,
-}
+pub struct Initializer(isize);
 
 impl Initializer {
     pub fn check_version<S: Into<String>>(&mut self, version: S) -> bool {
@@ -71,6 +70,13 @@ impl Initializer {
         self
     }
 
+    pub fn enable_secure_rndpool(&mut self) -> &mut Self {
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_USE_SECURE_RNDPOOL, 0);
+        }
+        self
+    }
+
     pub fn disable_secmem(&mut self) -> &mut Self {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_DISABLE_SECMEM, 0);
@@ -83,13 +89,6 @@ impl Initializer {
             return_err!(ffi::gcry_control(ffi::GCRYCTL_INIT_SECMEM, amt as libc::c_int));
         }
         Ok(self)
-    }
-
-    pub fn finish(self)  -> Token {
-        unsafe {
-            ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
-        }
-        Token(0)
     }
 }
 
@@ -132,14 +131,27 @@ impl Token {
     }
 }
 
+pub fn enable_memory_guard() -> bool {
+    let _lock = CONTROL_LOCK.lock().unwrap();
+    let initialized = unsafe {
+        ffi::gcry_control(ffi::GCRYCTL_ANY_INITIALIZATION_P, 0) != 0
+    };
+    if !initialized {
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_ENABLE_M_GUARD, 0);
+        }
+    }
+    !initialized
+}
+
 pub fn is_initialized() -> bool {
     unsafe {
         ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED_P, 0) != 0
     }
 }
 
-pub fn init() -> result::Result<Initializer, Token> {
-    let lock = CONTROL_LOCK.lock().unwrap();
+pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
+    let _lock = CONTROL_LOCK.lock().unwrap();
     if !is_initialized() {
         unsafe {
             if cfg!(unix) {
@@ -147,9 +159,38 @@ pub fn init() -> result::Result<Initializer, Token> {
             }
             ffi::gcry_check_version(ptr::null());
         }
-        Ok(Initializer { _lock: lock })
+        f(Initializer(0));
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
+        }
+    }
+    Token(0)
+}
+
+pub fn init_fips_mode<F: FnOnce(Initializer)>(f: F) -> Token {
+    let _lock = CONTROL_LOCK.lock().unwrap();
+    if !is_initialized() {
+        unsafe {
+            if cfg!(unix) {
+                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS, ffi::gcry_threads_pthread_shim());
+            }
+            ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
+            ffi::gcry_check_version(ptr::null());
+        }
+        f(Initializer(0));
+        unsafe {
+            ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
+        }
+    }
+    Token(0)
+}
+
+pub fn get_token() -> Option<Token> {
+    let _lock = CONTROL_LOCK.lock().unwrap();
+    if is_initialized() {
+        Some(Token(0))
     } else {
-        Err(Token(0))
+        None
     }
 }
 

@@ -8,7 +8,7 @@ use std::str;
 use libc;
 use ffi;
 
-use Wrapper;
+use {Wrapper, Token};
 use error::{self, Error, Result};
 use mpi::Integer;
 use mpi::integer::Format as IntegerFormat;
@@ -47,14 +47,18 @@ unsafe impl Wrapper for SExpression {
 }
 
 impl SExpression {
-    pub fn from_bytes<B: ?Sized + AsRef<[u8]>>(bytes: &B) -> Result<SExpression> {
+    pub fn from_bytes<B: ?Sized + AsRef<[u8]>>(_: Token, bytes: &B) -> Result<SExpression> {
         let bytes = bytes.as_ref();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_sexp_new(&mut result, bytes.as_ptr() as *const _,
-                                           bytes.len() as libc::size_t, 1));
+            return_err!(ffi::gcry_sexp_sscan(&mut result, ptr::null_mut(), bytes.as_ptr() as *const _,
+                                             bytes.len() as libc::size_t));
             Ok(SExpression::from_raw(result))
         }
+    }
+
+    pub fn from_str<S: ?Sized + AsRef<str>>(token: Token, s: &S) -> Result<SExpression> {
+        SExpression::from_bytes(token, s.as_ref())
     }
 
     pub fn to_bytes(&self, format: Format) -> Vec<u8> {
@@ -166,19 +170,6 @@ impl SExpression {
             } else {
                 None
             }
-        }
-    }
-}
-
-impl str::FromStr for SExpression {
-    type Err = Error;
-
-    fn from_str(s: &str) -> Result<SExpression> {
-        unsafe {
-            let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_sexp_sscan(&mut result, ptr::null_mut(), s.as_ptr() as *const _,
-                                             s.len() as libc::size_t));
-            Ok(SExpression::from_raw(result))
         }
     }
 }
@@ -326,41 +317,38 @@ impl<'a> Builder<'a> {
         Builder { template: template, params: Vec::new() }
     }
 
-    pub fn add_integer(&mut self, n: isize) -> &mut Self {
-        if self.template.params.get(self.params.len()) != Some(&ParameterKind::Integer) {
-            panic!();
-        }
+    pub fn add_int(&mut self, n: isize) -> &mut Self {
+        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::Integer));
         self.params.push(Parameter::Integer(n as libc::c_int));
         self
     }
 
     pub fn add_bytes<'s, 'b: 's, B: ?Sized>(&'s mut self, bytes: &'b B) -> &mut Self
     where B: AsRef<[u8]> {
-        if self.template.params.get(self.params.len()) != Some(&ParameterKind::Bytes) {
-            panic!();
-        }
+        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::Bytes));
         let bytes = bytes.as_ref();
         self.params.push(Parameter::Bytes(bytes.len() as libc::c_int, bytes.as_ptr() as *const _));
         self
     }
 
+    pub fn add_str<'s, 'b: 's, S: ?Sized>(&'s mut self, string: &'b S) -> &mut Self
+    where S: AsRef<str> {
+        self.add_bytes(string.as_ref())
+    }
+
     pub fn add_mpi<'s, 'b: 's>(&'s mut self, n: &'b Integer) -> &mut Self {
-        if self.template.params.get(self.params.len()) != Some(&ParameterKind::Mpi) {
-            panic!();
-        }
+        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::Mpi));
         self.params.push(Parameter::Mpi(n.as_raw()));
         self
     }
 
     pub fn add_sexp<'s, 'b: 's>(&'s mut self, s: &'b SExpression) -> &mut Self {
-        if self.template.params.get(self.params.len()) != Some(&ParameterKind::SExpression) {
-            panic!();
-        }
+        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::SExpression));
         self.params.push(Parameter::SExpression(s.as_raw()));
         self
     }
 
-    pub fn build(self) -> Result<SExpression> {
+    pub fn build(self, _: Token) -> Result<SExpression> {
         if self.params.len() != self.template.params.len() {
             return Err(Error::from_code(error::GPG_ERR_INV_STATE));
         }
@@ -394,9 +382,13 @@ mod tests {
 
     #[test]
     fn test_build() {
-        let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %b)(d %b)))").unwrap();
+        let token = ::init(|mut x| {
+            x.disable_secmem();
+        });
+
+        let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %d)(d %b)))").unwrap();
         let mut builder = Builder::from(&template);
-        builder.add_bytes("Ed25519").add_bytes("124124").add_bytes("2324");
-        builder.build().unwrap();
+        builder.add_str("Ed25519").add_int(1234).add_bytes("2324");
+        builder.build(token).unwrap();
     }
 }
