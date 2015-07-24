@@ -1,3 +1,19 @@
+//! ## Initialization
+//! The library **must** be initialized using the [result](struct.Initializer.html)
+//! from [``gcrypt::init``](fn.init.html) before
+//! using any other function in the library or wrapper. More information on initialization
+//! can be found in the libgcrypt
+//! [documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).
+//!
+//! An example:
+//!
+//! ```rust
+//! let token = gcrypt::init().map(|mut x| {
+//!     x.disable_secmem();
+//!     x.finish()
+//! }).unwrap_or_else(|x| x);
+//! ```
+
 extern crate libc;
 #[macro_use]
 extern crate bitflags;
