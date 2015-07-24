@@ -1,11 +1,11 @@
 [package]
 name = "gcrypt"
+version = "0.2.0"
+license = "LGPL-2.1"
 description = "Libgcrypt bindings for Rust"
 repository = "https://github.com/johnschug/rust-gcrypt"
 documentation = "https://johnschug.github.io/rust-gcrypt"
-version = "0.1.0"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
-license = "LGPL-2.1"
 keywords = ["crypto", "cryptography"]
 
 [dependencies]

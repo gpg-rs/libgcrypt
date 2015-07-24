@@ -41,7 +41,7 @@ Put this in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-gcrypt = "0.1"
+gcrypt = "0.2"
 ```
 
 And this in your crate root:
