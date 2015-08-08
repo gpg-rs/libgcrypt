@@ -1,3 +1,4 @@
+#[cfg(feature = "shim")]
 extern crate gcc;
 
 use std::env;
@@ -28,12 +29,17 @@ fn parse_config_output(output: &str, include_dirs: &mut Vec<String>) {
     }
 }
 
+#[cfg(feature = "shim")]
 fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
     let mut config = gcc::Config::new();
     for path in include_dirs.iter() {
         config.include(path);
     }
     config.file("shim.c").compile("libgcrypt_shim.a");
+}
+
+#[cfg(not(feature = "shim"))]
+fn build_shim<P: AsRef<Path>>(_include_dirs: &[P]) {
 }
 
 fn fail<S: AsRef<str>>(s: S) -> ! {

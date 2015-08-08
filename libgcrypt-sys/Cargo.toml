@@ -13,8 +13,12 @@ build = "build.rs"
 name = "libgcrypt_sys"
 path = "lib.rs"
 
-[build-dependencies]
-gcc = "0.3"
+[features]
+shim = ["gcc"]
+
+[build-dependencies.gcc]
+version = "0.3"
+optional = true
 
 [dependencies]
 libc = "0.1"

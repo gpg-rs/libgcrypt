@@ -21,6 +21,7 @@ use consts::*;
 use types::*;
 
 extern {
+    #[cfg(feature = "shim")]
     pub fn gcry_threads_pthread_shim() -> *mut gcry_thread_cbs;
 
     pub fn gcry_check_version(req_version: *const c_char) -> *const c_char;
