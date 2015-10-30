@@ -1,7 +1,5 @@
 use std::ffi::CStr;
-use std::str;
-
-use libc;
+use std::os::raw::c_char;
 
 macro_rules! try_opt {
     ($e:expr) => (match $e { Some(v) => v, None => return None });
@@ -39,9 +37,9 @@ macro_rules! enum_wrapper {
     };
 }
 
-pub unsafe fn from_cstr<'a>(s: *const libc::c_char) -> Option<&'a str> {
+pub unsafe fn from_cstr<'a>(s: *const c_char) -> Option<&'a str> {
     if !s.is_null() {
-        str::from_utf8(CStr::from_ptr(s).to_bytes()).ok()
+        CStr::from_ptr(s).to_str().ok()
     } else {
         None
     }

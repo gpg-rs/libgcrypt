@@ -2,10 +2,10 @@ use std::cmp::Ordering;
 use std::ffi::CString;
 use std::fmt;
 use std::ops;
+use std::os::raw::{c_uint, c_ulong};
 use std::ptr;
 use std::str;
 
-use libc;
 use ffi;
 
 use {Wrapper, Token};
@@ -13,13 +13,14 @@ use error::{self, Error, Result};
 use buffer::Buffer;
 use rand::Level;
 
+#[repr(usize)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Format {
-    Standard = ffi::GCRYMPI_FMT_STD as isize,
-    Unsigned = ffi::GCRYMPI_FMT_USG as isize,
-    Pgp = ffi::GCRYMPI_FMT_PGP as isize,
-    Ssh = ffi::GCRYMPI_FMT_SSH as isize,
-    Hex = ffi::GCRYMPI_FMT_HEX as isize,
+    Standard = ffi::GCRYMPI_FMT_STD as usize,
+    Unsigned = ffi::GCRYMPI_FMT_USG as usize,
+    Pgp = ffi::GCRYMPI_FMT_PGP as usize,
+    Ssh = ffi::GCRYMPI_FMT_SSH as usize,
+    Hex = ffi::GCRYMPI_FMT_HEX as usize,
 }
 
 #[derive(Debug)]
@@ -74,7 +75,7 @@ impl Integer {
     pub fn new(_: Token, nbits: usize) -> Integer {
         unsafe {
             Integer {
-                raw: ffi::gcry_mpi_new(nbits as libc::c_uint)
+                raw: ffi::gcry_mpi_new(nbits as c_uint)
             }
         }
     }
@@ -82,14 +83,14 @@ impl Integer {
     pub fn new_secure(_: Token, nbits: usize) -> Integer {
         unsafe {
             Integer {
-                raw: ffi::gcry_mpi_snew(nbits as libc::c_uint)
+                raw: ffi::gcry_mpi_snew(nbits as c_uint)
             }
         }
     }
 
     pub fn from_uint(_: Token, n: usize) -> Integer {
         unsafe {
-            Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n as libc::c_ulong))
+            Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n as c_ulong))
         }
     }
 
@@ -99,7 +100,7 @@ impl Integer {
         let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
         unsafe {
             let len = if format != Format::Hex {
-                bytes.len() as libc::size_t
+                bytes.len()
             } else if bytes.contains(&0) {
                 0
             } else {
@@ -120,41 +121,41 @@ impl Integer {
     pub fn to_bytes(&self, format: Format) -> Result<Buffer> {
         unsafe {
             let mut buffer = ptr::null_mut();
-            let mut len = 0 as libc::size_t;
+            let mut len = 0;
             return_err!(ffi::gcry_mpi_aprint(format as ffi::gcry_mpi_format, &mut buffer,
                                              &mut len, self.raw));
-            Ok(Buffer::from_raw(buffer as *mut u8, len as usize))
+            Ok(Buffer::from_raw(buffer as *mut u8, len))
         }
     }
 
     pub fn len_encoded(&self, format: Format) -> Result<usize> {
         unsafe {
-            let mut len = 0 as libc::size_t;
+            let mut len = 0;
             return_err!(ffi::gcry_mpi_print(format as ffi::gcry_mpi_format, ptr::null_mut(), 0,
                                             &mut len, self.raw));
-            Ok(len as usize)
+            Ok(len)
         }
     }
 
     pub fn encode(&self, format: Format, buf: &mut [u8]) -> Result<usize> {
         unsafe {
-            let mut written = 0 as libc::size_t;
+            let mut written = 0;
             return_err!(ffi::gcry_mpi_print(format as ffi::gcry_mpi_format,
-                                            buf.as_mut_ptr() as *mut _, buf.len() as libc::size_t,
+                                            buf.as_mut_ptr() as *mut _, buf.len(),
                                             &mut written, self.raw));
-            Ok(written as usize)
+            Ok(written)
         }
     }
 
     pub fn set(&mut self, n: usize) {
         unsafe {
-            ffi::gcry_mpi_set_ui(self.raw, n as libc::c_ulong);
+            ffi::gcry_mpi_set_ui(self.raw, n as c_ulong);
         }
     }
 
     pub fn randomize(&mut self, nbits: usize, level: Level) {
         unsafe {
-            ffi::gcry_mpi_randomize(self.raw, nbits as libc::c_uint, level.raw());
+            ffi::gcry_mpi_randomize(self.raw, nbits as c_uint, level.raw());
         }
     }
 
@@ -253,7 +254,7 @@ impl Integer {
 
     pub fn ldexp(self, e: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_mul_2exp(self.raw, self.raw, e as libc::c_ulong);
+            ffi::gcry_mpi_mul_2exp(self.raw, self.raw, e as c_ulong);
         }
         self
     }
@@ -281,6 +282,41 @@ impl fmt::Display for Integer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         let buffer = try!(self.to_bytes(Format::Hex).or(Err(fmt::Error)));
         f.write_str(str::from_utf8(&buffer[..(buffer.len() - 1)]).unwrap())
+    }
+}
+
+impl PartialEq<usize> for Integer {
+    fn eq(&self, other: &usize) -> bool {
+        self.partial_cmp(other).unwrap() == Ordering::Equal
+    }
+}
+
+impl PartialEq<Integer> for usize {
+    fn eq(&self, other: &Integer) -> bool {
+        self.partial_cmp(other).unwrap() == Ordering::Equal
+    }
+}
+
+impl PartialOrd<usize> for Integer {
+    fn partial_cmp(&self, other: &usize) -> Option<Ordering> {
+        let result = unsafe {
+            ffi::gcry_mpi_cmp_ui(self.raw, *other as c_ulong)
+        };
+        match result {
+            x if x < 0 => Some(Ordering::Less),
+            x if x > 0 => Some(Ordering::Greater),
+            _ => Some(Ordering::Equal),
+        }
+    }
+}
+
+impl PartialOrd<Integer> for usize {
+    fn partial_cmp(&self, other: &Integer) -> Option<Ordering> {
+        match other.partial_cmp(self) {
+            Some(Ordering::Less) => Some(Ordering::Greater),
+            Some(Ordering::Greater) => Some(Ordering::Less),
+            _ => Some(Ordering::Equal),
+        }
     }
 }
 
@@ -368,7 +404,7 @@ impl ops::Shl<usize> for Integer {
 
     fn shl(self, other: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_lshift(self.raw, self.raw, other as libc::c_uint);
+            ffi::gcry_mpi_lshift(self.raw, self.raw, other as c_uint);
         }
         self
     }
@@ -379,7 +415,7 @@ impl ops::Shr<usize> for Integer {
 
     fn shr(self, other: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_rshift(self.raw, self.raw, other as libc::c_uint);
+            ffi::gcry_mpi_rshift(self.raw, self.raw, other as c_uint);
         }
         self
     }

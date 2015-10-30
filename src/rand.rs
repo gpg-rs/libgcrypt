@@ -1,4 +1,3 @@
-use libc;
 use ffi;
 
 use Token;
@@ -19,15 +18,13 @@ pub trait Random {
 impl Random for [u8] {
     fn make_nonce(&mut self, _: Token) {
         unsafe {
-            let buffer = (self.as_mut_ptr() as *mut _, self.len());
-            ffi::gcry_create_nonce(buffer.0, buffer.1 as libc::size_t);
+            ffi::gcry_create_nonce(self.as_mut_ptr() as *mut _, self.len());
         }
     }
 
     fn randomize(&mut self, _: Token, level: Level) {
         unsafe {
-            let buffer = (self.as_mut_ptr() as *mut _, self.len());
-            ffi::gcry_randomize(buffer.0, buffer.1 as libc::size_t, level.0);
+            ffi::gcry_randomize(self.as_mut_ptr() as *mut _, self.len(), level.raw());
         }
     }
 }
@@ -35,15 +32,13 @@ impl Random for [u8] {
 impl<'a> Random for &'a mut [u8] {
     fn make_nonce(&mut self, _: Token) {
         unsafe {
-            let buffer = (self.as_mut_ptr() as *mut _, self.len());
-            ffi::gcry_create_nonce(buffer.0, buffer.1 as libc::size_t);
+            ffi::gcry_create_nonce(self.as_mut_ptr() as *mut _, self.len());
         }
     }
 
     fn randomize(&mut self, _: Token, level: Level) {
         unsafe {
-            let buffer = (self.as_mut_ptr() as *mut _, self.len());
-            ffi::gcry_randomize(buffer.0, buffer.1 as libc::size_t, level.0);
+            ffi::gcry_randomize(self.as_mut_ptr() as *mut _, self.len(), level.raw());
         }
     }
 }

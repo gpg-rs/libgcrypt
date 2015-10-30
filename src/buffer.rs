@@ -4,7 +4,6 @@ use std::slice;
 use std::result;
 use std::str;
 
-use libc;
 use ffi;
 
 use Token;
@@ -35,7 +34,7 @@ impl Buffer {
 
     pub fn new(_: Token, len: usize) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_malloc(len as libc::size_t) as *mut u8;
+            let buf = ffi::gcry_malloc(len) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -46,7 +45,7 @@ impl Buffer {
 
     pub fn new_secure(_: Token, len: usize) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_malloc_secure(len as libc::size_t) as *mut u8;
+            let buf = ffi::gcry_malloc_secure(len) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -56,7 +55,7 @@ impl Buffer {
     }
 
     pub fn try_clone(&self) -> Result<Buffer> {
-        let token = ::get_token().unwrap();
+        let token = ::Token(());
         let result = if self.is_secure() {
             try!(Buffer::new_secure(token, self.len))
         } else {
@@ -70,7 +69,7 @@ impl Buffer {
 
     pub fn random(_: Token, len: usize, level: Level) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_random_bytes(len as libc::size_t, level.raw()) as *mut u8;
+            let buf = ffi::gcry_random_bytes(len, level.raw()) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {
@@ -81,7 +80,7 @@ impl Buffer {
 
     pub fn random_secure(_: Token, len: usize, level: Level) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_random_bytes_secure(len as libc::size_t, level.raw()) as *mut u8;
+            let buf = ffi::gcry_random_bytes_secure(len, level.raw()) as *mut u8;
             if !buf.is_null() {
                 Ok(Buffer::from_raw(buf, len))
             } else {

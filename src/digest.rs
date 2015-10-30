@@ -1,8 +1,8 @@
 use std::ffi::CString;
+use std::os::raw::c_int;
 use std::ptr;
 use std::slice;
 
-use libc;
 use ffi;
 
 use {Wrapper, Token};
@@ -10,7 +10,7 @@ use utils;
 use error::Result;
 
 enum_wrapper! {
-    pub enum Algorithm: libc::c_int {
+    pub enum Algorithm: c_int {
         MD_MD5 = ffi::GCRY_MD_MD5,
         MD_SHA1 = ffi::GCRY_MD_SHA1,
         MD_RMD160 = ffi::GCRY_MD_RMD160,
@@ -49,14 +49,14 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_md_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
+            ffi::gcry_md_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as c_int,
                                    ptr::null_mut(), ptr::null_mut()) == 0
         }
     }
 
-    pub fn name(&self) -> &'static str {
+    pub fn name(&self) -> Option<&'static str> {
         unsafe {
-            utils::from_cstr(ffi::gcry_md_algo_name(self.0)).unwrap()
+            utils::from_cstr(ffi::gcry_md_algo_name(self.0))
         }
     }
 
@@ -139,8 +139,7 @@ impl MessageDigest {
 
     pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_md_setkey(self.raw, key.as_ptr() as *const _,
-                                            key.len() as libc::size_t));
+            return_err!(ffi::gcry_md_setkey(self.raw, key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
@@ -153,14 +152,13 @@ impl MessageDigest {
 
     pub fn write(&mut self, bytes: &[u8]) {
         unsafe {
-            ffi::gcry_md_write(self.raw, bytes.as_ptr() as *const _,
-                               bytes.len() as libc::size_t);
+            ffi::gcry_md_write(self.raw, bytes.as_ptr() as *const _, bytes.len());
         }
     }
 
     pub fn finish(&mut self) {
         unsafe {
-            ffi::gcry_md_ctl(self.raw, ffi::GCRYCTL_FINALIZE as libc::c_int, ptr::null_mut(), 0);
+            ffi::gcry_md_ctl(self.raw, ffi::GCRYCTL_FINALIZE as c_int, ptr::null_mut(), 0);
         }
     }
 

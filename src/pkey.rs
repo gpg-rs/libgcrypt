@@ -1,7 +1,7 @@
 use std::ffi::CString;
+use std::os::raw::c_int;
 use std::ptr;
 
-use libc;
 use ffi;
 
 use {Wrapper, Token};
@@ -11,7 +11,7 @@ use sexp::SExpression;
 use mpi::ec::{Curve, Curves};
 
 enum_wrapper! {
-    pub enum Algorithm: libc::c_int {
+    pub enum Algorithm: c_int {
         PK_RSA = ffi::GCRY_PK_RSA,
         PK_RSA_E = ffi::GCRY_PK_RSA_E,
         PK_RSA_S = ffi::GCRY_PK_RSA_S,
@@ -39,14 +39,14 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_pk_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
+            ffi::gcry_pk_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as c_int,
                                    ptr::null_mut(), ptr::null_mut()) == 0
         }
     }
 
-    pub fn name(&self) -> &'static str {
+    pub fn name(&self) -> Option<&'static str> {
         unsafe {
-            utils::from_cstr(ffi::gcry_pk_algo_name(self.0)).unwrap()
+            utils::from_cstr(ffi::gcry_pk_algo_name(self.0))
         }
     }
 }

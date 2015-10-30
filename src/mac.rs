@@ -1,7 +1,7 @@
 use std::ffi::CString;
+use std::os::raw::c_int;
 use std::ptr;
 
-use libc;
 use ffi;
 
 use {Wrapper, Token};
@@ -9,7 +9,7 @@ use utils;
 use error::Result;
 
 enum_wrapper! {
-    pub enum Algorithm: libc::c_int {
+    pub enum Algorithm: c_int {
         HMAC_SHA256 = ffi::GCRY_MAC_HMAC_SHA256,
         HMAC_SHA224 = ffi::GCRY_MAC_HMAC_SHA224,
         HMAC_SHA512 = ffi::GCRY_MAC_HMAC_SHA512,
@@ -57,14 +57,14 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_mac_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as libc::c_int,
+            ffi::gcry_mac_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as c_int,
                                    ptr::null_mut(), ptr::null_mut()) == 0
         }
     }
 
-    pub fn name(&self) -> &'static str {
+    pub fn name(&self) -> Option<&'static str> {
         unsafe {
-            utils::from_cstr(ffi::gcry_mac_algo_name(self.0)).unwrap()
+            utils::from_cstr(ffi::gcry_mac_algo_name(self.0))
         }
     }
 
@@ -124,23 +124,21 @@ impl Mac {
 
     pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_setkey(self.raw, key.as_ptr() as *const _,
-                                            key.len() as libc::size_t));
+            return_err!(ffi::gcry_mac_setkey(self.raw, key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
 
     pub fn set_iv(&mut self, iv: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_setiv(self.raw, iv.as_ptr() as *const _,
-                                            iv.len() as libc::size_t));
+            return_err!(ffi::gcry_mac_setiv(self.raw, iv.as_ptr() as *const _, iv.len()));
         }
         Ok(())
     }
 
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_ctl(self.raw, ffi::GCRYCTL_RESET as libc::c_int,
+            return_err!(ffi::gcry_mac_ctl(self.raw, ffi::GCRYCTL_RESET as c_int,
                                           ptr::null_mut(), 0));
         }
         Ok(())
@@ -148,25 +146,22 @@ impl Mac {
 
     pub fn write(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_write(self.raw, bytes.as_ptr() as *const _,
-                               bytes.len() as libc::size_t));
+            return_err!(ffi::gcry_mac_write(self.raw, bytes.as_ptr() as *const _, bytes.len()));
         }
         Ok(())
     }
 
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
-        let mut len = buf.len() as libc::size_t;
+        let mut len = buf.len();
         unsafe {
-            return_err!(ffi::gcry_mac_read(self.raw, buf.as_mut_ptr() as *mut _,
-                                           &mut len));
+            return_err!(ffi::gcry_mac_read(self.raw, buf.as_mut_ptr() as *mut _, &mut len));
         }
-        Ok(len as usize)
+        Ok(len)
     }
 
     pub fn verify(&mut self, buf: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_verify(self.raw, buf.as_ptr() as *mut _,
-                                             buf.len() as libc::size_t));
+            return_err!(ffi::gcry_mac_verify(self.raw, buf.as_ptr() as *mut _, buf.len()));
         }
         Ok(())
     }

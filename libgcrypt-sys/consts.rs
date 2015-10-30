@@ -1,6 +1,7 @@
 #![allow(non_upper_case_globals)]
-extern crate libc;
 extern crate libgpg_error_sys;
+
+use std::os::raw::c_uint;
 
 pub use libgpg_error_sys::gpg_err_source_t as gcry_err_source_t;
 pub use libgpg_error_sys::gpg_err_code_t as gcry_err_code_t;
@@ -11,13 +12,13 @@ pub mod errors {
 
 pub use self::errors::*;
 
-pub const GCRY_THREAD_OPTION_DEFAULT: libc::c_uint = 0;
-pub const GCRY_THREAD_OPTION_USER: libc::c_uint = 1;
-pub const GCRY_THREAD_OPTION_PTH: libc::c_uint = 2;
-pub const GCRY_THREAD_OPTION_PTHREAD: libc::c_uint = 3;
-pub const GCRY_THREAD_OPTION_VERSION: libc::c_uint = 1;
+pub const GCRY_THREAD_OPTION_DEFAULT: c_uint = 0;
+pub const GCRY_THREAD_OPTION_USER: c_uint = 1;
+pub const GCRY_THREAD_OPTION_PTH: c_uint = 2;
+pub const GCRY_THREAD_OPTION_PTHREAD: c_uint = 3;
+pub const GCRY_THREAD_OPTION_VERSION: c_uint = 1;
 
-pub type gcry_ctl_cmds = libc::c_uint;
+pub type gcry_ctl_cmds = c_uint;
 pub const GCRYCTL_CFB_SYNC: gcry_ctl_cmds = 3;
 pub const GCRYCTL_RESET: gcry_ctl_cmds = 4;
 pub const GCRYCTL_FINALIZE: gcry_ctl_cmds = 5;
@@ -82,13 +83,13 @@ pub const GCRYCTL_CLOSE_RANDOM_DEVICE: gcry_ctl_cmds = 70;
 pub const GCRYCTL_INACTIVATE_FIPS_FLAG: gcry_ctl_cmds = 71;
 pub const GCRYCTL_REACTIVATE_FIPS_FLAG: gcry_ctl_cmds = 72;
 
-pub type gcry_sexp_format = libc::c_uint;
+pub type gcry_sexp_format = c_uint;
 pub const GCRYSEXP_FMT_DEFAULT: gcry_sexp_format = 0;
 pub const GCRYSEXP_FMT_CANON: gcry_sexp_format = 1;
 pub const GCRYSEXP_FMT_BASE64: gcry_sexp_format = 2;
 pub const GCRYSEXP_FMT_ADVANCED: gcry_sexp_format = 3;
 
-pub type gcry_mpi_format = libc::c_uint;
+pub type gcry_mpi_format = c_uint;
 pub const GCRYMPI_FMT_NONE: gcry_mpi_format = 0;
 pub const GCRYMPI_FMT_STD: gcry_mpi_format = 1;
 pub const GCRYMPI_FMT_PGP: gcry_mpi_format = 2;
@@ -98,7 +99,7 @@ pub const GCRYMPI_FMT_USG: gcry_mpi_format = 5;
 pub const GCRYMPI_FMT_OPAQUE: gcry_mpi_format = 8;
 
 
-pub type gcry_mpi_flag = libc::c_uint;
+pub type gcry_mpi_flag = c_uint;
 pub const GCRYMPI_FLAG_SECURE: gcry_mpi_flag = 1;
 pub const GCRYMPI_FLAG_OPAQUE: gcry_mpi_flag = 2;
 pub const GCRYMPI_FLAG_IMMUTABLE: gcry_mpi_flag = 4;
@@ -108,7 +109,7 @@ pub const GCRYMPI_FLAG_USER2: gcry_mpi_flag = 0x0200;
 pub const GCRYMPI_FLAG_USER3: gcry_mpi_flag = 0x0400;
 pub const GCRYMPI_FLAG_USER4: gcry_mpi_flag = 0x0800;
 
-pub type gcry_cipher_algos = libc::c_uint;
+pub type gcry_cipher_algos = c_uint;
 pub const GCRY_CIPHER_NONE: gcry_cipher_algos = 0;
 pub const GCRY_CIPHER_IDEA: gcry_cipher_algos = 1;
 pub const GCRY_CIPHER_3DES: gcry_cipher_algos = 2;
@@ -141,7 +142,7 @@ pub const GCRY_CIPHER_RIJNDAEL128: gcry_cipher_algos = GCRY_CIPHER_AES128;
 pub const GCRY_CIPHER_RIJNDAEL192: gcry_cipher_algos = GCRY_CIPHER_AES192;
 pub const GCRY_CIPHER_RIJNDAEL256: gcry_cipher_algos = GCRY_CIPHER_AES256;
 
-pub type gcry_cipher_modes = libc::c_uint;
+pub type gcry_cipher_modes = c_uint;
 pub const GCRY_CIPHER_MODE_NONE: gcry_cipher_modes = 0;
 pub const GCRY_CIPHER_MODE_ECB: gcry_cipher_modes = 1;
 pub const GCRY_CIPHER_MODE_CFB: gcry_cipher_modes = 2;
@@ -153,16 +154,16 @@ pub const GCRY_CIPHER_MODE_AESWRAP: gcry_cipher_modes = 7;
 pub const GCRY_CIPHER_MODE_CCM: gcry_cipher_modes = 8;
 pub const GCRY_CIPHER_MODE_GCM: gcry_cipher_modes = 9;
 
-pub type gcry_cipher_flags = libc::c_uint;
+pub type gcry_cipher_flags = c_uint;
 pub const GCRY_CIPHER_SECURE: gcry_cipher_flags = 1;
 pub const GCRY_CIPHER_ENABLE_SYNC: gcry_cipher_flags = 2;
 pub const GCRY_CIPHER_CBC_CTS: gcry_cipher_flags = 4;
 pub const GCRY_CIPHER_CBC_MAC: gcry_cipher_flags = 8;
 
-pub const GCRY_GCM_BLOCK_LEN: libc::c_uint = (128 / 8);
-pub const GCRY_CCM_BLOCK_LEN: libc::c_uint = (128 / 8);
+pub const GCRY_GCM_BLOCK_LEN: c_uint = (128 / 8);
+pub const GCRY_CCM_BLOCK_LEN: c_uint = (128 / 8);
 
-pub type gcry_pk_algos = libc::c_uint;
+pub type gcry_pk_algos = c_uint;
 pub const GCRY_PK_RSA: gcry_pk_algos = 1;
 pub const GCRY_PK_RSA_E: gcry_pk_algos = 2;
 pub const GCRY_PK_RSA_S: gcry_pk_algos = 3;
@@ -173,16 +174,16 @@ pub const GCRY_PK_ELG: gcry_pk_algos = 20;
 pub const GCRY_PK_ECDSA: gcry_pk_algos = 301;
 pub const GCRY_PK_ECDH: gcry_pk_algos = 302;
 
-pub const GCRY_PK_USAGE_SIGN: libc::c_uint = 1;
-pub const GCRY_PK_USAGE_ENCR: libc::c_uint = 2;
-pub const GCRY_PK_USAGE_CERT: libc::c_uint = 4;
-pub const GCRY_PK_USAGE_AUTH: libc::c_uint = 8;
-pub const GCRY_PK_USAGE_UNKN: libc::c_uint = 128;
+pub const GCRY_PK_USAGE_SIGN: c_uint = 1;
+pub const GCRY_PK_USAGE_ENCR: c_uint = 2;
+pub const GCRY_PK_USAGE_CERT: c_uint = 4;
+pub const GCRY_PK_USAGE_AUTH: c_uint = 8;
+pub const GCRY_PK_USAGE_UNKN: c_uint = 128;
 
-pub const GCRY_PK_GET_PUBKEY: libc::c_uint = 1;
-pub const GCRY_PK_GET_SECKEY: libc::c_uint = 2;
+pub const GCRY_PK_GET_PUBKEY: c_uint = 1;
+pub const GCRY_PK_GET_SECKEY: c_uint = 2;
 
-pub type gcry_md_algos = libc::c_uint;
+pub type gcry_md_algos = c_uint;
 pub const GCRY_MD_NONE: gcry_md_algos = 0;
 pub const GCRY_MD_MD5: gcry_md_algos = 1;
 pub const GCRY_MD_SHA1: gcry_md_algos = 2;
@@ -205,12 +206,12 @@ pub const GCRY_MD_GOSTR3411_94: gcry_md_algos = 308;
 pub const GCRY_MD_STRIBOG256: gcry_md_algos = 309;
 pub const GCRY_MD_STRIBOG512: gcry_md_algos = 310;
 
-pub type gcry_md_flags = libc::c_uint;
+pub type gcry_md_flags = c_uint;
 pub const GCRY_MD_FLAG_SECURE: gcry_md_flags = 1;
 pub const GCRY_MD_FLAG_HMAC: gcry_md_flags = 2;
 pub const GCRY_MD_FLAG_BUGEMU1: gcry_md_flags = 0x0100;
 
-pub type gcry_mac_algos = libc::c_uint;
+pub type gcry_mac_algos = c_uint;
 pub const GCRY_MAC_NONE: gcry_mac_algos = 0;
 pub const GCRY_MAC_HMAC_SHA256: gcry_mac_algos = 101;
 pub const GCRY_MAC_HMAC_SHA224: gcry_mac_algos = 102;
@@ -242,10 +243,10 @@ pub const GCRY_MAC_GMAC_TWOFISH: gcry_mac_algos = 403;
 pub const GCRY_MAC_GMAC_SERPENT: gcry_mac_algos = 404;
 pub const GCRY_MAC_GMAC_SEED: gcry_mac_algos = 405;
 
-pub type gcry_mac_flags = libc::c_uint;
+pub type gcry_mac_flags = c_uint;
 pub const GCRY_MAC_FLAG_SECURE: gcry_mac_flags = 1;
 
-pub type gcry_kdf_algos = libc::c_uint;
+pub type gcry_kdf_algos = c_uint;
 pub const GCRY_KDF_NONE: gcry_kdf_algos = 0;
 pub const GCRY_KDF_SIMPLE_S2K: gcry_kdf_algos = 16;
 pub const GCRY_KDF_SALTED_S2K: gcry_kdf_algos = 17;
@@ -254,19 +255,19 @@ pub const GCRY_KDF_PBKDF1: gcry_kdf_algos = 33;
 pub const GCRY_KDF_PBKDF2: gcry_kdf_algos = 34;
 pub const GCRY_KDF_SCRYPT: gcry_kdf_algos = 48;
 
-pub type gcry_random_level_t = libc::c_uint;
+pub type gcry_random_level_t = c_uint;
 pub const GCRY_WEAK_RANDOM: gcry_random_level_t = 0;
 pub const GCRY_STRONG_RANDOM: gcry_random_level_t = 1;
 pub const GCRY_VERY_STRONG_RANDOM: gcry_random_level_t = 2;
 
-pub const GCRY_PRIME_CHECK_AT_FINISH: libc::c_uint = 0;
-pub const GCRY_PRIME_CHECK_AT_GOT_PRIME: libc::c_uint = 1;
-pub const GCRY_PRIME_CHECK_AT_MAYBE_PRIME: libc::c_uint = 2;
+pub const GCRY_PRIME_CHECK_AT_FINISH: c_uint = 0;
+pub const GCRY_PRIME_CHECK_AT_GOT_PRIME: c_uint = 1;
+pub const GCRY_PRIME_CHECK_AT_MAYBE_PRIME: c_uint = 2;
 
-pub const GCRY_PRIME_FLAG_SECRET: libc::c_uint = (1 << 0);
-pub const GCRY_PRIME_FLAG_SPECIAL_FACTOR: libc::c_uint = (1 << 1);
+pub const GCRY_PRIME_FLAG_SECRET: c_uint = (1 << 0);
+pub const GCRY_PRIME_FLAG_SPECIAL_FACTOR: c_uint = (1 << 1);
 
-pub type gcry_log_levels = libc::c_uint;
+pub type gcry_log_levels = c_uint;
 pub const GCRY_LOG_CONT: gcry_log_levels = 0;
 pub const GCRY_LOG_INFO: gcry_log_levels = 10;
 pub const GCRY_LOG_WARN: gcry_log_levels = 20;

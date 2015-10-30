@@ -1,6 +1,6 @@
+use std::os::raw::c_uint;
 use std::ptr;
 
-use libc;
 use ffi;
 
 use {Wrapper, Token};
@@ -22,11 +22,10 @@ impl Drop for Point {
 impl Clone for Point {
     fn clone(&self) -> Point {
         let (x, y, z) = self.to_coords();
-        let point = unsafe {
+        unsafe {
             Point::from_raw(ffi::gcry_mpi_point_snatch_set(ptr::null_mut(), x.into_raw(),
                                                            y.into_raw(), z.into_raw()))
-        };
-        point
+        }
     }
 
     fn clone_from(&mut self, source: &Point) {
@@ -57,9 +56,7 @@ impl Point {
 
     pub fn new(_: Token, nbits: usize) -> Point {
         unsafe {
-            Point {
-                raw: ffi::gcry_mpi_point_new(nbits as libc::c_uint)
-            }
+            Point::from_raw(ffi::gcry_mpi_point_new(nbits as c_uint))
         }
     }
 

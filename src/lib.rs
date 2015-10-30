@@ -15,8 +15,9 @@
 //!
 //! The token returned by ```init``` is used as an argument to various functions in the library
 //! to ensure that initialization has been completed.
+#![cfg_attr(feature = "dev", feature(plugin))]
+#![cfg_attr(feature = "dev", plugin(clippy))]
 
-extern crate libc;
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
@@ -25,8 +26,9 @@ extern crate lazy_static;
 extern crate gpg_error;
 extern crate libgcrypt_sys as ffi;
 
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::mem;
+use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Mutex;
 
@@ -50,7 +52,7 @@ lazy_static! {
     static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
 }
 
-pub struct Initializer(isize);
+pub struct Initializer(());
 
 impl Initializer {
     pub fn check_version<S: Into<String>>(&mut self, version: S) -> bool {
@@ -86,14 +88,14 @@ impl Initializer {
 
     pub fn enable_secmem(&mut self, amt: usize) -> Result<&mut Self> {
         unsafe {
-            return_err!(ffi::gcry_control(ffi::GCRYCTL_INIT_SECMEM, amt as libc::c_int));
+            return_err!(ffi::gcry_control(ffi::GCRYCTL_INIT_SECMEM, amt as c_int));
         }
         Ok(self)
     }
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct Token(isize);
+pub struct Token(());
 
 impl Token {
     pub fn is_fips_mode_active(&self) -> bool {
@@ -114,7 +116,8 @@ impl Token {
 
     pub fn version(&self) -> &'static str {
         unsafe {
-            utils::from_cstr(ffi::gcry_check_version(ptr::null())).unwrap()
+            CStr::from_ptr(ffi::gcry_check_version(ptr::null())).to_str()
+                    .expect("Version is invalid")
         }
     }
 
@@ -159,12 +162,12 @@ pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
             }
             ffi::gcry_check_version(ptr::null());
         }
-        f(Initializer(0));
+        f(Initializer(()));
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
         }
     }
-    Token(0)
+    Token(())
 }
 
 pub fn init_fips_mode<F: FnOnce(Initializer)>(f: F) -> Token {
@@ -177,18 +180,18 @@ pub fn init_fips_mode<F: FnOnce(Initializer)>(f: F) -> Token {
             ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
             ffi::gcry_check_version(ptr::null());
         }
-        f(Initializer(0));
+        f(Initializer(()));
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
         }
     }
-    Token(0)
+    Token(())
 }
 
 pub fn get_token() -> Option<Token> {
     let _lock = CONTROL_LOCK.lock().unwrap();
     if is_initialized() {
-        Some(Token(0))
+        Some(Token(()))
     } else {
         None
     }

@@ -1,6 +1,6 @@
+use std::os::raw::{c_int, c_ulong};
 use std::ptr;
 
-use libc;
 use ffi;
 
 use Token;
@@ -8,7 +8,7 @@ use error::Result;
 use digest::Algorithm as DigestAlgorithm;
 
 enum_wrapper! {
-    pub enum Algorithm: libc::c_int {
+    pub enum Algorithm: c_int {
         KDF_SIMPLE_S2K = ffi::GCRY_KDF_SIMPLE_S2K,
         KDF_SALTED_S2K = ffi::GCRY_KDF_SALTED_S2K,
         KDF_ITERSALTED_S2K = ffi::GCRY_KDF_ITERSALTED_S2K,
@@ -22,14 +22,9 @@ pub fn derive(_: Token, algo: Algorithm, subalgo: isize, iter: u32,
               pass: &[u8], salt: Option<&[u8]>, key: &mut [u8]) -> Result<()> {
     unsafe {
         let salt = salt.map_or((ptr::null(), 0), |s| (s.as_ptr(), s.len()));
-        return_err!(ffi::gcry_kdf_derive(pass.as_ptr() as *const _,
-                                         pass.len() as libc::size_t,
-                                         algo.raw(), subalgo as libc::c_int,
-                                         salt.0 as *const _,
-                                         salt.1 as libc::size_t,
-                                         iter as libc::c_ulong,
-                                         key.len() as libc::size_t,
-                                         key.as_mut_ptr() as *mut _));
+        return_err!(ffi::gcry_kdf_derive(pass.as_ptr() as *const _, pass.len(), algo.raw(),
+                subalgo as c_int, salt.0 as *const _, salt.1, iter as c_ulong, key.len(),
+                key.as_mut_ptr() as *mut _));
     }
     Ok(())
 }

@@ -1,8 +1,8 @@
 use std::ffi::{CStr, CString};
+use std::os::raw::c_int;
 use std::ptr;
 use std::str;
 
-use libc;
 use ffi;
 
 use {Token, Wrapper};
@@ -65,7 +65,7 @@ impl<'a> Iterator for Curves<'a> {
         unsafe {
             let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
             let mut nbits = 0;
-            let result = ffi::gcry_pk_get_curve(key, self.idx as libc::c_int, &mut nbits);
+            let result = ffi::gcry_pk_get_curve(key, self.idx as c_int, &mut nbits);
             if !result.is_null() {
                 self.idx += 1;
                 Some(Curve { name: CStr::from_ptr(result), nbits: nbits as usize })

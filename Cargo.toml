@@ -9,12 +9,11 @@ authors = ["John Schug <john.ips.schug@gmail.com>"]
 keywords = ["crypto", "cryptography"]
 
 [dependencies]
-libc = "0.1"
+clippy = {git = "https://github.com/Manishearth/rust-clippy", optional = true}
 bitflags = "0.3"
 lazy_static = "0.1"
 gpg-error = "0.1"
+libgcrypt-sys = {path = "libgcrypt-sys", features = ["shim"]}
 
-[dependencies.libgcrypt-sys]
-path = "libgcrypt-sys"
-version = "0.2.0"
-features = ["shim"]
+[features]
+dev = ["clippy"]
