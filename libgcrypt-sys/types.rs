@@ -1,5 +1,4 @@
 #![allow(non_upper_case_globals)]
-#![allow(raw_pointer_derive)]
 extern crate libgpg_error_sys;
 
 use std::os::raw::{c_void, c_char, c_int, c_uint};
