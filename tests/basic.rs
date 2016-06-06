@@ -8,12 +8,6 @@ use gcrypt::kdf;
 use gcrypt::sexp::{self, SExpression};
 use gcrypt::pkey;
 
-fn copy_slice<T: Copy>(src: &[T], dst: &mut [T]) {
-    for (d, s) in dst.iter_mut().zip(src.iter()) {
-        *d = *s;
-    }
-}
-
 fn setup() -> Token {
     gcrypt::init(|mut x| {
         x.disable_secmem().enable_quick_random();
@@ -28,7 +22,7 @@ fn test_self_tests() {
 fn check_cipher(token: Token, algo: cipher::Algorithm, mode: cipher::Mode, flags: cipher::Flags) {
     let key = b"0123456789abcdef.,;/[]{}-=ABCDEF";
     let mut plain = [0u8; 1040];
-    copy_slice(b"foobar42FOOBAR17", &mut plain);
+    (&mut plain[..16]).copy_from_slice(b"foobar42FOOBAR17");
     for i in 1..(plain.len() / 16) {
         let i = i * 16;
         for j in i..(i + 16) {
@@ -55,10 +49,10 @@ fn check_cipher(token: Token, algo: cipher::Algorithm, mode: cipher::Mode, flags
     assert_eq!(&plain[..], &input[..]);
 
     cipher.reset().unwrap();
-    copy_slice(&plain, &mut output);
-    cipher.encrypt_inplace(&mut output).unwrap();
+    output.copy_from_slice(&plain);
+    cipher.encrypt_in_place(&mut output).unwrap();
     cipher.reset().unwrap();
-    cipher.decrypt_inplace(&mut output).unwrap();
+    cipher.decrypt_in_place(&mut output).unwrap();
     assert_eq!(&plain[..], &output[..]);
 }
 
@@ -93,14 +87,14 @@ fn test_block_ciphers() {
             continue;
         }
 
-        check_cipher(token, algo, cipher::MODE_ECB, cipher::Flags::empty());
-        check_cipher(token, algo, cipher::MODE_CFB, cipher::Flags::empty());
-        check_cipher(token, algo, cipher::MODE_OFB, cipher::Flags::empty());
-        check_cipher(token, algo, cipher::MODE_CBC, cipher::Flags::empty());
+        check_cipher(token, algo, cipher::MODE_ECB, cipher::FLAGS_NONE);
+        check_cipher(token, algo, cipher::MODE_CFB, cipher::FLAGS_NONE);
+        check_cipher(token, algo, cipher::MODE_OFB, cipher::FLAGS_NONE);
+        check_cipher(token, algo, cipher::MODE_CBC, cipher::FLAGS_NONE);
         check_cipher(token, algo, cipher::MODE_CBC, cipher::FLAG_CBC_CTS);
-        check_cipher(token, algo, cipher::MODE_CTR, cipher::Flags::empty());
+        check_cipher(token, algo, cipher::MODE_CTR, cipher::FLAGS_NONE);
         if algo.block_len() == 16 && token.check_version("1.6.0") {
-            check_cipher(token, algo, cipher::MODE_GCM, cipher::Flags::empty());
+            check_cipher(token, algo, cipher::MODE_GCM, cipher::FLAGS_NONE);
         }
     }
 }
@@ -120,7 +114,7 @@ fn test_stream_ciphers() {
             continue;
         }
 
-        check_cipher(token, algo, cipher::MODE_STREAM, cipher::Flags::empty());
+        check_cipher(token, algo, cipher::MODE_STREAM, cipher::FLAGS_NONE);
     }
 }
 
@@ -198,25 +192,24 @@ fn test_bulk_cipher_modes() {
             *b = ((i & 0xff) ^ ((i >> 8) & 0xff)) as u8;
         }
 
-        let mut hde = Cipher::new(token, spec.0, spec.1, cipher::Flags::empty()).unwrap();
-        let mut hdd = Cipher::new(token, spec.0, spec.1, cipher::Flags::empty()).unwrap();
+        let mut hde = Cipher::new(token, spec.0, spec.1, cipher::FLAGS_NONE).unwrap();
+        let mut hdd = Cipher::new(token, spec.0, spec.1, cipher::FLAGS_NONE).unwrap();
         hde.set_key(spec.2).unwrap();
         hdd.set_key(spec.2).unwrap();
         hde.set_iv(spec.3).unwrap();
         hdd.set_iv(spec.3).unwrap();
         hde.encrypt(&buffer, &mut output).unwrap();
 
-        let mut digest = MessageDigest::new(token, digest::MD_SHA1,
-                                            digest::Flags::empty()).unwrap();
+        let mut digest = MessageDigest::new(token, digest::MD_SHA1, digest::FLAGS_NONE).unwrap();
         digest.write(&output);
         assert_eq!(&spec.4, digest.get_only_digest().unwrap());
-        hdd.decrypt_inplace(&mut output).unwrap();
+        hdd.decrypt_in_place(&mut output).unwrap();
         assert_eq!(&buffer, &output);
     }
 }
 
 fn check_digest(token: Token, algo: digest::Algorithm, data: &[u8], expected: &[u8]) {
-    let mut digest = MessageDigest::new(token, algo, digest::Flags::empty()).unwrap();
+    let mut digest = MessageDigest::new(token, algo, digest::FLAGS_NONE).unwrap();
     if data.starts_with(b"!") && data.len() == 1 {
         let aaa = [b'a'; 1000];
         for _ in 0..1000 {
@@ -1254,7 +1247,7 @@ fn check_pkey_crypt(token: Token, algo: pkey::Algorithm, skey: &SExpression, pke
                 for i in (0..10).rev() {
                     buffer[i] = buffer[i + hint.len()];
                 }
-                copy_slice(&hint, &mut buffer[10..(10 + hint.len())]);
+                (&mut buffer[10..(10 + hint.len())]).copy_from_slice(&hint);
                 SExpression::from_bytes(token, &buffer).unwrap()
             } else {
                 cipher

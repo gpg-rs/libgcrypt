@@ -23,8 +23,10 @@ impl Clone for Point {
     fn clone(&self) -> Point {
         let (x, y, z) = self.to_coords();
         unsafe {
-            Point::from_raw(ffi::gcry_mpi_point_snatch_set(ptr::null_mut(), x.into_raw(),
-                                                           y.into_raw(), z.into_raw()))
+            Point::from_raw(ffi::gcry_mpi_point_snatch_set(ptr::null_mut(),
+                                                           x.into_raw(),
+                                                           y.into_raw(),
+                                                           z.into_raw()))
         }
     }
 
@@ -55,9 +57,7 @@ impl Point {
     }
 
     pub fn new(_: Token, nbits: usize) -> Point {
-        unsafe {
-            Point::from_raw(ffi::gcry_mpi_point_new(nbits as c_uint))
-        }
+        unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits as c_uint)) }
     }
 
     pub fn from(x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) -> Point {
@@ -104,20 +104,13 @@ impl Point {
         let token = ::get_token().unwrap();
         let x = Integer::zero(token);
         let y = Integer::zero(token);
-        let result = unsafe {
-            ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.raw, ctx.as_raw())
-        };
-        if result == 0 {
-            Some((x, y))
-        } else {
-            None
-        }
+        let result =
+            unsafe { ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.raw, ctx.as_raw()) };
+        if result == 0 { Some((x, y)) } else { None }
     }
 
     pub fn on_curve(&self, ctx: &Context) -> bool {
-        unsafe {
-            ffi::gcry_mpi_ec_curve_point(self.raw, ctx.as_raw()) != 0
-        }
+        unsafe { ffi::gcry_mpi_ec_curve_point(self.raw, ctx.as_raw()) != 0 }
     }
 
     pub fn add(self, other: &Point, ctx: &Context) -> Point {

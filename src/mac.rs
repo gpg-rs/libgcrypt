@@ -45,9 +45,7 @@ enum_wrapper! {
 impl Algorithm {
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
-        let result = unsafe {
-            ffi::gcry_mac_map_name(name.as_ptr())
-        };
+        let result = unsafe { ffi::gcry_mac_map_name(name.as_ptr()) };
         if result != 0 {
             Some(Algorithm(result))
         } else {
@@ -57,27 +55,23 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_mac_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as c_int,
-                                   ptr::null_mut(), ptr::null_mut()) == 0
+            ffi::gcry_mac_algo_info(self.0,
+                                    ffi::GCRYCTL_TEST_ALGO as c_int,
+                                    ptr::null_mut(),
+                                    ptr::null_mut()) == 0
         }
     }
 
     pub fn name(&self) -> Option<&'static str> {
-        unsafe {
-            utils::from_cstr(ffi::gcry_mac_algo_name(self.0))
-        }
+        unsafe { utils::from_cstr(ffi::gcry_mac_algo_name(self.0)) }
     }
 
     pub fn key_len(&self) -> usize {
-        unsafe {
-            ffi::gcry_mac_get_algo_keylen(self.0) as usize
-        }
+        unsafe { ffi::gcry_mac_get_algo_keylen(self.0) as usize }
     }
 
     pub fn mac_len(&self) -> usize {
-        unsafe {
-            ffi::gcry_mac_get_algo_maclen(self.0) as usize
-        }
+        unsafe { ffi::gcry_mac_get_algo_maclen(self.0) as usize }
     }
 }
 
@@ -138,8 +132,10 @@ impl Mac {
 
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_ctl(self.raw, ffi::GCRYCTL_RESET as c_int,
-                                          ptr::null_mut(), 0));
+            return_err!(ffi::gcry_mac_ctl(self.raw,
+                                          ffi::GCRYCTL_RESET as c_int,
+                                          ptr::null_mut(),
+                                          0));
         }
         Ok(())
     }

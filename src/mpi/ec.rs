@@ -44,17 +44,24 @@ pub struct Curves<'a> {
 }
 
 impl<'a> Curves<'a> {
-    pub fn all(_: Token) -> Curves<'static>{
-        Curves { key: None, idx: 0 }
+    pub fn all(_: Token) -> Curves<'static> {
+        Curves {
+            key: None,
+            idx: 0,
+        }
     }
 
     pub fn from(key: &SExpression) -> Curves {
-        Curves { key: Some(key), idx: 0 }
+        Curves {
+            key: Some(key),
+            idx: 0,
+        }
     }
 
     pub fn get(token: Token, name: &str) -> Option<Curve> {
         SExpression::from_bytes(token, &format!("(curve {})", name))
-            .ok().and_then(|s| s.curve())
+            .ok()
+            .and_then(|s| s.curve())
     }
 }
 
@@ -68,7 +75,10 @@ impl<'a> Iterator for Curves<'a> {
             let result = ffi::gcry_pk_get_curve(key, self.idx as c_int, &mut nbits);
             if !result.is_null() {
                 self.idx += 1;
-                Some(Curve { name: CStr::from_ptr(result), nbits: nbits as usize })
+                Some(Curve {
+                    name: CStr::from_ptr(result),
+                    nbits: nbits as usize,
+                })
             } else {
                 None
             }

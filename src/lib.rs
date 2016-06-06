@@ -15,15 +15,12 @@
 //!
 //! The token returned by ```init``` is used as an argument to various functions in the library
 //! to ensure that initialization has been completed.
-#![cfg_attr(feature = "dev", feature(plugin))]
-#![cfg_attr(feature = "dev", plugin(clippy))]
-
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
 extern crate lazy_static;
 #[macro_use]
-extern crate gpg_error;
+pub extern crate gpg_error as error;
 extern crate libgcrypt_sys as ffi;
 
 use std::ffi::{CStr, CString};
@@ -32,7 +29,6 @@ use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Mutex;
 
-pub use gpg_error as error;
 pub use error::{Error, Result};
 pub use buffer::Buffer;
 
@@ -60,9 +56,7 @@ impl Initializer {
             Ok(v) => v,
             Err(..) => return false,
         };
-        unsafe {
-            !ffi::gcry_check_version(version.as_ptr()).is_null()
-        }
+        unsafe { !ffi::gcry_check_version(version.as_ptr()).is_null() }
     }
 
     pub fn enable_quick_random(&mut self) -> &mut Self {
@@ -99,9 +93,7 @@ pub struct Token(());
 
 impl Token {
     pub fn is_fips_mode_active(&self) -> bool {
-        unsafe {
-            ffi::gcry_control(ffi::GCRYCTL_FIPS_MODE_P, 0) != 0
-        }
+        unsafe { ffi::gcry_control(ffi::GCRYCTL_FIPS_MODE_P, 0) != 0 }
     }
 
     pub fn check_version<S: Into<String>>(&self, version: S) -> bool {
@@ -109,22 +101,19 @@ impl Token {
             Ok(v) => v,
             Err(..) => return false,
         };
-        unsafe {
-            !ffi::gcry_check_version(version.as_ptr()).is_null()
-        }
+        unsafe { !ffi::gcry_check_version(version.as_ptr()).is_null() }
     }
 
     pub fn version(&self) -> &'static str {
         unsafe {
-            CStr::from_ptr(ffi::gcry_check_version(ptr::null())).to_str()
-                    .expect("Version is invalid")
+            CStr::from_ptr(ffi::gcry_check_version(ptr::null()))
+                .to_str()
+                .expect("Version is invalid")
         }
     }
 
     pub fn run_self_tests(&self) -> bool {
-        unsafe {
-            ffi::gcry_control(ffi::GCRYCTL_SELFTEST, 0) == 0
-        }
+        unsafe { ffi::gcry_control(ffi::GCRYCTL_SELFTEST, 0) == 0 }
     }
 
     pub fn destroy_secmem(&self) {
@@ -136,9 +125,7 @@ impl Token {
 
 pub fn enable_memory_guard() -> bool {
     let _lock = CONTROL_LOCK.lock().unwrap();
-    let initialized = unsafe {
-        ffi::gcry_control(ffi::GCRYCTL_ANY_INITIALIZATION_P, 0) != 0
-    };
+    let initialized = unsafe { ffi::gcry_control(ffi::GCRYCTL_ANY_INITIALIZATION_P, 0) != 0 };
     if !initialized {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_ENABLE_M_GUARD, 0);
@@ -148,9 +135,7 @@ pub fn enable_memory_guard() -> bool {
 }
 
 pub fn is_initialized() -> bool {
-    unsafe {
-        ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED_P, 0) != 0
-    }
+    unsafe { ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED_P, 0) != 0 }
 }
 
 pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
@@ -158,7 +143,8 @@ pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
     if !is_initialized() {
         unsafe {
             if cfg!(unix) {
-                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS, ffi::gcry_threads_pthread_shim());
+                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
+                                  ffi::gcry_threads_pthread_shim());
             }
             ffi::gcry_check_version(ptr::null());
         }
@@ -175,7 +161,8 @@ pub fn init_fips_mode<F: FnOnce(Initializer)>(f: F) -> Token {
     if !is_initialized() {
         unsafe {
             if cfg!(unix) {
-                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS, ffi::gcry_threads_pthread_shim());
+                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
+                                  ffi::gcry_threads_pthread_shim());
             }
             ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
             ffi::gcry_check_version(ptr::null());
@@ -202,7 +189,9 @@ pub unsafe trait Wrapper {
 
     unsafe fn from_raw(raw: Self::Raw) -> Self;
     fn as_raw(&self) -> Self::Raw;
-    fn into_raw(self) -> Self::Raw where Self: Sized {
+    fn into_raw(self) -> Self::Raw
+        where Self: Sized
+    {
         let raw = self.as_raw();
         mem::forget(self);
         raw

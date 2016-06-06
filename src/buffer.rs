@@ -90,21 +90,15 @@ impl Buffer {
     }
 
     pub fn is_secure(&self) -> bool {
-        unsafe {
-            ffi::gcry_is_secure(self.buf as *const _) != 0
-        }
+        unsafe { ffi::gcry_is_secure(self.buf as *const _) != 0 }
     }
 
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe {
-            slice::from_raw_parts(self.buf, self.len)
-        }
+        unsafe { slice::from_raw_parts(self.buf, self.len) }
     }
 
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
-        unsafe {
-            slice::from_raw_parts_mut(self.buf, self.len)
-        }
+        unsafe { slice::from_raw_parts_mut(self.buf, self.len) }
     }
 
     pub fn to_str(&self) -> result::Result<&str, str::Utf8Error> {

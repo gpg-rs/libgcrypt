@@ -37,9 +37,7 @@ enum_wrapper! {
 impl Algorithm {
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
-        let result = unsafe {
-            ffi::gcry_md_map_name(name.as_ptr())
-        };
+        let result = unsafe { ffi::gcry_md_map_name(name.as_ptr()) };
         if result != 0 {
             Some(Algorithm(result))
         } else {
@@ -49,26 +47,25 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_md_algo_info(self.0, ffi::GCRYCTL_TEST_ALGO as c_int,
-                                   ptr::null_mut(), ptr::null_mut()) == 0
+            ffi::gcry_md_algo_info(self.0,
+                                   ffi::GCRYCTL_TEST_ALGO as c_int,
+                                   ptr::null_mut(),
+                                   ptr::null_mut()) == 0
         }
     }
 
     pub fn name(&self) -> Option<&'static str> {
-        unsafe {
-            utils::from_cstr(ffi::gcry_md_algo_name(self.0))
-        }
+        unsafe { utils::from_cstr(ffi::gcry_md_algo_name(self.0)) }
     }
 
     pub fn digest_len(&self) -> usize {
-        unsafe {
-            ffi::gcry_md_get_algo_dlen(self.0) as usize
-        }
+        unsafe { ffi::gcry_md_get_algo_dlen(self.0) as usize }
     }
 }
 
 bitflags! {
     flags Flags: ffi::gcry_md_flags {
+        const FLAGS_NONE = 0,
         const FLAG_SECURE = ffi::GCRY_MD_FLAG_SECURE,
         const FLAG_HMAC = ffi::GCRY_MD_FLAG_HMAC,
         const FLAG_BUGEMU1 = ffi::GCRY_MD_FLAG_BUGEMU1,
@@ -126,15 +123,11 @@ impl MessageDigest {
     }
 
     pub fn is_enabled(&self, algo: Algorithm) -> bool {
-        unsafe {
-            ffi::gcry_md_is_enabled(self.raw, algo.0) != 0
-        }
+        unsafe { ffi::gcry_md_is_enabled(self.raw, algo.0) != 0 }
     }
 
     pub fn is_secure(&self) -> bool {
-        unsafe {
-            ffi::gcry_md_is_secure(self.raw) != 0
-        }
+        unsafe { ffi::gcry_md_is_secure(self.raw) != 0 }
     }
 
     pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
@@ -145,9 +138,7 @@ impl MessageDigest {
     }
 
     pub fn reset(&mut self) {
-        unsafe {
-            ffi::gcry_md_reset(self.raw)
-        }
+        unsafe { ffi::gcry_md_reset(self.raw) }
     }
 
     pub fn write(&mut self, bytes: &[u8]) {
@@ -163,9 +154,7 @@ impl MessageDigest {
     }
 
     pub fn get_only_digest(&mut self) -> Option<&[u8]> {
-        let algo = unsafe {
-            ffi::gcry_md_get_algo(self.raw)
-        };
+        let algo = unsafe { ffi::gcry_md_get_algo(self.raw) };
         if algo != 0 {
             self.get_digest(Algorithm(algo))
         } else {
@@ -186,5 +175,16 @@ impl MessageDigest {
                 None
             }
         }
+    }
+}
+
+pub fn hash(token: Token, algo: Algorithm, src: &[u8], dst: &mut [u8]) {
+    assert!(algo.is_available(token));
+    assert!(dst.len() >= algo.digest_len());
+    unsafe {
+        ffi::gcry_md_hash_buffer(algo.0,
+                                 dst.as_mut_ptr() as *mut _,
+                                 src.as_ptr() as *const _,
+                                 src.len().into());
     }
 }

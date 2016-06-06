@@ -51,8 +51,10 @@ impl SExpression {
         let bytes = bytes.as_ref();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_sexp_sscan(&mut result, ptr::null_mut(),
-                    bytes.as_ptr() as *const _, bytes.len()));
+            return_err!(ffi::gcry_sexp_sscan(&mut result,
+                                             ptr::null_mut(),
+                                             bytes.as_ptr() as *const _,
+                                             bytes.len()));
             Ok(SExpression::from_raw(result))
         }
     }
@@ -69,15 +71,15 @@ impl SExpression {
     }
 
     pub fn len_encoded(&self, format: Format) -> usize {
-        unsafe {
-            ffi::gcry_sexp_sprint(self.raw, format as c_int, ptr::null_mut(), 0)
-        }
+        unsafe { ffi::gcry_sexp_sprint(self.raw, format as c_int, ptr::null_mut(), 0) }
     }
 
     pub fn encode(&self, format: Format, buf: &mut [u8]) -> Option<usize> {
         unsafe {
-            match ffi::gcry_sexp_sprint(self.raw, format as c_int, buf.as_mut_ptr() as *mut _,
-                    buf.len()) {
+            match ffi::gcry_sexp_sprint(self.raw,
+                                        format as c_int,
+                                        buf.as_mut_ptr() as *mut _,
+                                        buf.len()) {
                 0 => None,
                 x => Some(x),
             }
@@ -119,16 +121,14 @@ impl SExpression {
     }
 
     pub fn len(&self) -> usize {
-        unsafe {
-            ffi::gcry_sexp_length(self.raw) as usize
-        }
+        unsafe { ffi::gcry_sexp_length(self.raw) as usize }
     }
 
     pub fn find_token<B: ?Sized + AsRef<[u8]>>(&self, token: &B) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
-            let result = ffi::gcry_sexp_find_token(self.raw, token.as_ptr() as *const _,
-                    token.len());
+            let result =
+                ffi::gcry_sexp_find_token(self.raw, token.as_ptr() as *const _, token.len());
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -237,7 +237,7 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
             self.last -= 1;
             unsafe {
                 Some(SExpression::from_raw(ffi::gcry_sexp_nth(self.sexp.as_raw(),
-                        self.last as c_int)))
+                                                              self.last as c_int)))
             }
         } else {
             None
@@ -280,30 +280,33 @@ impl Template {
                         Some(x) if (x == b'd') || (x == b'u') => {
                             new_format.push(x);
                             ParameterKind::Integer
-                        },
+                        }
                         Some(b'b') | Some(b's') => {
                             new_format.push(b'b');
                             ParameterKind::Bytes
-                        },
+                        }
                         Some(x) if (x == b'm') || (x == b'M') => {
                             new_format.push(x);
                             ParameterKind::Mpi
-                        },
+                        }
                         Some(b'S') => {
                             new_format.push(b'S');
                             ParameterKind::SExpression
-                        },
+                        }
                         _ => return Err(Error::from_code(error::GPG_ERR_INV_ARG)),
                     };
                     params.push(kind);
-                },
+                }
                 Some(b'\0') => return Err(Error::from_code(error::GPG_ERR_INV_ARG)),
                 Some(x) => new_format.push(x),
                 None => break,
             }
         }
         unsafe {
-            Ok(Template { format: CString::from_vec_unchecked(new_format), params: params })
+            Ok(Template {
+                format: CString::from_vec_unchecked(new_format),
+                params: params,
+            })
         }
     }
 }
@@ -315,36 +318,45 @@ pub struct Builder<'a> {
 
 impl<'a> Builder<'a> {
     pub fn from(template: &Template) -> Builder {
-        Builder { template: template, params: Vec::new() }
+        Builder {
+            template: template,
+            params: Vec::new(),
+        }
     }
 
     pub fn add_int(&mut self, n: isize) -> &mut Self {
-        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::Integer));
+        assert_eq!(self.template.params.get(self.params.len()),
+                   Some(&ParameterKind::Integer));
         self.params.push(Parameter::Integer(n as c_int));
         self
     }
 
     pub fn add_bytes<'s, 'b: 's, B: ?Sized>(&'s mut self, bytes: &'b B) -> &mut Self
-    where B: AsRef<[u8]> {
-        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::Bytes));
+        where B: AsRef<[u8]>
+    {
+        assert_eq!(self.template.params.get(self.params.len()),
+                   Some(&ParameterKind::Bytes));
         let bytes = bytes.as_ref();
         self.params.push(Parameter::Bytes(bytes.len() as c_int, bytes.as_ptr() as *const _));
         self
     }
 
     pub fn add_str<'s, 'b: 's, S: ?Sized>(&'s mut self, string: &'b S) -> &mut Self
-        where S: AsRef<str> {
-            self.add_bytes(string.as_ref())
-        }
+        where S: AsRef<str>
+    {
+        self.add_bytes(string.as_ref())
+    }
 
     pub fn add_mpi<'s, 'b: 's>(&'s mut self, n: &'b Integer) -> &mut Self {
-        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::Mpi));
+        assert_eq!(self.template.params.get(self.params.len()),
+                   Some(&ParameterKind::Mpi));
         self.params.push(Parameter::Mpi(n.as_raw()));
         self
     }
 
     pub fn add_sexp<'s, 'b: 's>(&'s mut self, s: &'b SExpression) -> &mut Self {
-        assert_eq!(self.template.params.get(self.params.len()), Some(&ParameterKind::SExpression));
+        assert_eq!(self.template.params.get(self.params.len()),
+                   Some(&ParameterKind::SExpression));
         self.params.push(Parameter::SExpression(s.as_raw()));
         self
     }
@@ -361,7 +373,7 @@ impl<'a> Builder<'a> {
                     Parameter::Bytes(ref len, ref data) => {
                         args.push(mem::transmute(len));
                         args.push(mem::transmute(data));
-                    },
+                    }
                     Parameter::Mpi(ref x) => args.push(mem::transmute(x)),
                     Parameter::SExpression(ref s) => args.push(mem::transmute(s)),
                 }
@@ -369,8 +381,10 @@ impl<'a> Builder<'a> {
             args.push(ptr::null_mut());
 
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_sexp_build_array(&mut result, ptr::null_mut(),
-                    self.template.format.as_ptr(), args.as_mut_ptr()));
+            return_err!(ffi::gcry_sexp_build_array(&mut result,
+                                                   ptr::null_mut(),
+                                                   self.template.format.as_ptr(),
+                                                   args.as_mut_ptr()));
             Ok(SExpression::from_raw(result))
         }
     }
@@ -386,7 +400,8 @@ mod tests {
             x.disable_secmem();
         });
 
-        let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %d)(d %b)))").unwrap();
+        let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %d)(d %b)))")
+            .unwrap();
         let mut builder = Builder::from(&template);
         builder.add_str("Ed25519").add_int(1234).add_bytes("2324");
         builder.build(token).unwrap();
