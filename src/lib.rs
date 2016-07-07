@@ -95,7 +95,7 @@ pub struct Token(());
 
 impl Token {
     pub fn is_fips_mode_active(&self) -> bool {
-        unsafe { ffi::gcry_control(ffi::GCRYCTL_FIPS_MODE_P, 0) != 0 }
+        unsafe { ffi::gcry_fips_mode_active() }
     }
 
     pub fn check_version<S: Into<String>>(&self, version: S) -> bool {
