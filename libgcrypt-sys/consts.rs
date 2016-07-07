@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 extern crate libgpg_error_sys;
 
-use std::os::raw::c_uint;
+use libc::{c_uint, c_int};
 
 pub use libgpg_error_sys::gpg_err_source_t as gcry_err_source_t;
 pub use libgpg_error_sys::gpg_err_code_t as gcry_err_code_t;
@@ -18,7 +18,7 @@ pub const GCRY_THREAD_OPTION_PTH: c_uint     = 2;
 pub const GCRY_THREAD_OPTION_PTHREAD: c_uint = 3;
 pub const GCRY_THREAD_OPTION_VERSION: c_uint = 1;
 
-pub type gcry_ctl_cmds = c_uint;
+pub type gcry_ctl_cmds = c_int;
 pub const GCRYCTL_SET_KEY: gcry_ctl_cmds                   = 1;
 pub const GCRYCTL_SET_IV: gcry_ctl_cmds                    = 2;
 pub const GCRYCTL_CFB_SYNC: gcry_ctl_cmds                  = 3;

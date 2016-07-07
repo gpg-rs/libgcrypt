@@ -15,6 +15,7 @@
 //!
 //! The token returned by ```init``` is used as an argument to various functions in the library
 //! to ensure that initialization has been completed.
+extern crate libc;
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
@@ -25,9 +26,10 @@ extern crate libgcrypt_sys as ffi;
 
 use std::ffi::{CStr, CString};
 use std::mem;
-use std::os::raw::c_int;
 use std::ptr;
 use std::sync::Mutex;
+
+use libc::c_int;
 
 pub use error::{Error, Result};
 pub use buffer::Buffer;

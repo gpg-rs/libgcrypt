@@ -1,11 +1,11 @@
 use std::ffi::CString;
 use std::fmt;
 use std::mem;
-use std::os::raw::{c_void, c_char, c_int};
 use std::ptr;
 use std::slice;
 use std::str;
 
+use libc::{c_void, c_char, c_int};
 use ffi;
 
 use {Wrapper, Token};
@@ -87,10 +87,12 @@ impl SExpression {
     }
 
     pub fn elements(&self) -> Elements {
-        Elements {
-            sexp: self,
-            first: 0,
-            last: self.len(),
+        unsafe {
+            Elements {
+                sexp: self,
+                first: 0,
+                last: ffi::gcry_sexp_length(self.raw),
+            }
         }
     }
 
@@ -137,9 +139,9 @@ impl SExpression {
         }
     }
 
-    pub fn get(&self, idx: usize) -> Option<SExpression> {
+    pub fn get(&self, idx: u16) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_nth(self.raw, idx as c_int);
+            let result = ffi::gcry_sexp_nth(self.raw, idx.into());
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -148,10 +150,10 @@ impl SExpression {
         }
     }
 
-    pub fn get_bytes(&self, idx: usize) -> Option<&[u8]> {
+    pub fn get_bytes(&self, idx: u16) -> Option<&[u8]> {
         unsafe {
             let mut data_len = 0;
-            let result = ffi::gcry_sexp_nth_data(self.raw, idx as c_int, &mut data_len);
+            let result = ffi::gcry_sexp_nth_data(self.raw, idx.into(), &mut data_len);
             if !result.is_null() {
                 Some(slice::from_raw_parts(result as *const _, data_len))
             } else {
@@ -160,13 +162,13 @@ impl SExpression {
         }
     }
 
-    pub fn get_str(&self, idx: usize) -> Option<&str> {
+    pub fn get_str(&self, idx: u16) -> Option<&str> {
         self.get_bytes(idx).and_then(|b| str::from_utf8(b).ok())
     }
 
-    pub fn get_integer(&self, idx: usize, fmt: IntegerFormat) -> Option<Integer> {
+    pub fn get_integer(&self, idx: u16, fmt: IntegerFormat) -> Option<Integer> {
         unsafe {
-            let result = ffi::gcry_sexp_nth_mpi(self.raw, idx as c_int, fmt as c_int);
+            let result = ffi::gcry_sexp_nth_mpi(self.raw, idx.into(), fmt as c_int);
             if !result.is_null() {
                 Some(Integer::from_raw(result))
             } else {
@@ -198,8 +200,8 @@ impl<'a> IntoIterator for &'a SExpression {
 
 pub struct Elements<'a> {
     sexp: &'a SExpression,
-    first: usize,
-    last: usize,
+    first: c_int,
+    last: c_int,
 }
 
 impl<'a> Iterator for Elements<'a> {
@@ -208,7 +210,8 @@ impl<'a> Iterator for Elements<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.first < self.last {
             let elem = unsafe {
-                SExpression::from_raw(ffi::gcry_sexp_nth(self.sexp.as_raw(), self.first as c_int))
+                let raw = ffi::gcry_sexp_nth(self.sexp.as_raw(), self.first);
+                SExpression::from_raw(raw)
             };
             self.first += 1;
             Some(elem)
@@ -222,12 +225,16 @@ impl<'a> Iterator for Elements<'a> {
     }
 
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.first = self.first.saturating_add(n);
+        self.first = if (n as u64) < (self.last as u64) {
+            self.first + (n as c_int)
+        } else {
+            self.last
+        };
         self.next()
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
-        let size = self.last - self.first;
+        let size = (self.last - self.first) as usize;
         (size, Some(size))
     }
 }
@@ -236,8 +243,8 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
         if self.first < self.last {
             self.last -= 1;
             unsafe {
-                Some(SExpression::from_raw(ffi::gcry_sexp_nth(self.sexp.as_raw(),
-                                                              self.last as c_int)))
+                let raw = ffi::gcry_sexp_nth(self.sexp.as_raw(), self.last);
+                Some(SExpression::from_raw(raw))
             }
         } else {
             None

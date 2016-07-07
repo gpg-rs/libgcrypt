@@ -1,9 +1,9 @@
 use std::ffi::{CStr, CString};
-use std::os::raw::c_int;
 use std::ptr;
 use std::str;
 
 use ffi;
+use libc::c_int;
 
 use {Token, Wrapper};
 use error::Result;
@@ -40,7 +40,7 @@ impl Curve {
 
 pub struct Curves<'a> {
     key: Option<&'a SExpression>,
-    idx: usize,
+    idx: c_int,
 }
 
 impl<'a> Curves<'a> {
@@ -72,9 +72,9 @@ impl<'a> Iterator for Curves<'a> {
         unsafe {
             let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
             let mut nbits = 0;
-            let result = ffi::gcry_pk_get_curve(key, self.idx as c_int, &mut nbits);
+            let result = ffi::gcry_pk_get_curve(key, self.idx, &mut nbits);
             if !result.is_null() {
-                self.idx += 1;
+                self.idx = self.idx.checked_add(1).unwrap_or(-1);
                 Some(Curve {
                     name: CStr::from_ptr(result),
                     nbits: nbits as usize,
@@ -86,7 +86,7 @@ impl<'a> Iterator for Curves<'a> {
     }
 
     fn nth(&mut self, n: usize) -> Option<Curve> {
-        self.idx = self.idx.saturating_add(n);
+        self.idx = self.idx.saturating_add(n as c_int);
         self.next()
     }
 }

@@ -1,5 +1,6 @@
 use std::ffi::CStr;
-use std::os::raw::c_char;
+
+use libc::c_char;
 
 macro_rules! try_opt {
     ($e:expr) => (match $e { Some(v) => v, None => return None });

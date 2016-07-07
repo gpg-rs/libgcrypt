@@ -1,9 +1,9 @@
 use std::ffi::CString;
-use std::os::raw::c_int;
 use std::ptr;
 use std::slice;
 
 use ffi;
+use libc::c_int;
 
 use {Wrapper, Token};
 use utils;
@@ -54,10 +54,7 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_md_algo_info(self.0,
-                                   ffi::GCRYCTL_TEST_ALGO as c_int,
-                                   ptr::null_mut(),
-                                   ptr::null_mut()) == 0
+            ffi::gcry_md_test_algo(self.0) == 0
         }
     }
 

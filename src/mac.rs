@@ -1,8 +1,8 @@
 use std::ffi::CString;
-use std::os::raw::c_int;
 use std::ptr;
 
 use ffi;
+use libc::c_int;
 
 use {Wrapper, Token};
 use utils;

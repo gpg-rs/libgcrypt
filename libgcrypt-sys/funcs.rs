@@ -1,6 +1,6 @@
 extern crate libgpg_error_sys;
 
-use std::os::raw::{c_void, c_char, c_uchar, c_int, c_uint, c_ulong};
+use libc::{c_void, c_char, c_uchar, c_int, c_uint, c_ulong, size_t};
 use std::ptr;
 
 pub use libgpg_error_sys::gpg_err_make as gcry_err_make;
@@ -28,20 +28,20 @@ extern {
     pub fn gcry_control(cmd: gcry_ctl_cmds, ...) -> gcry_error_t;
 
     pub fn gcry_sexp_new(retsexp: *mut gcry_sexp_t, buffer: *const c_void,
-            length: usize, autodetect: c_int) -> gcry_error_t;
-    pub fn gcry_sexp_create(retsexp: *mut gcry_sexp_t, buffer: *mut c_void, length: usize,
+            length: size_t, autodetect: c_int) -> gcry_error_t;
+    pub fn gcry_sexp_create(retsexp: *mut gcry_sexp_t, buffer: *mut c_void, length: size_t,
             autodetect: c_int, freefnc: extern fn(*mut c_void)) -> gcry_error_t;
-    pub fn gcry_sexp_sscan(retsexp: *mut gcry_sexp_t, erroff: *mut usize, buffer: *const c_char,
-            length: usize) -> gcry_error_t;
-    pub fn gcry_sexp_build(retsexp: *mut gcry_sexp_t, erroff: *mut usize,
+    pub fn gcry_sexp_sscan(retsexp: *mut gcry_sexp_t, erroff: *mut size_t, buffer: *const c_char,
+            length: size_t) -> gcry_error_t;
+    pub fn gcry_sexp_build(retsexp: *mut gcry_sexp_t, erroff: *mut size_t,
             format: *const c_char, ...) -> gcry_error_t;
-    pub fn gcry_sexp_build_array(retsexp: *mut gcry_sexp_t, erroff: *mut usize,
+    pub fn gcry_sexp_build_array(retsexp: *mut gcry_sexp_t, erroff: *mut size_t,
             format: *const c_char, arg_list: *mut *mut c_void) -> gcry_error_t;
     pub fn gcry_sexp_release(sexp: gcry_sexp_t);
-    pub fn gcry_sexp_canon_len(buffer: *const c_uchar, length: usize, erroff: *mut usize,
-            errcode: *mut gcry_error_t) -> usize;
+    pub fn gcry_sexp_canon_len(buffer: *const c_uchar, length: size_t, erroff: *mut size_t,
+            errcode: *mut gcry_error_t) -> size_t;
     pub fn gcry_sexp_sprint(sexp: gcry_sexp_t, mode: c_int, buffer: *mut c_void,
-            maxlength: usize) -> usize;
+            maxlength: size_t) -> size_t;
     pub fn gcry_sexp_dump(a: gcry_sexp_t);
     pub fn gcry_sexp_cons(a: gcry_sexp_t, b: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_alist(array: *const gcry_sexp_t) -> gcry_sexp_t;
@@ -49,16 +49,16 @@ extern {
     pub fn gcry_sexp_append(a: gcry_sexp_t, n: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_prepend(a: gcry_sexp_t, n: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_find_token(list: gcry_sexp_t, tok: *const c_char,
-            toklen: usize) -> gcry_sexp_t;
+            toklen: size_t) -> gcry_sexp_t;
     pub fn gcry_sexp_length(list: gcry_sexp_t) -> c_int;
     pub fn gcry_sexp_nth(list: gcry_sexp_t, number: c_int) -> gcry_sexp_t;
     pub fn gcry_sexp_car(list: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_cdr(list: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_cadr(list: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_nth_data(list: gcry_sexp_t, number: c_int,
-            datalen: *mut usize) -> *const c_char;
+            datalen: *mut size_t) -> *const c_char;
     pub fn gcry_sexp_nth_buffer(list: gcry_sexp_t, number: c_int,
-            rlength: *mut usize) -> *mut c_void;
+            rlength: *mut size_t) -> *mut c_void;
     pub fn gcry_sexp_nth_string(list: gcry_sexp_t, number: c_int) -> *mut c_char;
     pub fn gcry_sexp_nth_mpi(list: gcry_sexp_t, number: c_int, mpifmt: c_int) -> gcry_mpi_t;
     pub fn gcry_sexp_extract_param(sexp: gcry_sexp_t, path: *const c_char,
@@ -78,14 +78,14 @@ extern {
     pub fn gcry_mpi_cmp(u: gcry_mpi_t, v: gcry_mpi_t) -> c_int;
     pub fn gcry_mpi_cmp_ui(u: gcry_mpi_t, v: c_ulong) -> c_int;
     pub fn gcry_mpi_scan(ret_mpi: *mut gcry_mpi_t, format: gcry_mpi_format,
-            buffer: *const c_void, buflen: usize,
-            nscanned: *mut usize) -> gcry_error_t;
+            buffer: *const c_void, buflen: size_t,
+            nscanned: *mut size_t) -> gcry_error_t;
     pub fn gcry_mpi_print(format: gcry_mpi_format,
-            buffer: *mut c_uchar, buflen: usize,
-            nwritten: *mut usize,
+            buffer: *mut c_uchar, buflen: size_t,
+            nwritten: *mut size_t,
             a: gcry_mpi_t) -> gcry_error_t;
     pub fn gcry_mpi_aprint(format: gcry_mpi_format, buffer: *mut *mut c_uchar,
-            nwritten: *mut usize, a: gcry_mpi_t) -> gcry_error_t ;
+            nwritten: *mut size_t, a: gcry_mpi_t) -> gcry_error_t ;
     pub fn gcry_mpi_dump(a: gcry_mpi_t);
     pub fn gcry_mpi_add(w: gcry_mpi_t, u: gcry_mpi_t, v: gcry_mpi_t);
     pub fn gcry_mpi_add_ui(w: gcry_mpi_t, u: gcry_mpi_t, v: c_ulong);
@@ -156,34 +156,34 @@ extern {
             mode: c_int, flags: c_uint) -> gcry_error_t;
     pub fn gcry_cipher_close(handle: gcry_cipher_hd_t);
     pub fn gcry_cipher_ctl(handle: gcry_cipher_hd_t, cmd: c_int, buffer: *mut c_void,
-            buflen: usize) -> gcry_error_t;
+            buflen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_info(handle: gcry_cipher_hd_t, what: c_int, buffer: *mut c_void,
-            nbytes: *mut usize) -> gcry_error_t;
+            nbytes: *mut size_t) -> gcry_error_t;
     pub fn gcry_cipher_algo_info(algo: c_int, what: c_int, buffer: *mut c_void,
-            nbytes: *mut usize) -> gcry_error_t;
+            nbytes: *mut size_t) -> gcry_error_t;
     pub fn gcry_cipher_algo_name(algo: c_int) -> *const c_char;
     pub fn gcry_cipher_map_name(name: *const c_char) -> c_int;
     pub fn gcry_cipher_mode_from_oid(string: *const c_char) -> c_int;
-    pub fn gcry_cipher_get_algo_keylen(algo: c_int) -> usize;
-    pub fn gcry_cipher_get_algo_blklen(algo: c_int) -> usize;
+    pub fn gcry_cipher_get_algo_keylen(algo: c_int) -> size_t;
+    pub fn gcry_cipher_get_algo_blklen(algo: c_int) -> size_t;
     pub fn gcry_cipher_encrypt(handle: gcry_cipher_hd_t,
-            output: *mut c_void, outsize: usize,
-            input: *const c_void, inlen: usize) -> gcry_error_t;
+            output: *mut c_void, outsize: size_t,
+            input: *const c_void, inlen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_decrypt(handle: gcry_cipher_hd_t,
-            output: *mut c_void, outsize: usize,
-            input: *const c_void, inlen: usize) -> gcry_error_t;
+            output: *mut c_void, outsize: size_t,
+            input: *const c_void, inlen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_setkey(handle: gcry_cipher_hd_t,
-            key: *const c_void, keylen: usize) -> gcry_error_t;
+            key: *const c_void, keylen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_setiv(handle: gcry_cipher_hd_t,
-            iv: *const c_void, ivlen: usize) -> gcry_error_t;
+            iv: *const c_void, ivlen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_setctr(handle: gcry_cipher_hd_t,
-            ctr: *const c_void, ctrlen: usize) -> gcry_error_t;
+            ctr: *const c_void, ctrlen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_authenticate(handle: gcry_cipher_hd_t, abuf: *const c_void,
-            abuflen: usize) -> gcry_error_t;
+            abuflen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_gettag(handle: gcry_cipher_hd_t, outtag: *mut c_void,
-            taglen: usize) -> gcry_error_t;
+            taglen: size_t) -> gcry_error_t;
     pub fn gcry_cipher_checktag(handle: gcry_cipher_hd_t, in_tag: *const c_void,
-            taglen: usize) -> gcry_error_t;
+            taglen: size_t) -> gcry_error_t;
 
     pub fn gcry_pk_encrypt(result: *mut gcry_sexp_t, data: gcry_sexp_t,
             pkey: gcry_sexp_t) -> gcry_error_t;
@@ -195,9 +195,9 @@ extern {
             pkey: gcry_sexp_t) -> gcry_error_t;
     pub fn gcry_pk_testkey(key: gcry_sexp_t) -> gcry_error_t;
     pub fn gcry_pk_genkey(r_key: *mut gcry_sexp_t, s_parms: gcry_sexp_t) -> gcry_error_t;
-    pub fn gcry_pk_ctl(cmd: c_int, buffer: *mut c_void, buflen: usize) -> gcry_error_t;
+    pub fn gcry_pk_ctl(cmd: c_int, buffer: *mut c_void, buflen: size_t) -> gcry_error_t;
     pub fn gcry_pk_algo_info(algo: c_int, what: c_int,
-            buffer: *mut c_void, nbytes: *mut usize) -> gcry_error_t;
+            buffer: *mut c_void, nbytes: *mut size_t) -> gcry_error_t;
     pub fn gcry_pk_algo_name(algorithm: c_int) -> *const c_char;
     pub fn gcry_pk_map_name(name: *const c_char) -> c_int;
     pub fn gcry_pk_get_nbits(key: gcry_sexp_t) -> c_uint;
@@ -214,59 +214,59 @@ extern {
     pub fn gcry_md_copy(new: *mut gcry_md_hd_t, old: gcry_md_hd_t) -> gcry_error_t;
     pub fn gcry_md_reset(h: gcry_md_hd_t);
     pub fn gcry_md_ctl(h: gcry_md_hd_t, cmd: c_int,
-            buffer: *mut c_void, buflen: usize) -> gcry_error_t;
-    pub fn gcry_md_write(h: gcry_md_hd_t, buffer: *const c_void, length: usize);
+            buffer: *mut c_void, buflen: size_t) -> gcry_error_t;
+    pub fn gcry_md_write(h: gcry_md_hd_t, buffer: *const c_void, length: size_t);
     pub fn gcry_md_read(h: gcry_md_hd_t, algo: c_int) -> *mut u8;
     pub fn gcry_md_extract(hd: gcry_md_hd_t, algo: c_int, buffer: *mut c_void,
-            length: usize) -> gcry_error_t;
+            length: size_t) -> gcry_error_t;
     pub fn gcry_md_hash_buffer(algo: c_int, digest: *mut c_void,
-            buffer: *const c_void, length: usize);
+            buffer: *const c_void, length: size_t);
     pub fn gcry_md_get_algo(h: gcry_md_hd_t) -> c_int;
     pub fn gcry_md_get_algo_dlen(algo: c_int) -> c_uint;
     pub fn gcry_md_is_enabled(a: gcry_md_hd_t, algo: c_int) -> c_int;
     pub fn gcry_md_is_secure(a: gcry_md_hd_t) -> c_int;
     pub fn gcry_md_info(h: gcry_md_hd_t, what: c_int, buffer: *mut c_void,
-            nbytes: *mut usize) -> gcry_error_t;
+            nbytes: *mut size_t) -> gcry_error_t;
     pub fn gcry_md_algo_info(algo: c_int, what: c_int, buffer: *mut c_void,
-            nbytes: *mut usize) -> gcry_error_t;
+            nbytes: *mut size_t) -> gcry_error_t;
     pub fn gcry_md_algo_name(algo: c_int) -> *const c_char;
     pub fn gcry_md_map_name(name: *const c_char) -> c_int;
-    pub fn gcry_md_setkey(h: gcry_md_hd_t, key: *const c_void, keylen: usize) -> gcry_error_t;
+    pub fn gcry_md_setkey(h: gcry_md_hd_t, key: *const c_void, keylen: size_t) -> gcry_error_t;
 
     pub fn gcry_mac_open(handle: *mut gcry_mac_hd_t, algo: c_int,
             flags: c_uint, ctx: gcry_ctx_t) -> gcry_error_t;
     pub fn gcry_mac_close(h: gcry_mac_hd_t);
     pub fn gcry_mac_ctl(h: gcry_mac_hd_t, cmd: c_int, buffer: *mut c_void,
-            buflen: usize) -> gcry_error_t;
+            buflen: size_t) -> gcry_error_t;
     pub fn gcry_mac_algo_info(algo: c_int, what: c_int, buffer: *mut c_void,
-            nbytes: *mut usize) -> gcry_error_t;
+            nbytes: *mut size_t) -> gcry_error_t;
     pub fn gcry_mac_setkey(h: gcry_mac_hd_t, key: *const c_void,
-            keylen: usize) -> gcry_error_t;
+            keylen: size_t) -> gcry_error_t;
     pub fn gcry_mac_setiv(h: gcry_mac_hd_t, iv: *const c_void,
-            ivlen: usize) -> gcry_error_t;
+            ivlen: size_t) -> gcry_error_t;
     pub fn gcry_mac_write(h: gcry_mac_hd_t, buffer: *const c_void,
-            length: usize) -> gcry_error_t;
-    pub fn gcry_mac_read(h: gcry_mac_hd_t, buffer: *mut c_void, buflen: *mut usize) -> gcry_error_t;
+            length: size_t) -> gcry_error_t;
+    pub fn gcry_mac_read(h: gcry_mac_hd_t, buffer: *mut c_void, buflen: *mut size_t) -> gcry_error_t;
     pub fn gcry_mac_verify(h: gcry_mac_hd_t, buffer: *const c_void,
-            buflen: usize) -> gcry_error_t;
+            buflen: size_t) -> gcry_error_t;
     pub fn gcry_mac_get_algo(hd: gcry_mac_hd_t) -> c_int;
     pub fn gcry_mac_get_algo_maclen(algo: c_int) -> c_uint;
     pub fn gcry_mac_get_algo_keylen(algo: c_int) -> c_uint;
     pub fn gcry_mac_algo_name(algorithm: c_int) -> *const c_char;
     pub fn gcry_mac_map_name(name: *const c_char) -> c_int;
 
-    pub fn gcry_kdf_derive(passphrase: *const c_void, passphraselen: usize,
+    pub fn gcry_kdf_derive(passphrase: *const c_void, passphraselen: size_t,
             algo: c_int, subalgo: c_int,
-            salt: *const c_void, saltlen: usize,
+            salt: *const c_void, saltlen: size_t,
             iterations: c_ulong,
-            keysize: usize, keybuffer: *mut c_void) -> gcry_error_t;
+            keysize: size_t, keybuffer: *mut c_void) -> gcry_error_t;
 
-    pub fn gcry_randomize(buffer: *mut c_void, length: usize, level: gcry_random_level_t);
-    pub fn gcry_random_add_bytes(buffer: *const c_void, length: usize,
+    pub fn gcry_randomize(buffer: *mut c_void, length: size_t, level: gcry_random_level_t);
+    pub fn gcry_random_add_bytes(buffer: *const c_void, length: size_t,
             quality: c_int) -> gcry_error_t;
-    pub fn gcry_random_bytes(nbytes: usize, level: gcry_random_level_t) -> *mut c_void;
-    pub fn gcry_random_bytes_secure(nbytes: usize, level: gcry_random_level_t) -> *mut c_void;
-    pub fn gcry_create_nonce(buffer: *mut c_void, length: usize);
+    pub fn gcry_random_bytes(nbytes: size_t, level: gcry_random_level_t) -> *mut c_void;
+    pub fn gcry_random_bytes_secure(nbytes: size_t, level: gcry_random_level_t) -> *mut c_void;
+    pub fn gcry_create_nonce(buffer: *mut c_void, length: size_t);
     pub fn gcry_mpi_randomize(w: gcry_mpi_t, nbits: c_uint, level: gcry_random_level_t);
 
     pub fn gcry_prime_generate(prime: *mut gcry_mpi_t, prime_bits: c_uint,
@@ -283,7 +283,7 @@ extern {
     pub fn gcry_ctx_release(ctx: gcry_ctx_t);
 
     pub fn gcry_log_debug(fmt: *const c_char, ...);
-    pub fn gcry_log_debughex(text: *const c_char, buffer: *const c_void, length: usize);
+    pub fn gcry_log_debughex(text: *const c_char, buffer: *const c_void, length: size_t);
     pub fn gcry_log_debugmpi(text: *const c_char, mpi: gcry_mpi_t);
     pub fn gcry_log_debugpnt(text: *const c_char, point: gcry_mpi_point_t, ctx: gcry_ctx_t);
     pub fn gcry_log_debugsxp(text: *const c_char, sexp: gcry_sexp_t);
@@ -298,17 +298,17 @@ extern {
     pub fn gcry_set_fatalerror_handler(fnc: gcry_handler_error_t, opaque: *mut c_void);
     //pub fn gcry_set_log_handler(f: gcry_handler_log_t, opaque: *mut c_void);
 
-    pub fn gcry_malloc(n: usize) -> *mut c_void;
-    pub fn gcry_calloc(n: usize, m: usize) -> *mut c_void;
-    pub fn gcry_malloc_secure(n: usize) -> *mut c_void;
-    pub fn gcry_calloc_secure(n: usize, m: usize) -> *mut c_void;
-    pub fn gcry_realloc(a: *mut c_void, n: usize) -> *mut c_void;
+    pub fn gcry_malloc(n: size_t) -> *mut c_void;
+    pub fn gcry_calloc(n: size_t, m: size_t) -> *mut c_void;
+    pub fn gcry_malloc_secure(n: size_t) -> *mut c_void;
+    pub fn gcry_calloc_secure(n: size_t, m: size_t) -> *mut c_void;
+    pub fn gcry_realloc(a: *mut c_void, n: size_t) -> *mut c_void;
     pub fn gcry_strdup(string: *const c_char) -> *mut c_char;
-    pub fn gcry_xmalloc(n: usize) -> *mut c_void;
-    pub fn gcry_xcalloc(n: usize, m: usize) -> *mut c_void;
-    pub fn gcry_xmalloc_secure(n: usize) -> *mut c_void;
-    pub fn gcry_xcalloc_secure(n: usize, m: usize) -> *mut c_void;
-    pub fn gcry_xrealloc(a: *mut c_void, n: usize) -> *mut c_void;
+    pub fn gcry_xmalloc(n: size_t) -> *mut c_void;
+    pub fn gcry_xcalloc(n: size_t, m: size_t) -> *mut c_void;
+    pub fn gcry_xmalloc_secure(n: size_t) -> *mut c_void;
+    pub fn gcry_xcalloc_secure(n: size_t, m: size_t) -> *mut c_void;
+    pub fn gcry_xrealloc(a: *mut c_void, n: size_t) -> *mut c_void;
     pub fn gcry_xstrdup(a: *const c_char) -> *mut c_char;
     pub fn gcry_free(a: *mut c_void);
     pub fn gcry_is_secure(a: *const c_void) -> c_int;
@@ -325,52 +325,52 @@ pub unsafe fn gcry_fast_random_poll() -> gcry_error_t {
 
 #[inline]
 pub unsafe fn gcry_cipher_test_algo(a: c_int) -> gcry_error_t {
-    gcry_cipher_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_cipher_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
 }
 #[inline]
 pub unsafe fn gcry_md_test_algo(a: c_int) -> gcry_error_t {
-    gcry_md_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_md_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
 }
 #[inline]
 pub unsafe fn gcry_mac_test_algo(a: c_int) -> gcry_error_t {
-    gcry_mac_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_mac_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
 }
 #[inline]
 pub unsafe fn gcry_pk_test_algo(a: c_int) -> gcry_error_t {
-    gcry_pk_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_pk_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
 }
 
 #[inline]
 pub unsafe fn gcry_cipher_reset(h: gcry_cipher_hd_t) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_RESET as c_int, ptr::null_mut(), 0)
+    gcry_cipher_ctl(h, GCRYCTL_RESET, ptr::null_mut(), 0)
 }
 #[inline]
 pub unsafe fn gcry_cipher_sync(h: gcry_cipher_hd_t) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_CFB_SYNC as c_int, ptr::null_mut(), 0)
+    gcry_cipher_ctl(h, GCRYCTL_CFB_SYNC, ptr::null_mut(), 0)
 }
 #[inline]
 pub unsafe fn gcry_cipher_cts(h: gcry_cipher_hd_t, on: bool) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_SET_CBC_CTS as c_int, ptr::null_mut(), if on { 1 } else { 0 })
+    gcry_cipher_ctl(h, GCRYCTL_SET_CBC_CTS, ptr::null_mut(), if on { 1 } else { 0 })
 }
 #[inline]
 pub unsafe fn gcry_cipher_set_sbox(h: gcry_cipher_hd_t, oid: *const c_char) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_SET_SBOX as c_int, oid as *mut _, 0)
+    gcry_cipher_ctl(h, GCRYCTL_SET_SBOX, oid as *mut _, 0)
 }
 #[inline]
 pub unsafe fn gcry_cipher_final(h: gcry_cipher_hd_t) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_FINALIZE as c_int, ptr::null_mut(), 0)
+    gcry_cipher_ctl(h, GCRYCTL_FINALIZE, ptr::null_mut(), 0)
 }
 
 #[inline]
 pub unsafe fn gcry_md_final(h: gcry_md_hd_t) -> gcry_error_t {
-    gcry_md_ctl(h, GCRYCTL_FINALIZE as c_int, ptr::null_mut(), 0)
+    gcry_md_ctl(h, GCRYCTL_FINALIZE, ptr::null_mut(), 0)
 }
 #[inline]
-pub unsafe fn gcry_md_get_asnoid(a: c_int, b: *mut c_void, n: &mut usize) -> gcry_error_t {
-    gcry_md_algo_info(a, GCRYCTL_GET_ASNOID as c_int, b, n)
+pub unsafe fn gcry_md_get_asnoid(a: c_int, b: *mut c_void, n: &mut size_t) -> gcry_error_t {
+    gcry_md_algo_info(a, GCRYCTL_GET_ASNOID, b, n)
 }
 
 #[inline]
 pub unsafe fn gcry_mac_reset(h: gcry_mac_hd_t) -> gcry_error_t {
-    gcry_mac_ctl(h, GCRYCTL_RESET as c_int, ptr::null_mut(), 0)
+    gcry_mac_ctl(h, GCRYCTL_RESET, ptr::null_mut(), 0)
 }

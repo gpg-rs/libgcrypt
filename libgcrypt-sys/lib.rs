@@ -1,4 +1,5 @@
 #![allow(non_camel_case_types)]
+extern crate libc;
 extern crate libgpg_error_sys;
 
 pub use self::consts::*;

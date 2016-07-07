@@ -9,6 +9,7 @@ authors = ["John Schug <john.ips.schug@gmail.com>"]
 keywords = ["crypto", "cryptography"]
 
 [dependencies]
+libc = "0.2"
 bitflags = "0.3"
 lazy_static = "0.2"
 gpg-error = "0.1"

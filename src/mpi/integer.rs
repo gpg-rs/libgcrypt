@@ -2,11 +2,11 @@ use std::cmp::Ordering;
 use std::ffi::CString;
 use std::fmt;
 use std::ops;
-use std::os::raw::{c_uint, c_ulong};
 use std::ptr;
 use std::str;
 
 use ffi;
+use libc::c_uint;
 
 use {Wrapper, Token};
 use error::{self, Error, Result};
@@ -70,16 +70,16 @@ impl Integer {
         Integer::from_uint(token, 1)
     }
 
-    pub fn new(_: Token, nbits: usize) -> Integer {
-        unsafe { Integer { raw: ffi::gcry_mpi_new(nbits as c_uint) } }
+    pub fn new(_: Token, nbits: u16) -> Integer {
+        unsafe { Integer { raw: ffi::gcry_mpi_new(nbits.into()) } }
     }
 
-    pub fn new_secure(_: Token, nbits: usize) -> Integer {
-        unsafe { Integer { raw: ffi::gcry_mpi_snew(nbits as c_uint) } }
+    pub fn new_secure(_: Token, nbits: u16) -> Integer {
+        unsafe { Integer { raw: ffi::gcry_mpi_snew(nbits.into()) } }
     }
 
-    pub fn from_uint(_: Token, n: usize) -> Integer {
-        unsafe { Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n as c_ulong)) }
+    pub fn from_uint(_: Token, n: u32) -> Integer {
+        unsafe { Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n.into())) }
     }
 
     pub fn from_bytes<B: ?Sized>(_: Token, format: Format, bytes: &B) -> Result<Integer>
@@ -144,15 +144,15 @@ impl Integer {
         }
     }
 
-    pub fn set(&mut self, n: usize) {
+    pub fn set(&mut self, n: u32) {
         unsafe {
-            ffi::gcry_mpi_set_ui(self.raw, n as c_ulong);
+            ffi::gcry_mpi_set_ui(self.raw, n.into());
         }
     }
 
-    pub fn randomize(&mut self, nbits: usize, level: Level) {
+    pub fn randomize(&mut self, nbits: u16, level: Level) {
         unsafe {
-            ffi::gcry_mpi_randomize(self.raw, nbits as c_uint, level.raw());
+            ffi::gcry_mpi_randomize(self.raw, nbits.into(), level.raw());
         }
     }
 
@@ -235,9 +235,9 @@ impl Integer {
         (self, rem)
     }
 
-    pub fn ldexp(self, e: usize) -> Integer {
+    pub fn ldexp(self, e: u32) -> Integer {
         unsafe {
-            ffi::gcry_mpi_mul_2exp(self.raw, self.raw, e as c_ulong);
+            ffi::gcry_mpi_mul_2exp(self.raw, self.raw, e.into());
         }
         self
     }
@@ -268,21 +268,21 @@ impl fmt::Display for Integer {
     }
 }
 
-impl PartialEq<usize> for Integer {
-    fn eq(&self, other: &usize) -> bool {
+impl PartialEq<u32> for Integer {
+    fn eq(&self, other: &u32) -> bool {
         self.partial_cmp(other).unwrap() == Ordering::Equal
     }
 }
 
-impl PartialEq<Integer> for usize {
+impl PartialEq<Integer> for u32 {
     fn eq(&self, other: &Integer) -> bool {
         self.partial_cmp(other).unwrap() == Ordering::Equal
     }
 }
 
-impl PartialOrd<usize> for Integer {
-    fn partial_cmp(&self, other: &usize) -> Option<Ordering> {
-        let result = unsafe { ffi::gcry_mpi_cmp_ui(self.raw, *other as c_ulong) };
+impl PartialOrd<u32> for Integer {
+    fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
+        let result = unsafe { ffi::gcry_mpi_cmp_ui(self.raw, (*other).into()) };
         match result {
             x if x < 0 => Some(Ordering::Less),
             x if x > 0 => Some(Ordering::Greater),
@@ -291,7 +291,7 @@ impl PartialOrd<usize> for Integer {
     }
 }
 
-impl PartialOrd<Integer> for usize {
+impl PartialOrd<Integer> for u32 {
     fn partial_cmp(&self, other: &Integer) -> Option<Ordering> {
         match other.partial_cmp(self) {
             Some(Ordering::Less) => Some(Ordering::Greater),

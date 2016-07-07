@@ -1,4 +1,3 @@
-use std::os::raw::c_uint;
 use std::ptr;
 
 use ffi;
@@ -56,8 +55,8 @@ impl Point {
         Point::new(token, 0)
     }
 
-    pub fn new(_: Token, nbits: usize) -> Point {
-        unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits as c_uint)) }
+    pub fn new(_: Token, nbits: u16) -> Point {
+        unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits.into())) }
     }
 
     pub fn from(x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) -> Point {
