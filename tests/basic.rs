@@ -50,9 +50,9 @@ fn check_cipher(token: Token, algo: cipher::Algorithm, mode: cipher::Mode, flags
 
     cipher.reset().unwrap();
     output.copy_from_slice(&plain);
-    cipher.encrypt_in_place(&mut output).unwrap();
+    cipher.encrypt_inplace(&mut output).unwrap();
     cipher.reset().unwrap();
-    cipher.decrypt_in_place(&mut output).unwrap();
+    cipher.decrypt_inplace(&mut output).unwrap();
     assert_eq!(&plain[..], &output[..]);
 }
 
@@ -203,7 +203,7 @@ fn test_bulk_cipher_modes() {
         let mut digest = MessageDigest::new(token, digest::MD_SHA1, digest::FLAGS_NONE).unwrap();
         digest.write(&output);
         assert_eq!(&spec.4, digest.get_only_digest().unwrap());
-        hdd.decrypt_in_place(&mut output).unwrap();
+        hdd.decrypt_inplace(&mut output).unwrap();
         assert_eq!(&buffer, &output);
     }
 }

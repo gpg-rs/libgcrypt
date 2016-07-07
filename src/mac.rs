@@ -10,35 +10,41 @@ use error::Result;
 
 enum_wrapper! {
     pub enum Algorithm: c_int {
-        HMAC_SHA256 = ffi::GCRY_MAC_HMAC_SHA256,
-        HMAC_SHA224 = ffi::GCRY_MAC_HMAC_SHA224,
-        HMAC_SHA512 = ffi::GCRY_MAC_HMAC_SHA512,
-        HMAC_SHA384 = ffi::GCRY_MAC_HMAC_SHA384,
-        HMAC_SHA1 = ffi::GCRY_MAC_HMAC_SHA1,
-        HMAC_MD5 = ffi::GCRY_MAC_HMAC_MD5,
-        HMAC_MD4 = ffi::GCRY_MAC_HMAC_MD4,
-        HMAC_RMD160 = ffi::GCRY_MAC_HMAC_RMD160,
-        HMAC_TIGER1 = ffi::GCRY_MAC_HMAC_TIGER1,
-        HMAC_WHIRLPOOL = ffi::GCRY_MAC_HMAC_WHIRLPOOL,
+        HMAC_SHA256       = ffi::GCRY_MAC_HMAC_SHA256,
+        HMAC_SHA224       = ffi::GCRY_MAC_HMAC_SHA224,
+        HMAC_SHA512       = ffi::GCRY_MAC_HMAC_SHA512,
+        HMAC_SHA384       = ffi::GCRY_MAC_HMAC_SHA384,
+        HMAC_SHA1         = ffi::GCRY_MAC_HMAC_SHA1,
+        HMAC_MD5          = ffi::GCRY_MAC_HMAC_MD5,
+        HMAC_MD4          = ffi::GCRY_MAC_HMAC_MD4,
+        HMAC_RMD160       = ffi::GCRY_MAC_HMAC_RMD160,
+        HMAC_TIGER1       = ffi::GCRY_MAC_HMAC_TIGER1,
+        HMAC_WHIRLPOOL    = ffi::GCRY_MAC_HMAC_WHIRLPOOL,
         HMAC_GOSTR3411_94 = ffi::GCRY_MAC_HMAC_GOSTR3411_94,
-        HMAC_STRIBOG256 = ffi::GCRY_MAC_HMAC_STRIBOG256,
-        HMAC_STRIBOG512 = ffi::GCRY_MAC_HMAC_STRIBOG512,
-        CMAC_AES = ffi::GCRY_MAC_CMAC_AES,
-        CMAC_3DES = ffi::GCRY_MAC_CMAC_3DES,
-        CMAC_CAMELLIA = ffi::GCRY_MAC_CMAC_CAMELLIA,
-        CMAC_CAST5 = ffi::GCRY_MAC_CMAC_CAST5,
-        CMAC_BLOWFISH = ffi::GCRY_MAC_CMAC_BLOWFISH,
-        CMAC_TWOFISH = ffi::GCRY_MAC_CMAC_TWOFISH,
-        CMAC_SERPENT = ffi::GCRY_MAC_CMAC_SERPENT,
-        CMAC_SEED = ffi::GCRY_MAC_CMAC_SEED,
-        CMAC_RFC2268 = ffi::GCRY_MAC_CMAC_RFC2268,
-        CMAC_IDEA = ffi::GCRY_MAC_CMAC_IDEA,
-        CMAC_GOST28147 = ffi::GCRY_MAC_CMAC_GOST28147,
-        GMAC_AES = ffi::GCRY_MAC_GMAC_AES,
-        GMAC_CAMELLIA = ffi::GCRY_MAC_GMAC_CAMELLIA,
-        GMAC_TWOFISH = ffi::GCRY_MAC_GMAC_TWOFISH,
-        GMAC_SERPENT = ffi::GCRY_MAC_GMAC_SERPENT,
-        GMAC_SEED = ffi::GCRY_MAC_GMAC_SEED,
+        HMAC_STRIBOG256   = ffi::GCRY_MAC_HMAC_STRIBOG256,
+        HMAC_STRIBOG512   = ffi::GCRY_MAC_HMAC_STRIBOG512,
+        CMAC_AES          = ffi::GCRY_MAC_CMAC_AES,
+        CMAC_3DES         = ffi::GCRY_MAC_CMAC_3DES,
+        CMAC_CAMELLIA     = ffi::GCRY_MAC_CMAC_CAMELLIA,
+        CMAC_CAST5        = ffi::GCRY_MAC_CMAC_CAST5,
+        CMAC_BLOWFISH     = ffi::GCRY_MAC_CMAC_BLOWFISH,
+        CMAC_TWOFISH      = ffi::GCRY_MAC_CMAC_TWOFISH,
+        CMAC_SERPENT      = ffi::GCRY_MAC_CMAC_SERPENT,
+        CMAC_SEED         = ffi::GCRY_MAC_CMAC_SEED,
+        CMAC_RFC2268      = ffi::GCRY_MAC_CMAC_RFC2268,
+        CMAC_IDEA         = ffi::GCRY_MAC_CMAC_IDEA,
+        CMAC_GOST28147    = ffi::GCRY_MAC_CMAC_GOST28147,
+        GMAC_AES          = ffi::GCRY_MAC_GMAC_AES,
+        GMAC_CAMELLIA     = ffi::GCRY_MAC_GMAC_CAMELLIA,
+        GMAC_TWOFISH      = ffi::GCRY_MAC_GMAC_TWOFISH,
+        GMAC_SERPENT      = ffi::GCRY_MAC_GMAC_SERPENT,
+        GMAC_SEED         = ffi::GCRY_MAC_GMAC_SEED,
+        POLY1305          = ffi::GCRY_MAC_POLY1305,
+        POLY1305_AES      = ffi::GCRY_MAC_POLY1305_AES,
+        POLY1305_CAMELLIA = ffi::GCRY_MAC_POLY1305_CAMELLIA,
+        POLY1305_TWOFISH  = ffi::GCRY_MAC_POLY1305_TWOFISH,
+        POLY1305_SERPENT  = ffi::GCRY_MAC_POLY1305_SERPENT,
+        POLY1305_SEED     = ffi::GCRY_MAC_POLY1305_SEED,
     }
 }
 
@@ -55,10 +61,7 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_mac_algo_info(self.0,
-                                    ffi::GCRYCTL_TEST_ALGO as c_int,
-                                    ptr::null_mut(),
-                                    ptr::null_mut()) == 0
+            ffi::gcry_mac_test_algo(self.0) == 0
         }
     }
 
@@ -77,6 +80,7 @@ impl Algorithm {
 
 bitflags! {
     flags Flags: ffi::gcry_mac_flags {
+        const FLAGS_NONE = 0,
         const FLAG_SECURE = ffi::GCRY_MAC_FLAG_SECURE,
     }
 }
@@ -132,10 +136,7 @@ impl Mac {
 
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_ctl(self.raw,
-                                          ffi::GCRYCTL_RESET as c_int,
-                                          ptr::null_mut(),
-                                          0));
+            return_err!(ffi::gcry_mac_reset(self.raw));
         }
         Ok(())
     }

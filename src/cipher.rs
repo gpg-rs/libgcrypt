@@ -10,36 +10,37 @@ use error::Result;
 
 enum_wrapper! {
     pub enum Algorithm: c_int {
-        CIPHER_IDEA = ffi::GCRY_CIPHER_IDEA,
-        CIPHER_3DES = ffi::GCRY_CIPHER_3DES,
-        CIPHER_CAST5 = ffi::GCRY_CIPHER_CAST5,
-        CIPHER_BLOWFISH = ffi::GCRY_CIPHER_BLOWFISH,
+        CIPHER_IDEA        = ffi::GCRY_CIPHER_IDEA,
+        CIPHER_3DES        = ffi::GCRY_CIPHER_3DES,
+        CIPHER_CAST5       = ffi::GCRY_CIPHER_CAST5,
+        CIPHER_BLOWFISH    = ffi::GCRY_CIPHER_BLOWFISH,
         CIPHER_SAFER_SK128 = ffi::GCRY_CIPHER_SAFER_SK128,
-        CIPHER_DES_SK = ffi::GCRY_CIPHER_DES_SK,
-        CIPHER_AES = ffi::GCRY_CIPHER_AES,
-        CIPHER_AES128 = ffi::GCRY_CIPHER_AES128,
-        CIPHER_AES192 = ffi::GCRY_CIPHER_AES192,
-        CIPHER_AES256 = ffi::GCRY_CIPHER_AES256,
-        CIPHER_RIJNDAEL = ffi::GCRY_CIPHER_RIJNDAEL,
+        CIPHER_DES_SK      = ffi::GCRY_CIPHER_DES_SK,
+        CIPHER_AES         = ffi::GCRY_CIPHER_AES,
+        CIPHER_AES128      = ffi::GCRY_CIPHER_AES128,
+        CIPHER_AES192      = ffi::GCRY_CIPHER_AES192,
+        CIPHER_AES256      = ffi::GCRY_CIPHER_AES256,
+        CIPHER_RIJNDAEL    = ffi::GCRY_CIPHER_RIJNDAEL,
         CIPHER_RIJNDAEL128 = ffi::GCRY_CIPHER_RIJNDAEL128,
         CIPHER_RIJNDAEL192 = ffi::GCRY_CIPHER_RIJNDAEL192,
         CIPHER_RIJNDAEL256 = ffi::GCRY_CIPHER_RIJNDAEL256,
-        CIPHER_TWOFISH = ffi::GCRY_CIPHER_TWOFISH,
-        CIPHER_ARCFOUR = ffi::GCRY_CIPHER_ARCFOUR,
-        CIPHER_DES = ffi::GCRY_CIPHER_DES,
-        CIPHER_TWOFISH128 = ffi::GCRY_CIPHER_TWOFISH128,
-        CIPHER_SERPENT128 = ffi::GCRY_CIPHER_SERPENT128,
-        CIPHER_SERPENT192 = ffi::GCRY_CIPHER_SERPENT192,
-        CIPHER_SERPENT256 = ffi::GCRY_CIPHER_SERPENT256,
-        CIPHER_RFC2268_40 = ffi::GCRY_CIPHER_RFC2268_40,
+        CIPHER_TWOFISH     = ffi::GCRY_CIPHER_TWOFISH,
+        CIPHER_ARCFOUR     = ffi::GCRY_CIPHER_ARCFOUR,
+        CIPHER_DES         = ffi::GCRY_CIPHER_DES,
+        CIPHER_TWOFISH128  = ffi::GCRY_CIPHER_TWOFISH128,
+        CIPHER_SERPENT128  = ffi::GCRY_CIPHER_SERPENT128,
+        CIPHER_SERPENT192  = ffi::GCRY_CIPHER_SERPENT192,
+        CIPHER_SERPENT256  = ffi::GCRY_CIPHER_SERPENT256,
+        CIPHER_RFC2268_40  = ffi::GCRY_CIPHER_RFC2268_40,
         CIPHER_RFC2268_128 = ffi::GCRY_CIPHER_RFC2268_128,
-        CIPHER_SEED = ffi::GCRY_CIPHER_SEED,
+        CIPHER_SEED        = ffi::GCRY_CIPHER_SEED,
         CIPHER_CAMELLIA128 = ffi::GCRY_CIPHER_CAMELLIA128,
         CIPHER_CAMELLIA192 = ffi::GCRY_CIPHER_CAMELLIA192,
         CIPHER_CAMELLIA256 = ffi::GCRY_CIPHER_CAMELLIA256,
-        CIPHER_SALSA20 = ffi::GCRY_CIPHER_SALSA20,
-        CIPHER_SALSA20R12 = ffi::GCRY_CIPHER_SALSA20R12,
-        CIPHER_GOST28147 = ffi::GCRY_CIPHER_GOST28147,
+        CIPHER_SALSA20     = ffi::GCRY_CIPHER_SALSA20,
+        CIPHER_SALSA20R12  = ffi::GCRY_CIPHER_SALSA20R12,
+        CIPHER_GOST28147   = ffi::GCRY_CIPHER_GOST28147,
+        CIPHER_CHACHA20    = ffi::GCRY_CIPHER_CHACHA20,
     }
 }
 
@@ -56,10 +57,7 @@ impl Algorithm {
 
     pub fn is_available(&self, _: Token) -> bool {
         unsafe {
-            ffi::gcry_cipher_algo_info(self.0,
-                                       ffi::GCRYCTL_TEST_ALGO as c_int,
-                                       ptr::null_mut(),
-                                       ptr::null_mut()) == 0
+            ffi::gcry_cipher_test_algo(self.0) == 0
         }
     }
 
@@ -78,15 +76,18 @@ impl Algorithm {
 
 enum_wrapper! {
     pub enum Mode: c_int {
-        MODE_ECB = ffi::GCRY_CIPHER_MODE_ECB,
-        MODE_CFB = ffi::GCRY_CIPHER_MODE_CFB,
-        MODE_CBC = ffi::GCRY_CIPHER_MODE_CBC,
-        MODE_STREAM = ffi::GCRY_CIPHER_MODE_STREAM,
-        MODE_OFB = ffi::GCRY_CIPHER_MODE_OFB,
-        MODE_CTR = ffi::GCRY_CIPHER_MODE_CTR,
-        MODE_AESWRAP = ffi::GCRY_CIPHER_MODE_AESWRAP,
-        MODE_CCM = ffi::GCRY_CIPHER_MODE_CCM,
-        MODE_GCM = ffi::GCRY_CIPHER_MODE_GCM,
+        MODE_ECB      = ffi::GCRY_CIPHER_MODE_ECB,
+        MODE_CFB      = ffi::GCRY_CIPHER_MODE_CFB,
+        MODE_CBC      = ffi::GCRY_CIPHER_MODE_CBC,
+        MODE_STREAM   = ffi::GCRY_CIPHER_MODE_STREAM,
+        MODE_OFB      = ffi::GCRY_CIPHER_MODE_OFB,
+        MODE_CTR      = ffi::GCRY_CIPHER_MODE_CTR,
+        MODE_AESWRAP  = ffi::GCRY_CIPHER_MODE_AESWRAP,
+        MODE_CCM      = ffi::GCRY_CIPHER_MODE_CCM,
+        MODE_GCM      = ffi::GCRY_CIPHER_MODE_GCM,
+        MODE_POLY1305 = ffi::GCRY_CIPHER_MODE_POLY1305,
+        MODE_OCB      = ffi::GCRY_CIPHER_MODE_OCB,
+        MODE_CFB8     = ffi::GCRY_CIPHER_MODE_CFB8,
     }
 }
 
@@ -104,11 +105,11 @@ impl Mode {
 
 bitflags! {
     flags Flags: ffi::gcry_cipher_flags {
-        const FLAGS_NONE = 0,
-        const FLAG_SECURE = ffi::GCRY_CIPHER_SECURE,
+        const FLAGS_NONE       = 0,
+        const FLAG_SECURE      = ffi::GCRY_CIPHER_SECURE,
         const FLAG_ENABLE_SYNC = ffi::GCRY_CIPHER_ENABLE_SYNC,
-        const FLAG_CBC_CTS = ffi::GCRY_CIPHER_CBC_CTS,
-        const FLAG_CBC_MAC = ffi::GCRY_CIPHER_CBC_MAC,
+        const FLAG_CBC_CTS     = ffi::GCRY_CIPHER_CBC_CTS,
+        const FLAG_CBC_MAC     = ffi::GCRY_CIPHER_CBC_MAC,
     }
 }
 
@@ -170,10 +171,7 @@ impl Cipher {
 
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_cipher_ctl(self.raw,
-                                             ffi::GCRYCTL_RESET as c_int,
-                                             ptr::null_mut(),
-                                             0));
+            return_err!(ffi::gcry_cipher_reset(self.raw));
         }
         Ok(())
     }
@@ -223,7 +221,7 @@ impl Cipher {
         Ok(())
     }
 
-    pub fn encrypt_in_place(&mut self, plain: &mut [u8]) -> Result<()> {
+    pub fn encrypt_inplace(&mut self, plain: &mut [u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_encrypt(self.raw,
                                                  plain.as_mut_ptr() as *mut _,
@@ -234,7 +232,7 @@ impl Cipher {
         Ok(())
     }
 
-    pub fn decrypt_in_place(&mut self, cipher: &mut [u8]) -> Result<()> {
+    pub fn decrypt_inplace(&mut self, cipher: &mut [u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_decrypt(self.raw,
                                                  cipher.as_mut_ptr() as *mut _,

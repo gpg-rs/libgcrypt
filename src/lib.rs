@@ -184,14 +184,14 @@ pub fn get_token() -> Option<Token> {
     }
 }
 
-pub unsafe trait Wrapper {
+pub unsafe trait Wrapper: Sized {
     type Raw: Copy;
 
     unsafe fn from_raw(raw: Self::Raw) -> Self;
+
     fn as_raw(&self) -> Self::Raw;
-    fn into_raw(self) -> Self::Raw
-        where Self: Sized
-    {
+
+    fn into_raw(self) -> Self::Raw {
         let raw = self.as_raw();
         mem::forget(self);
         raw

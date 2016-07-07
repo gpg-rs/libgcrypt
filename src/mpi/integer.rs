@@ -83,8 +83,7 @@ impl Integer {
     }
 
     pub fn from_bytes<B: ?Sized>(_: Token, format: Format, bytes: &B) -> Result<Integer>
-        where B: AsRef<[u8]>
-    {
+    where B: AsRef<[u8]> {
         let bytes = bytes.as_ref();
         let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
         unsafe {
@@ -376,8 +375,7 @@ macro_rules! impl_binary_op {
 impl_binary_op!(Add, add, |x, y| ffi::gcry_mpi_add(x, x, y));
 impl_binary_op!(Sub, sub, |x, y| ffi::gcry_mpi_sub(x, x, y));
 impl_binary_op!(Mul, mul, |x, y| ffi::gcry_mpi_mul(x, x, y));
-impl_binary_op!(Div,
-                div,
+impl_binary_op!(Div, div,
                 |x, y| ffi::gcry_mpi_div(x, ptr::null_mut(), x, y, 0));
 impl_binary_op!(Rem, rem, |x, y| ffi::gcry_mpi_mod(x, x, y));
 

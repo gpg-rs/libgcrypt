@@ -11,26 +11,33 @@ use error::Result;
 
 enum_wrapper! {
     pub enum Algorithm: c_int {
-        MD_MD5 = ffi::GCRY_MD_MD5,
-        MD_SHA1 = ffi::GCRY_MD_SHA1,
-        MD_RMD160 = ffi::GCRY_MD_RMD160,
-        MD_MD2 = ffi::GCRY_MD_MD2,
-        MD_TIGER = ffi::GCRY_MD_TIGER,
-        MD_HAVAL = ffi::GCRY_MD_HAVAL,
-        MD_SHA256 = ffi::GCRY_MD_SHA256,
-        MD_SHA384 = ffi::GCRY_MD_SHA384,
-        MD_SHA512 = ffi::GCRY_MD_SHA512,
-        MD_SHA224 = ffi::GCRY_MD_SHA224,
-        MD_MD4 = ffi::GCRY_MD_MD4,
-        MD_CRC32 = ffi::GCRY_MD_CRC32,
+        MD_MD5           = ffi::GCRY_MD_MD5,
+        MD_SHA1          = ffi::GCRY_MD_SHA1,
+        MD_RMD160        = ffi::GCRY_MD_RMD160,
+        MD_MD2           = ffi::GCRY_MD_MD2,
+        MD_TIGER         = ffi::GCRY_MD_TIGER,
+        MD_HAVAL         = ffi::GCRY_MD_HAVAL,
+        MD_SHA256        = ffi::GCRY_MD_SHA256,
+        MD_SHA384        = ffi::GCRY_MD_SHA384,
+        MD_SHA512        = ffi::GCRY_MD_SHA512,
+        MD_SHA224        = ffi::GCRY_MD_SHA224,
+        MD_MD4           = ffi::GCRY_MD_MD4,
+        MD_CRC32         = ffi::GCRY_MD_CRC32,
         MD_CRC32_RFC1510 = ffi::GCRY_MD_CRC32_RFC1510,
         MD_CRC24_RFC2440 = ffi::GCRY_MD_CRC24_RFC2440,
-        MD_WHIRLPOOL = ffi::GCRY_MD_WHIRLPOOL,
-        MD_TIGER1 = ffi::GCRY_MD_TIGER1,
-        MD_TIGER2 = ffi::GCRY_MD_TIGER2,
-        MD_GOSTR3411_94 = ffi::GCRY_MD_GOSTR3411_94,
-        MD_STRIBOG256 = ffi::GCRY_MD_STRIBOG256,
-        MD_STRIBOG512 = ffi::GCRY_MD_STRIBOG512,
+        MD_WHIRLPOOL     = ffi::GCRY_MD_WHIRLPOOL,
+        MD_TIGER1        = ffi::GCRY_MD_TIGER1,
+        MD_TIGER2        = ffi::GCRY_MD_TIGER2,
+        MD_GOSTR3411_94  = ffi::GCRY_MD_GOSTR3411_94,
+        MD_STRIBOG256    = ffi::GCRY_MD_STRIBOG256,
+        MD_STRIBOG512    = ffi::GCRY_MD_STRIBOG512,
+        MD_GOSTR3411_CP  = ffi::GCRY_MD_GOSTR3411_CP,
+        MD_SHA3_224      = ffi::GCRY_MD_SHA3_224,
+        MD_SHA3_256      = ffi::GCRY_MD_SHA3_256,
+        MD_SHA3_384      = ffi::GCRY_MD_SHA3_384,
+        MD_SHA3_512      = ffi::GCRY_MD_SHA3_512,
+        MD_SHAKE128      = ffi::GCRY_MD_SHAKE128,
+        MD_SHAKE256      = ffi::GCRY_MD_SHAKE256,
     }
 }
 
@@ -149,7 +156,7 @@ impl MessageDigest {
 
     pub fn finish(&mut self) {
         unsafe {
-            ffi::gcry_md_ctl(self.raw, ffi::GCRYCTL_FINALIZE as c_int, ptr::null_mut(), 0);
+            ffi::gcry_md_final(self.raw);
         }
     }
 
