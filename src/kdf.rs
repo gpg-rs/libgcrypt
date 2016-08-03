@@ -58,7 +58,15 @@ pub fn pbkdf2_derive(token: Token, algo: DigestAlgorithm, iter: u32,
     derive(token, KDF_PBKDF2, algo.raw() as i16, iter, pass, Some(salt), key)
 }
 
-pub fn scrypt_derive(token: Token, n: u32, p: u32,
+pub fn scrypt_derive(_: Token, n: u32, p: u32,
                      pass: &[u8], salt: &[u8], key: &mut [u8]) -> Result<()> {
-    derive(token, KDF_SCRYPT, n as i16, p, pass, Some(salt), key)
+    unsafe {
+        return_err!(ffi::gcry_kdf_derive(pass.as_ptr() as *const _,
+                                         pass.len(), KDF_SCRYPT.raw(),
+                                         n as c_int,
+                                         salt.as_ptr() as *const _, salt.len(),
+                                         p.into(),
+                                         key.len(), key.as_mut_ptr() as *mut _));
+    }
+    Ok(())
 }
