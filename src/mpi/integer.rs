@@ -70,11 +70,11 @@ impl Integer {
         Integer::from_uint(token, 1)
     }
 
-    pub fn new(_: Token, nbits: u16) -> Integer {
+    pub fn new(_: Token, nbits: u32) -> Integer {
         unsafe { Integer { raw: ffi::gcry_mpi_new(nbits.into()) } }
     }
 
-    pub fn new_secure(_: Token, nbits: u16) -> Integer {
+    pub fn new_secure(_: Token, nbits: u32) -> Integer {
         unsafe { Integer { raw: ffi::gcry_mpi_snew(nbits.into()) } }
     }
 
@@ -150,7 +150,7 @@ impl Integer {
         }
     }
 
-    pub fn randomize(&mut self, nbits: u16, level: Level) {
+    pub fn randomize(&mut self, nbits: u32, level: Level) {
         unsafe {
             ffi::gcry_mpi_randomize(self.raw, nbits.into(), level.raw());
         }

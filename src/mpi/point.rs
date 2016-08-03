@@ -55,7 +55,7 @@ impl Point {
         Point::new(token, 0)
     }
 
-    pub fn new(_: Token, nbits: u16) -> Point {
+    pub fn new(_: Token, nbits: u32) -> Point {
         unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits.into())) }
     }
 

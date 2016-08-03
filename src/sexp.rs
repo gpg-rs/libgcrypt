@@ -139,9 +139,9 @@ impl SExpression {
         }
     }
 
-    pub fn get(&self, idx: u16) -> Option<SExpression> {
+    pub fn get(&self, idx: u32) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_nth(self.raw, idx.into());
+            let result = ffi::gcry_sexp_nth(self.raw, idx as c_int);
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -150,10 +150,10 @@ impl SExpression {
         }
     }
 
-    pub fn get_bytes(&self, idx: u16) -> Option<&[u8]> {
+    pub fn get_bytes(&self, idx: u32) -> Option<&[u8]> {
         unsafe {
             let mut data_len = 0;
-            let result = ffi::gcry_sexp_nth_data(self.raw, idx.into(), &mut data_len);
+            let result = ffi::gcry_sexp_nth_data(self.raw, idx as c_int, &mut data_len);
             if !result.is_null() {
                 Some(slice::from_raw_parts(result as *const _, data_len))
             } else {
@@ -162,13 +162,13 @@ impl SExpression {
         }
     }
 
-    pub fn get_str(&self, idx: u16) -> Option<&str> {
+    pub fn get_str(&self, idx: u32) -> Option<&str> {
         self.get_bytes(idx).and_then(|b| str::from_utf8(b).ok())
     }
 
-    pub fn get_integer(&self, idx: u16, fmt: IntegerFormat) -> Option<Integer> {
+    pub fn get_integer(&self, idx: u32, fmt: IntegerFormat) -> Option<Integer> {
         unsafe {
-            let result = ffi::gcry_sexp_nth_mpi(self.raw, idx.into(), fmt as c_int);
+            let result = ffi::gcry_sexp_nth_mpi(self.raw, idx as c_int, fmt as c_int);
             if !result.is_null() {
                 Some(Integer::from_raw(result))
             } else {
@@ -331,7 +331,7 @@ impl<'a> Builder<'a> {
         }
     }
 
-    pub fn add_int(&mut self, n: isize) -> &mut Self {
+    pub fn add_int(&mut self, n: i32) -> &mut Self {
         assert_eq!(self.template.params.get(self.params.len()),
                    Some(&ParameterKind::Integer));
         self.params.push(Parameter::Integer(n as c_int));
@@ -339,8 +339,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn add_bytes<'s, 'b: 's, B: ?Sized>(&'s mut self, bytes: &'b B) -> &mut Self
-        where B: AsRef<[u8]>
-    {
+    where B: AsRef<[u8]> {
         assert_eq!(self.template.params.get(self.params.len()),
                    Some(&ParameterKind::Bytes));
         let bytes = bytes.as_ref();
