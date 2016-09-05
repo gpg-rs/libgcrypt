@@ -1,4 +1,5 @@
 use std::ffi::CString;
+use std::io::{self, Write};
 use std::ptr;
 
 use ffi;
@@ -153,6 +154,17 @@ impl Mac {
         unsafe {
             return_err!(ffi::gcry_mac_verify(self.0, buf.as_ptr() as *mut _, buf.len()));
         }
+        Ok(())
+    }
+}
+
+impl Write for Mac {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        try!(self.update(buf));
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
