@@ -140,7 +140,7 @@ pub fn is_initialized() -> bool {
     unsafe { ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED_P, 0) != 0 }
 }
 
-pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
+pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
     let _lock = CONTROL_LOCK.lock().unwrap();
     if !is_initialized() {
         unsafe {
@@ -150,7 +150,7 @@ pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
             }
             ffi::gcry_check_version(ptr::null());
         }
-        f(Initializer(()));
+        f(&mut Initializer(()));
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
         }
@@ -158,7 +158,7 @@ pub fn init<F: FnOnce(Initializer)>(f: F) -> Token {
     Token(())
 }
 
-pub fn init_fips_mode<F: FnOnce(Initializer)>(f: F) -> Token {
+pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
     let _lock = CONTROL_LOCK.lock().unwrap();
     if !is_initialized() {
         unsafe {
@@ -169,7 +169,7 @@ pub fn init_fips_mode<F: FnOnce(Initializer)>(f: F) -> Token {
             ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
             ffi::gcry_check_version(ptr::null());
         }
-        f(Initializer(()));
+        f(&mut Initializer(()));
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
         }
