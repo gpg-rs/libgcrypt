@@ -60,9 +60,5 @@ macro_rules! impl_wrapper {
 }
 
 pub unsafe fn from_cstr<'a>(s: *const c_char) -> Option<&'a str> {
-    if !s.is_null() {
-        CStr::from_ptr(s).to_str().ok()
-    } else {
-        None
-    }
+    s.as_ref().and_then(|s| CStr::from_ptr(s).to_str().ok())
 }

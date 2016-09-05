@@ -28,12 +28,9 @@ impl Curve {
 
     pub fn parameters(&self) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr());
-            if !result.is_null() {
-                Some(SExpression::from_raw(result))
-            } else {
-                None
-            }
+            ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr()).as_mut().map(|x| {
+                SExpression::from_raw(x)
+            })
         }
     }
 }
@@ -70,16 +67,13 @@ impl<'a> Iterator for Curves<'a> {
         let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
         unsafe {
             let mut nbits = 0;
-            let result = ffi::gcry_pk_get_curve(key, self.idx, &mut nbits);
-            if !result.is_null() {
+            ffi::gcry_pk_get_curve(key, self.idx, &mut nbits).as_ref().map(|x| {
                 self.idx = self.idx.checked_add(1).unwrap_or(-1);
-                Some(Curve {
-                    name: CStr::from_ptr(result),
+                Curve {
+                    name: CStr::from_ptr(x),
                     nbits: nbits as usize,
-                })
-            } else {
-                None
-            }
+                }
+            })
         }
     }
 
@@ -122,12 +116,9 @@ impl Context {
     pub fn get_integer<S: Into<String>>(&self, name: S) -> Option<Integer> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
-            let mpi = ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.0, 1);
-            if !mpi.is_null() {
-                Some(Integer::from_raw(mpi))
-            } else {
-                None
-            }
+            ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.0, 1).as_mut().map(|x| {
+                Integer::from_raw(x)
+            })
         }
     }
 
@@ -142,12 +133,9 @@ impl Context {
     pub fn get_point<S: Into<String>>(&self, name: S) -> Option<Point> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
-            let point = ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.0, 1);
-            if !point.is_null() {
-                Some(Point::from_raw(point))
-            } else {
-                None
-            }
+            ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.0, 1).as_mut().map(|x| {
+                Point::from_raw(x)
+            })
         }
     }
 

@@ -34,23 +34,17 @@ impl Buffer {
 
     pub fn new(_: Token, len: usize) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_malloc(len) as *mut u8;
-            if !buf.is_null() {
-                Ok(Buffer::from_raw(buf, len))
-            } else {
-                Err(Error::last_os_error())
-            }
+            ffi::gcry_malloc(len).as_mut().map(|x| {
+                Buffer::from_raw(x as *mut _ as *mut _, len)
+            }).ok_or_else(|| Error::last_os_error())
         }
     }
 
     pub fn new_secure(_: Token, len: usize) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_malloc_secure(len) as *mut u8;
-            if !buf.is_null() {
-                Ok(Buffer::from_raw(buf, len))
-            } else {
-                Err(Error::last_os_error())
-            }
+            ffi::gcry_malloc_secure(len).as_mut().map(|x| {
+                Buffer::from_raw(x as *mut _ as *mut _, len)
+            }).ok_or_else(|| Error::last_os_error())
         }
     }
 
@@ -69,23 +63,17 @@ impl Buffer {
 
     pub fn random(_: Token, len: usize, level: Level) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_random_bytes(len, level.raw()) as *mut u8;
-            if !buf.is_null() {
-                Ok(Buffer::from_raw(buf, len))
-            } else {
-                Err(Error::last_os_error())
-            }
+            ffi::gcry_random_bytes(len, level.raw()).as_mut().map(|x| {
+                Buffer::from_raw(x as *mut _ as *mut _, len)
+            }).ok_or_else(|| Error::last_os_error())
         }
     }
 
     pub fn random_secure(_: Token, len: usize, level: Level) -> Result<Buffer> {
         unsafe {
-            let buf = ffi::gcry_random_bytes_secure(len, level.raw()) as *mut u8;
-            if !buf.is_null() {
-                Ok(Buffer::from_raw(buf, len))
-            } else {
-                Err(Error::last_os_error())
-            }
+            ffi::gcry_random_bytes_secure(len, level.raw()).as_mut().map(|x| {
+                Buffer::from_raw(x as *mut _ as *mut _, len)
+            }).ok_or_else(|| Error::last_os_error())
         }
     }
 

@@ -166,12 +166,9 @@ impl MessageDigest {
         }
 
         unsafe {
-            let result = ffi::gcry_md_read(self.0, algo.0);
-            if !result.is_null() {
-                Some(slice::from_raw_parts(result, len))
-            } else {
-                None
-            }
+            ffi::gcry_md_read(self.0, algo.0).as_ref().map(|x| {
+                slice::from_raw_parts(x, len)
+            })
         }
     }
 }

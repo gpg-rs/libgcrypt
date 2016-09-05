@@ -85,23 +85,13 @@ impl SExpression {
 
     pub fn head(&self) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_car(self.0);
-            if !result.is_null() {
-                Some(SExpression::from_raw(result))
-            } else {
-                None
-            }
+            ffi::gcry_sexp_car(self.0).as_mut().map(|x| SExpression::from_raw(x))
         }
     }
 
     pub fn tail(&self) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_cdr(self.0);
-            if !result.is_null() {
-                Some(SExpression::from_raw(result))
-            } else {
-                None
-            }
+            ffi::gcry_sexp_cdr(self.0).as_mut().map(|x| SExpression::from_raw(x))
         }
     }
 
@@ -116,36 +106,25 @@ impl SExpression {
     pub fn find_token<B: AsRef<[u8]>>(&self, token: B) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
-            let result =
-                ffi::gcry_sexp_find_token(self.0, token.as_ptr() as *const _, token.len());
-            if !result.is_null() {
-                Some(SExpression::from_raw(result))
-            } else {
-                None
-            }
+            ffi::gcry_sexp_find_token(self.0, token.as_ptr() as *const _, token.len())
+                .as_mut().map(|x| SExpression::from_raw(x))
         }
     }
 
     pub fn get(&self, idx: u32) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_nth(self.0, idx as c_int);
-            if !result.is_null() {
-                Some(SExpression::from_raw(result))
-            } else {
-                None
-            }
+            ffi::gcry_sexp_nth(self.0, idx as c_int).as_mut().map(|x| {
+                SExpression::from_raw(x)
+            })
         }
     }
 
     pub fn get_bytes(&self, idx: u32) -> Option<&[u8]> {
         unsafe {
-            let mut data_len = 0;
-            let result = ffi::gcry_sexp_nth_data(self.0, idx as c_int, &mut data_len);
-            if !result.is_null() {
-                Some(slice::from_raw_parts(result as *const _, data_len))
-            } else {
-                None
-            }
+            let mut len = 0;
+            ffi::gcry_sexp_nth_data(self.0, idx as c_int, &mut len).as_ref().map(|x| {
+                slice::from_raw_parts(x as *const _ as *const _, len)
+            })
         }
     }
 
@@ -155,24 +134,19 @@ impl SExpression {
 
     pub fn get_integer(&self, idx: u32, fmt: IntegerFormat) -> Option<Integer> {
         unsafe {
-            let result = ffi::gcry_sexp_nth_mpi(self.0, idx as c_int, fmt as c_int);
-            if !result.is_null() {
-                Some(Integer::from_raw(result))
-            } else {
-                None
-            }
+            ffi::gcry_sexp_nth_mpi(self.0, idx as c_int, fmt as c_int).as_mut().map(|x| {
+                Integer::from_raw(x)
+            })
         }
     }
 }
 
 impl fmt::Display for SExpression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let result = self.to_bytes(Format::Advanced);
-        if !result.is_empty() {
-            f.write_str(&String::from_utf8_lossy(&result[..(result.len() - 1)]))
-        } else {
-            Ok(())
+        if let Some((_, result)) = self.to_bytes(Format::Advanced).split_last() {
+            try!(f.write_str(&String::from_utf8_lossy(result)));
         }
+        Ok(())
     }
 }
 
