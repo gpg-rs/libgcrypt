@@ -69,8 +69,7 @@ impl Integer {
         unsafe { Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n.into())) }
     }
 
-    pub fn from_bytes<B: ?Sized>(_: Token, format: Format, bytes: &B) -> Result<Integer>
-    where B: AsRef<[u8]> {
+    pub fn from_bytes<B: AsRef<[u8]>>(_: Token, format: Format, bytes: B) -> Result<Integer> {
         let bytes = bytes.as_ref();
         unsafe {
             let mut raw: ffi::gcry_mpi_t = ptr::null_mut();

@@ -125,3 +125,9 @@ impl AsRef<[u8]> for Buffer {
         self.as_bytes()
     }
 }
+
+impl AsMut<[u8]> for Buffer {
+    fn as_mut(&mut self) -> &mut [u8] {
+        self.as_mut_bytes()
+    }
+}

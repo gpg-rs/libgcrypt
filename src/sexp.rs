@@ -34,7 +34,7 @@ impl Drop for SExpression {
 }
 
 impl SExpression {
-    pub fn from_bytes<B: ?Sized + AsRef<[u8]>>(_: Token, bytes: &B) -> Result<SExpression> {
+    pub fn from_bytes<B: AsRef<[u8]>>(_: Token, bytes: B) -> Result<SExpression> {
         let bytes = bytes.as_ref();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
@@ -46,7 +46,7 @@ impl SExpression {
         }
     }
 
-    pub fn from_str<S: ?Sized + AsRef<str>>(token: Token, s: &S) -> Result<SExpression> {
+    pub fn from_str<S: AsRef<str>>(token: Token, s: S) -> Result<SExpression> {
         SExpression::from_bytes(token, s.as_ref())
     }
 
@@ -113,7 +113,7 @@ impl SExpression {
         unsafe { ffi::gcry_sexp_length(self.0) as usize }
     }
 
-    pub fn find_token<B: ?Sized + AsRef<[u8]>>(&self, token: &B) -> Option<SExpression> {
+    pub fn find_token<B: AsRef<[u8]>>(&self, token: B) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
             let result =

@@ -93,13 +93,17 @@ impl_wrapper!(Mac: ffi::gcry_mac_hd_t);
 impl Drop for Mac {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_mac_close(self.raw);
+            ffi::gcry_mac_close(self.0);
         }
     }
 }
 
 impl Mac {
-    pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<Mac> {
+    pub fn new(token: Token, algo: Algorithm) -> Result<Mac> {
+        Mac::with_flags(token, algo, FLAGS_NONE)
+    }
+
+    pub fn with_flags(_: Token, algo: Algorithm, flags: Flags) -> Result<Mac> {
         let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_mac_open(&mut handle, algo.0, flags.bits(), ptr::null_mut()));
@@ -107,14 +111,16 @@ impl Mac {
         }
     }
 
-    pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
+    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
+        let key = key.as_ref();
         unsafe {
             return_err!(ffi::gcry_mac_setkey(self.0, key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
 
-    pub fn set_iv(&mut self, iv: &[u8]) -> Result<()> {
+    pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: B) -> Result<()> {
+        let iv = iv.as_ref();
         unsafe {
             return_err!(ffi::gcry_mac_setiv(self.0, iv.as_ptr() as *const _, iv.len()));
         }
@@ -128,14 +134,14 @@ impl Mac {
         Ok(())
     }
 
-    pub fn write(&mut self, bytes: &[u8]) -> Result<()> {
+    pub fn update(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_mac_write(self.0, bytes.as_ptr() as *const _, bytes.len()));
         }
         Ok(())
     }
 
-    pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+    pub fn get_mac(&mut self, buf: &mut [u8]) -> Result<usize> {
         let mut len = buf.len();
         unsafe {
             return_err!(ffi::gcry_mac_read(self.0, buf.as_mut_ptr() as *mut _, &mut len));

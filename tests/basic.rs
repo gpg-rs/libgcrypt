@@ -38,7 +38,7 @@ fn check_cipher(token: Token, algo: cipher::Algorithm, mode: cipher::Mode, flags
         }
     }
 
-    let mut cipher = Cipher::new(token, algo, mode, flags).unwrap();
+    let mut cipher = Cipher::with_flags(token, algo, mode, flags).unwrap();
     cipher.set_key(&key[..algo.key_len()]).unwrap();
 
     let mut input = [0u8; 1040];
@@ -192,16 +192,16 @@ fn test_bulk_cipher_modes() {
             *b = ((i & 0xff) ^ ((i >> 8) & 0xff)) as u8;
         }
 
-        let mut hde = Cipher::new(token, spec.0, spec.1, cipher::FLAGS_NONE).unwrap();
-        let mut hdd = Cipher::new(token, spec.0, spec.1, cipher::FLAGS_NONE).unwrap();
+        let mut hde = Cipher::new(token, spec.0, spec.1).unwrap();
+        let mut hdd = Cipher::new(token, spec.0, spec.1).unwrap();
         hde.set_key(spec.2).unwrap();
         hdd.set_key(spec.2).unwrap();
         hde.set_iv(spec.3).unwrap();
         hdd.set_iv(spec.3).unwrap();
         hde.encrypt(&buffer, &mut output).unwrap();
 
-        let mut digest = MessageDigest::new(token, digest::MD_SHA1, digest::FLAGS_NONE).unwrap();
-        digest.write(&output);
+        let mut digest = MessageDigest::new(token, digest::MD_SHA1).unwrap();
+        digest.update(&output);
         assert_eq!(&spec.4, digest.get_only_digest().unwrap());
         hdd.decrypt_inplace(&mut output).unwrap();
         assert_eq!(&buffer, &output);
@@ -209,16 +209,16 @@ fn test_bulk_cipher_modes() {
 }
 
 fn check_digest(token: Token, algo: digest::Algorithm, data: &[u8], expected: &[u8]) {
-    let mut digest = MessageDigest::new(token, algo, digest::FLAGS_NONE).unwrap();
+    let mut digest = MessageDigest::new(token, algo).unwrap();
     if data.starts_with(b"!") && data.len() == 1 {
         let aaa = [b'a'; 1000];
         for _ in 0..1000 {
-            digest.write(&aaa);
+            digest.update(&aaa);
         }
     } else {
-        digest.write(data);
+        digest.update(data);
     }
-    assert_eq!(Some(expected), digest.try_clone().unwrap().get_only_digest());
+    assert_eq!(Some(expected), digest.get_only_digest());
 }
 
 #[test]
@@ -445,10 +445,10 @@ fn test_digests() {
 }
 
 fn check_hmac(token: Token, algo: digest::Algorithm, data: &[u8], key: &[u8], expected: &[u8]) {
-    let mut hmac = MessageDigest::new(token, algo, digest::FLAG_HMAC).unwrap();
+    let mut hmac = MessageDigest::with_flags(token, algo, digest::FLAG_HMAC).unwrap();
     hmac.set_key(key).unwrap();
-    hmac.write(data);
-    assert_eq!(Some(expected), hmac.try_clone().unwrap().get_only_digest());
+    hmac.update(data);
+    assert_eq!(Some(expected), hmac.get_only_digest());
 }
 
 #[test]
@@ -1525,8 +1525,7 @@ fn test_pkey() {
     check_pkey(token, algo, flags, &skey, &pkey, key.2);
   }
 
-  let key_spec = SExpression::from_bytes(token,
-      &b"(genkey (rsa (nbits 4:1024)))").unwrap();
+  let key_spec = SExpression::from_bytes(token, b"(genkey (rsa (nbits 4:1024)))").unwrap();
   let key = key_spec.generate_key().unwrap();
   let pkey = key.find_token("public-key").unwrap();
   let skey = key.find_token("private-key").unwrap();

@@ -90,7 +90,11 @@ impl Drop for MessageDigest {
 }
 
 impl MessageDigest {
-    pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
+    pub fn new(token: Token, algo: Algorithm) -> Result<MessageDigest> {
+        MessageDigest::with_flags(token, algo, FLAGS_NONE)
+    }
+
+    pub fn with_flags(_: Token, algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
         let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_md_open(&mut handle, algo.0, flags.bits()));
@@ -121,7 +125,8 @@ impl MessageDigest {
         unsafe { ffi::gcry_md_is_secure(self.0) != 0 }
     }
 
-    pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
+    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
+        let key = key.as_ref();
         unsafe {
             return_err!(ffi::gcry_md_setkey(self.0, key.as_ptr() as *const _, key.len()));
         }
@@ -132,7 +137,7 @@ impl MessageDigest {
         unsafe { ffi::gcry_md_reset(self.0) }
     }
 
-    pub fn write(&mut self, bytes: &[u8]) {
+    pub fn update(&mut self, bytes: &[u8]) {
         unsafe {
             ffi::gcry_md_write(self.0, bytes.as_ptr() as *const _, bytes.len());
         }

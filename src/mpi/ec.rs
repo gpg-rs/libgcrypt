@@ -59,9 +59,7 @@ impl<'a> Curves<'a> {
     }
 
     pub fn get(token: Token, name: &str) -> Option<Curve> {
-        SExpression::from_bytes(token, &format!("(curve {})", name))
-            .ok()
-            .and_then(|s| s.curve())
+        SExpression::from_bytes(token, format!("(curve {})", name)).ok().and_then(|s| s.curve())
     }
 }
 

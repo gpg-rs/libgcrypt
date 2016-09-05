@@ -127,7 +127,11 @@ impl Drop for Cipher {
 }
 
 impl Cipher {
-    pub fn new(_: Token, algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
+    pub fn new(token: Token, algo: Algorithm, mode: Mode) -> Result<Cipher> {
+        Cipher::with_flags(token, algo, mode, FLAGS_NONE)
+    }
+
+    pub fn with_flags(_: Token, algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
         let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_cipher_open(&mut handle, algo.0, mode.0, flags.bits()));
@@ -135,21 +139,24 @@ impl Cipher {
         }
     }
 
-    pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
+    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
+        let key = key.as_ref();
         unsafe {
             return_err!(ffi::gcry_cipher_setkey(self.0, key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
 
-    pub fn set_iv(&mut self, iv: &[u8]) -> Result<()> {
+    pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: B) -> Result<()> {
+        let iv = iv.as_ref();
         unsafe {
             return_err!(ffi::gcry_cipher_setiv(self.0, iv.as_ptr() as *const _, iv.len()));
         }
         Ok(())
     }
 
-    pub fn set_ctr(&mut self, ctr: &[u8]) -> Result<()> {
+    pub fn set_ctr<B: AsRef<[u8]>>(&mut self, ctr: B) -> Result<()> {
+        let ctr = ctr.as_ref();
         unsafe {
             return_err!(ffi::gcry_cipher_setctr(self.0, ctr.as_ptr() as *const _, ctr.len()));
         }
@@ -179,7 +186,7 @@ impl Cipher {
         Ok(())
     }
 
-    pub fn check_tag(&mut self, tag: &[u8]) -> Result<()> {
+    pub fn verify_tag(&mut self, tag: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_checktag(self.0, tag.as_ptr() as *const _, tag.len()));
         }
@@ -208,22 +215,22 @@ impl Cipher {
         Ok(())
     }
 
-    pub fn encrypt_inplace(&mut self, plain: &mut [u8]) -> Result<()> {
+    pub fn encrypt_inplace(&mut self, buffer: &mut [u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_encrypt(self.0,
-                                                 pain.as_mut_ptr() as *mut _,
-                                                 pain.len(),
+                                                 buffer.as_mut_ptr() as *mut _,
+                                                 buffer.len(),
                                                  ptr::null(),
                                                  0));
         }
         Ok(())
     }
 
-    pub fn decrypt_inplace(&mut self, cipher: &mut [u8]) -> Result<()> {
+    pub fn decrypt_inplace(&mut self, buffer: &mut [u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_cipher_decrypt(self.0,
-                                                 cipher.as_mut_ptr() as *mut _,
-                                                 cipher.len(),
+                                                 buffer.as_mut_ptr() as *mut _,
+                                                 buffer.len(),
                                                  ptr::null(),
                                                  0));
         }
