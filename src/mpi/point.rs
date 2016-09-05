@@ -3,7 +3,7 @@ use std::ptr;
 use ffi;
 
 use Token;
-use super::{Integer, Context};
+use super::{Context, Integer};
 
 #[derive(Debug)]
 pub struct Point(ffi::gcry_mpi_point_t);

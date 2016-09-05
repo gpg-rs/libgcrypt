@@ -54,9 +54,7 @@ impl Algorithm {
     }
 
     pub fn is_available(&self, _: Token) -> bool {
-        unsafe {
-            ffi::gcry_md_test_algo(self.0) == 0
-        }
+        unsafe { ffi::gcry_md_test_algo(self.0) == 0 }
     }
 
     pub fn name(&self) -> Option<&'static str> {
@@ -70,9 +68,9 @@ impl Algorithm {
 
 bitflags! {
     flags Flags: ffi::gcry_md_flags {
-        const FLAGS_NONE = 0,
-        const FLAG_SECURE = ffi::GCRY_MD_FLAG_SECURE,
-        const FLAG_HMAC = ffi::GCRY_MD_FLAG_HMAC,
+        const FLAGS_NONE   = 0,
+        const FLAG_SECURE  = ffi::GCRY_MD_FLAG_SECURE,
+        const FLAG_HMAC    = ffi::GCRY_MD_FLAG_HMAC,
         const FLAG_BUGEMU1 = ffi::GCRY_MD_FLAG_BUGEMU1,
     }
 }
@@ -166,9 +164,7 @@ impl MessageDigest {
         }
 
         unsafe {
-            ffi::gcry_md_read(self.0, algo.0).as_ref().map(|x| {
-                slice::from_raw_parts(x, len)
-            })
+            ffi::gcry_md_read(self.0, algo.0).as_ref().map(|x| slice::from_raw_parts(x, len))
         }
     }
 }

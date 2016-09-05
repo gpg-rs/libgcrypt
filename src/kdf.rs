@@ -19,8 +19,7 @@ enum_wrapper! {
 }
 
 pub fn derive(_: Token, algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8],
-              salt: Option<&[u8]>, key: &mut [u8])
-              -> Result<()> {
+              salt: Option<&[u8]>, key: &mut [u8]) -> Result<()> {
     unsafe {
         let salt = salt.map_or((ptr::null(), 0), |s| (s.as_ptr(), s.len()));
         return_err!(ffi::gcry_kdf_derive(pass.as_ptr() as *const _,

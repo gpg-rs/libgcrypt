@@ -4,8 +4,8 @@ use Token;
 
 enum_wrapper! {
     pub enum Level: ffi::gcry_random_level_t {
-        WEAK_RANDOM = ffi::GCRY_WEAK_RANDOM,
-        STRONG_RANDOM = ffi::GCRY_STRONG_RANDOM,
+        WEAK_RANDOM        = ffi::GCRY_WEAK_RANDOM,
+        STRONG_RANDOM      = ffi::GCRY_STRONG_RANDOM,
         VERY_STRONG_RANDOM = ffi::GCRY_VERY_STRONG_RANDOM,
     }
 }

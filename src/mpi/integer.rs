@@ -18,9 +18,9 @@ use rand::Level;
 pub enum Format {
     Standard = ffi::GCRYMPI_FMT_STD as usize,
     Unsigned = ffi::GCRYMPI_FMT_USG as usize,
-    Pgp = ffi::GCRYMPI_FMT_PGP as usize,
-    Ssh = ffi::GCRYMPI_FMT_SSH as usize,
-    Hex = ffi::GCRYMPI_FMT_HEX as usize,
+    Pgp      = ffi::GCRYMPI_FMT_PGP as usize,
+    Ssh      = ffi::GCRYMPI_FMT_SSH as usize,
+    Hex      = ffi::GCRYMPI_FMT_HEX as usize,
 }
 
 #[derive(Debug)]

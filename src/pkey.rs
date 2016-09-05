@@ -37,9 +37,7 @@ impl Algorithm {
     }
 
     pub fn is_available(&self, _: Token) -> bool {
-        unsafe {
-            ffi::gcry_pk_test_algo(self.0) == 0
-        }
+        unsafe { ffi::gcry_pk_test_algo(self.0) == 0 }
     }
 
     pub fn name(&self) -> Option<&'static str> {

@@ -5,7 +5,7 @@ use std::ptr;
 use std::slice;
 use std::str;
 
-use libc::{c_void, c_char, c_int};
+use libc::{c_char, c_int, c_void};
 use ffi;
 
 use Token;
@@ -15,10 +15,10 @@ use mpi::integer::Format as IntegerFormat;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Format {
-    Default = ffi::GCRYSEXP_FMT_DEFAULT as isize,
+    Default   = ffi::GCRYSEXP_FMT_DEFAULT as isize,
     Canonical = ffi::GCRYSEXP_FMT_CANON as isize,
-    Base64 = ffi::GCRYSEXP_FMT_BASE64 as isize,
-    Advanced = ffi::GCRYSEXP_FMT_ADVANCED as isize,
+    Base64    = ffi::GCRYSEXP_FMT_BASE64 as isize,
+    Advanced  = ffi::GCRYSEXP_FMT_ADVANCED as isize,
 }
 
 pub struct SExpression(ffi::gcry_sexp_t);
@@ -84,15 +84,11 @@ impl SExpression {
     }
 
     pub fn head(&self) -> Option<SExpression> {
-        unsafe {
-            ffi::gcry_sexp_car(self.0).as_mut().map(|x| SExpression::from_raw(x))
-        }
+        unsafe { ffi::gcry_sexp_car(self.0).as_mut().map(|x| SExpression::from_raw(x)) }
     }
 
     pub fn tail(&self) -> Option<SExpression> {
-        unsafe {
-            ffi::gcry_sexp_cdr(self.0).as_mut().map(|x| SExpression::from_raw(x))
-        }
+        unsafe { ffi::gcry_sexp_cdr(self.0).as_mut().map(|x| SExpression::from_raw(x)) }
     }
 
     pub fn is_empty(&self) -> bool {
@@ -107,24 +103,23 @@ impl SExpression {
         let token = token.as_ref();
         unsafe {
             ffi::gcry_sexp_find_token(self.0, token.as_ptr() as *const _, token.len())
-                .as_mut().map(|x| SExpression::from_raw(x))
+                .as_mut()
+                .map(|x| SExpression::from_raw(x))
         }
     }
 
     pub fn get(&self, idx: u32) -> Option<SExpression> {
         unsafe {
-            ffi::gcry_sexp_nth(self.0, idx as c_int).as_mut().map(|x| {
-                SExpression::from_raw(x)
-            })
+            ffi::gcry_sexp_nth(self.0, idx as c_int).as_mut().map(|x| SExpression::from_raw(x))
         }
     }
 
     pub fn get_bytes(&self, idx: u32) -> Option<&[u8]> {
         unsafe {
             let mut len = 0;
-            ffi::gcry_sexp_nth_data(self.0, idx as c_int, &mut len).as_ref().map(|x| {
-                slice::from_raw_parts(x as *const _ as *const _, len)
-            })
+            ffi::gcry_sexp_nth_data(self.0, idx as c_int, &mut len)
+                .as_ref()
+                .map(|x| slice::from_raw_parts(x as *const _ as *const _, len))
         }
     }
 
@@ -134,9 +129,9 @@ impl SExpression {
 
     pub fn get_integer(&self, idx: u32, fmt: IntegerFormat) -> Option<Integer> {
         unsafe {
-            ffi::gcry_sexp_nth_mpi(self.0, idx as c_int, fmt as c_int).as_mut().map(|x| {
-                Integer::from_raw(x)
-            })
+            ffi::gcry_sexp_nth_mpi(self.0, idx as c_int, fmt as c_int)
+                .as_mut()
+                .map(|x| Integer::from_raw(x))
         }
     }
 }
@@ -309,8 +304,7 @@ impl<'a> Builder<'a> {
     }
 
     pub fn add_str<'s, 'b: 's, S: ?Sized>(&'s mut self, string: &'b S) -> &mut Self
-        where S: AsRef<str>
-    {
+    where S: AsRef<str> {
         self.add_bytes(string.as_ref())
     }
 

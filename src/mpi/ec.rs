@@ -28,9 +28,9 @@ impl Curve {
 
     pub fn parameters(&self) -> Option<SExpression> {
         unsafe {
-            ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr()).as_mut().map(|x| {
-                SExpression::from_raw(x)
-            })
+            ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr())
+                .as_mut()
+                .map(|x| SExpression::from_raw(x))
         }
     }
 }
@@ -116,9 +116,9 @@ impl Context {
     pub fn get_integer<S: Into<String>>(&self, name: S) -> Option<Integer> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
-            ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.0, 1).as_mut().map(|x| {
-                Integer::from_raw(x)
-            })
+            ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.0, 1)
+                .as_mut()
+                .map(|x| Integer::from_raw(x))
         }
     }
 
@@ -133,9 +133,9 @@ impl Context {
     pub fn get_point<S: Into<String>>(&self, name: S) -> Option<Point> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
-            ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.0, 1).as_mut().map(|x| {
-                Point::from_raw(x)
-            })
+            ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.0, 1)
+                .as_mut()
+                .map(|x| Point::from_raw(x))
         }
     }
 

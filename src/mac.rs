@@ -61,9 +61,7 @@ impl Algorithm {
     }
 
     pub fn is_available(&self, _: Token) -> bool {
-        unsafe {
-            ffi::gcry_mac_test_algo(self.0) == 0
-        }
+        unsafe { ffi::gcry_mac_test_algo(self.0) == 0 }
     }
 
     pub fn name(&self) -> Option<&'static str> {
@@ -81,7 +79,7 @@ impl Algorithm {
 
 bitflags! {
     flags Flags: ffi::gcry_mac_flags {
-        const FLAGS_NONE = 0,
+        const FLAGS_NONE  = 0,
         const FLAG_SECURE = ffi::GCRY_MAC_FLAG_SECURE,
     }
 }
