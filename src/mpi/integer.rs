@@ -8,7 +8,7 @@ use std::str;
 use ffi;
 use libc::c_uint;
 
-use {Wrapper, Token};
+use Token;
 use error::{self, Error, Result};
 use buffer::Buffer;
 use rand::Level;
@@ -24,40 +24,27 @@ pub enum Format {
 }
 
 #[derive(Debug)]
-pub struct Integer {
-    raw: ffi::gcry_mpi_t,
-}
+pub struct Integer(ffi::gcry_mpi_t);
+
+impl_wrapper!(Integer: ffi::gcry_mpi_t);
 
 impl Drop for Integer {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_mpi_release(self.raw);
+            ffi::gcry_mpi_release(self.0);
         }
     }
 }
 
 impl Clone for Integer {
     fn clone(&self) -> Integer {
-        unsafe { Integer::from_raw(ffi::gcry_mpi_copy(self.raw)) }
+        unsafe { Integer::from_raw(ffi::gcry_mpi_copy(self.0)) }
     }
 
     fn clone_from(&mut self, source: &Integer) {
         unsafe {
-            ffi::gcry_mpi_set(self.raw, source.raw);
+            ffi::gcry_mpi_set(self.0, source.0);
         }
-    }
-}
-
-unsafe impl Wrapper for Integer {
-    type Raw = ffi::gcry_mpi_t;
-
-    unsafe fn from_raw(raw: ffi::gcry_mpi_t) -> Integer {
-        debug_assert!(!raw.is_null());
-        Integer { raw: raw }
-    }
-
-    fn as_raw(&self) -> ffi::gcry_mpi_t {
-        self.raw
     }
 }
 
@@ -71,11 +58,11 @@ impl Integer {
     }
 
     pub fn new(_: Token, nbits: u32) -> Integer {
-        unsafe { Integer { raw: ffi::gcry_mpi_new(nbits.into()) } }
+        unsafe { Integer::from_raw(ffi::gcry_mpi_new(nbits.into())) }
     }
 
     pub fn new_secure(_: Token, nbits: u32) -> Integer {
-        unsafe { Integer { raw: ffi::gcry_mpi_snew(nbits.into()) } }
+        unsafe { Integer::from_raw(ffi::gcry_mpi_snew(nbits.into())) }
     }
 
     pub fn from_uint(_: Token, n: u32) -> Integer {
@@ -85,8 +72,8 @@ impl Integer {
     pub fn from_bytes<B: ?Sized>(_: Token, format: Format, bytes: &B) -> Result<Integer>
     where B: AsRef<[u8]> {
         let bytes = bytes.as_ref();
-        let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
         unsafe {
+            let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
             let len = if format != Format::Hex {
                 bytes.len()
             } else if bytes.contains(&0) {
@@ -115,7 +102,7 @@ impl Integer {
             return_err!(ffi::gcry_mpi_aprint(format as ffi::gcry_mpi_format,
                                              &mut buffer,
                                              &mut len,
-                                             self.raw));
+                                             self.0));
             Ok(Buffer::from_raw(buffer as *mut u8, len))
         }
     }
@@ -127,7 +114,7 @@ impl Integer {
                                             ptr::null_mut(),
                                             0,
                                             &mut len,
-                                            self.raw));
+                                            self.0));
             Ok(len)
         }
     }
@@ -139,82 +126,82 @@ impl Integer {
                                             buf.as_mut_ptr() as *mut _,
                                             buf.len(),
                                             &mut written,
-                                            self.raw));
+                                            self.0));
             Ok(written)
         }
     }
 
     pub fn set(&mut self, n: u32) {
         unsafe {
-            ffi::gcry_mpi_set_ui(self.raw, n.into());
+            ffi::gcry_mpi_set_ui(self.0, n.into());
         }
     }
 
     pub fn randomize(&mut self, nbits: u32, level: Level) {
         unsafe {
-            ffi::gcry_mpi_randomize(self.raw, nbits.into(), level.raw());
+            ffi::gcry_mpi_randomize(self.0, nbits.into(), level.raw());
         }
     }
 
     pub fn num_bits(&self) -> usize {
-        unsafe { ffi::gcry_mpi_get_nbits(self.raw) as usize }
+        unsafe { ffi::gcry_mpi_get_nbits(self.0) as usize }
     }
 
     pub fn is_prime(&self) -> bool {
-        unsafe { ffi::gcry_prime_check(self.raw, 0) == 0 }
+        unsafe { ffi::gcry_prime_check(self.0, 0) == 0 }
     }
 
     pub fn is_positive(&self) -> bool {
-        unsafe { ffi::gcry_mpi_cmp_ui(self.raw, 0) > 0 }
+        unsafe { ffi::gcry_mpi_cmp_ui(self.0, 0) > 0 }
     }
 
     pub fn is_negative(&self) -> bool {
-        unsafe { ffi::gcry_mpi_cmp_ui(self.raw, 0) < 0 }
+        unsafe { ffi::gcry_mpi_cmp_ui(self.0, 0) < 0 }
     }
 
     pub fn abs(self) -> Integer {
         unsafe {
-            ffi::gcry_mpi_abs(self.raw);
+            ffi::gcry_mpi_abs(self.0);
         }
         self
     }
 
     pub fn add_mod(self, other: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_addm(self.raw, self.raw, other.raw, m.raw);
+            ffi::gcry_mpi_addm(self.0, self.0, other.0, m.0);
         }
         self
     }
 
     pub fn sub_mod(self, other: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_subm(self.raw, self.raw, other.raw, m.raw);
+            ffi::gcry_mpi_subm(self.0, self.0, other.0, m.0);
         }
         self
     }
 
     pub fn mul_mod(self, other: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_mulm(self.raw, self.raw, other.raw, m.raw);
+            ffi::gcry_mpi_mulm(self.0, self.0, other.0, m.0);
         }
         self
     }
 
     pub fn inv_mod(self, m: &Integer) -> Option<Integer> {
-        let result = unsafe { ffi::gcry_mpi_invm(self.raw, self.raw, m.raw) };
+        let result = unsafe { ffi::gcry_mpi_invm(self.0, self.0, m.0) };
         if result != 0 { Some(self) } else { None }
     }
 
     pub fn div_floor(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_div(self.raw, ptr::null_mut(), self.raw, other.raw, -1);
+            ffi::gcry_mpi_div(self.0, ptr::null_mut(), self.0, other.0, -1);
         }
         self
     }
 
     pub fn mod_floor(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_div(ptr::null_mut(), self.raw, self.raw, other.raw, -1);
+            ffi::gcry_mpi_div(ptr::null_mut(), self.0, self.0, other.0, -1);
         }
         self
     }
@@ -222,7 +209,7 @@ impl Integer {
     pub fn div_rem(self, other: &Integer) -> (Integer, Integer) {
         let rem = Integer::zero(::get_token().unwrap());
         unsafe {
-            ffi::gcry_mpi_div(self.raw, rem.raw, self.raw, other.raw, 0);
+            ffi::gcry_mpi_div(self.0, rem.0, self.0, other.0, 0);
         }
         (self, rem)
     }
@@ -230,28 +217,28 @@ impl Integer {
     pub fn div_mod_floor(self, other: &Integer) -> (Integer, Integer) {
         let rem = Integer::zero(::get_token().unwrap());
         unsafe {
-            ffi::gcry_mpi_div(self.raw, rem.raw, self.raw, other.raw, -1);
+            ffi::gcry_mpi_div(self.0, rem.0, self.0, other.0, -1);
         }
         (self, rem)
     }
 
     pub fn ldexp(self, e: u32) -> Integer {
         unsafe {
-            ffi::gcry_mpi_mul_2exp(self.raw, self.raw, e.into());
+            ffi::gcry_mpi_mul_2exp(self.0, self.0, e.into());
         }
         self
     }
 
     pub fn pow_mod(self, e: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_powm(self.raw, self.raw, e.raw, m.raw);
+            ffi::gcry_mpi_powm(self.0, self.0, e.0, m.0);
         }
         self
     }
 
     pub fn gcd(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_gcd(self.raw, self.raw, other.raw);
+            ffi::gcry_mpi_gcd(self.0, self.0, other.0);
         }
         self
     }
@@ -282,7 +269,7 @@ impl PartialEq<Integer> for u32 {
 
 impl PartialOrd<u32> for Integer {
     fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
-        let result = unsafe { ffi::gcry_mpi_cmp_ui(self.raw, (*other).into()) };
+        let result = unsafe { ffi::gcry_mpi_cmp_ui(self.0, (*other).into()) };
         match result {
             x if x < 0 => Some(Ordering::Less),
             x if x > 0 => Some(Ordering::Greater),
@@ -315,7 +302,7 @@ impl PartialOrd for Integer {
 }
 impl Ord for Integer {
     fn cmp(&self, other: &Integer) -> Ordering {
-        let result = unsafe { ffi::gcry_mpi_cmp(self.raw, other.raw) };
+        let result = unsafe { ffi::gcry_mpi_cmp(self.0, other.0) };
         match result {
             x if x < 0 => Ordering::Less,
             x if x > 0 => Ordering::Greater,
@@ -329,7 +316,7 @@ impl ops::Neg for Integer {
 
     fn neg(self) -> Integer {
         unsafe {
-            ffi::gcry_mpi_neg(self.raw, self.raw);
+            ffi::gcry_mpi_neg(self.0, self.0);
         }
         self
     }
@@ -365,7 +352,7 @@ macro_rules! impl_binary_op {
 
             fn $method(self, other: &'a Integer) -> Integer {
                 unsafe {
-                    $body(self.raw, other.raw);
+                    $body(self.0, other.0);
                 }
                 self
             }
@@ -384,7 +371,7 @@ impl ops::Shl<usize> for Integer {
 
     fn shl(self, other: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_lshift(self.raw, self.raw, other as c_uint);
+            ffi::gcry_mpi_lshift(self.0, self.0, other as c_uint);
         }
         self
     }
@@ -395,7 +382,7 @@ impl ops::Shr<usize> for Integer {
 
     fn shr(self, other: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_rshift(self.raw, self.raw, other as c_uint);
+            ffi::gcry_mpi_rshift(self.0, self.0, other as c_uint);
         }
         self
     }

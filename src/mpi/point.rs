@@ -2,18 +2,18 @@ use std::ptr;
 
 use ffi;
 
-use {Wrapper, Token};
+use Token;
 use super::{Integer, Context};
 
 #[derive(Debug)]
-pub struct Point {
-    raw: ffi::gcry_mpi_point_t,
-}
+pub struct Point(ffi::gcry_mpi_point_t);
+
+impl_wrapper!(Point: ffi::gcry_mpi_point_t);
 
 impl Drop for Point {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_mpi_point_release(self.raw);
+            ffi::gcry_mpi_point_release(self.0);
         }
     }
 }
@@ -32,21 +32,8 @@ impl Clone for Point {
     fn clone_from(&mut self, source: &Point) {
         let (x, y, z) = source.to_coords();
         unsafe {
-            ffi::gcry_mpi_point_snatch_set(self.raw, x.into_raw(), y.into_raw(), z.into_raw());
+            ffi::gcry_mpi_point_snatch_set(self.0, x.into_raw(), y.into_raw(), z.into_raw());
         }
-    }
-}
-
-unsafe impl Wrapper for Point {
-    type Raw = ffi::gcry_mpi_point_t;
-
-    unsafe fn from_raw(raw: ffi::gcry_mpi_point_t) -> Point {
-        debug_assert!(!raw.is_null());
-        Point { raw: raw }
-    }
-
-    fn as_raw(&self) -> ffi::gcry_mpi_point_t {
-        self.raw
     }
 }
 
@@ -73,7 +60,7 @@ impl Point {
             let x = x.map_or(ptr::null_mut(), |v| v.into_raw());
             let y = y.map_or(ptr::null_mut(), |v| v.into_raw());
             let z = z.map_or(ptr::null_mut(), |v| v.into_raw());
-            ffi::gcry_mpi_point_snatch_set(self.raw, x, y, z);
+            ffi::gcry_mpi_point_snatch_set(self.0, x, y, z);
         }
     }
 
@@ -83,7 +70,7 @@ impl Point {
         let y = Integer::zero(token);
         let z = Integer::zero(token);
         unsafe {
-            ffi::gcry_mpi_point_get(x.as_raw(), y.as_raw(), z.as_raw(), self.raw);
+            ffi::gcry_mpi_point_get(x.as_raw(), y.as_raw(), z.as_raw(), self.0);
         }
         (x, y, z)
     }
@@ -104,24 +91,24 @@ impl Point {
         let x = Integer::zero(token);
         let y = Integer::zero(token);
         let result =
-            unsafe { ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.raw, ctx.as_raw()) };
+            unsafe { ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.0, ctx.as_raw()) };
         if result == 0 { Some((x, y)) } else { None }
     }
 
     pub fn on_curve(&self, ctx: &Context) -> bool {
-        unsafe { ffi::gcry_mpi_ec_curve_point(self.raw, ctx.as_raw()) != 0 }
+        unsafe { ffi::gcry_mpi_ec_curve_point(self.0, ctx.as_raw()) != 0 }
     }
 
     pub fn add(self, other: &Point, ctx: &Context) -> Point {
         unsafe {
-            ffi::gcry_mpi_ec_add(self.raw, self.raw, other.raw, ctx.as_raw());
+            ffi::gcry_mpi_ec_add(self.0, self.0, other.0, ctx.as_raw());
         }
         self
     }
 
     pub fn mul(self, n: &Integer, ctx: &Context) -> Point {
         unsafe {
-            ffi::gcry_mpi_ec_mul(self.raw, n.as_raw(), self.raw, ctx.as_raw());
+            ffi::gcry_mpi_ec_mul(self.0, n.as_raw(), self.0, ctx.as_raw());
         }
         self
     }

@@ -4,7 +4,7 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use {Wrapper, Token};
+use Token;
 use utils;
 use error::Result;
 
@@ -86,9 +86,9 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct Mac {
-    raw: ffi::gcry_mac_hd_t,
-}
+pub struct Mac(ffi::gcry_mac_hd_t);
+
+impl_wrapper!(Mac: ffi::gcry_mac_hd_t);
 
 impl Drop for Mac {
     fn drop(&mut self) {
@@ -98,52 +98,39 @@ impl Drop for Mac {
     }
 }
 
-unsafe impl Wrapper for Mac {
-    type Raw = ffi::gcry_mac_hd_t;
-
-    unsafe fn from_raw(raw: ffi::gcry_mac_hd_t) -> Mac {
-        debug_assert!(!raw.is_null());
-        Mac { raw: raw }
-    }
-
-    fn as_raw(&self) -> ffi::gcry_mac_hd_t {
-        self.raw
-    }
-}
-
 impl Mac {
     pub fn new(_: Token, algo: Algorithm, flags: Flags) -> Result<Mac> {
         let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_mac_open(&mut handle, algo.0, flags.bits(), ptr::null_mut()));
+            Ok(Mac::from_raw(handle))
         }
-        Ok(Mac { raw: handle })
     }
 
     pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_setkey(self.raw, key.as_ptr() as *const _, key.len()));
+            return_err!(ffi::gcry_mac_setkey(self.0, key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
 
     pub fn set_iv(&mut self, iv: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_setiv(self.raw, iv.as_ptr() as *const _, iv.len()));
+            return_err!(ffi::gcry_mac_setiv(self.0, iv.as_ptr() as *const _, iv.len()));
         }
         Ok(())
     }
 
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_reset(self.raw));
+            return_err!(ffi::gcry_mac_reset(self.0));
         }
         Ok(())
     }
 
     pub fn write(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_write(self.raw, bytes.as_ptr() as *const _, bytes.len()));
+            return_err!(ffi::gcry_mac_write(self.0, bytes.as_ptr() as *const _, bytes.len()));
         }
         Ok(())
     }
@@ -151,14 +138,14 @@ impl Mac {
     pub fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
         let mut len = buf.len();
         unsafe {
-            return_err!(ffi::gcry_mac_read(self.raw, buf.as_mut_ptr() as *mut _, &mut len));
+            return_err!(ffi::gcry_mac_read(self.0, buf.as_mut_ptr() as *mut _, &mut len));
         }
         Ok(len)
     }
 
     pub fn verify(&mut self, buf: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_verify(self.raw, buf.as_ptr() as *mut _, buf.len()));
+            return_err!(ffi::gcry_mac_verify(self.0, buf.as_ptr() as *mut _, buf.len()));
         }
         Ok(())
     }

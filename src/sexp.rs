@@ -8,7 +8,7 @@ use std::str;
 use libc::{c_void, c_char, c_int};
 use ffi;
 
-use {Wrapper, Token};
+use Token;
 use error::{self, Error, Result};
 use mpi::Integer;
 use mpi::integer::Format as IntegerFormat;
@@ -21,28 +21,15 @@ pub enum Format {
     Advanced = ffi::GCRYSEXP_FMT_ADVANCED as isize,
 }
 
-pub struct SExpression {
-    raw: ffi::gcry_sexp_t,
-}
+pub struct SExpression(ffi::gcry_sexp_t);
+
+impl_wrapper!(SExpression: ffi::gcry_sexp_t);
 
 impl Drop for SExpression {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_sexp_release(self.raw);
+            ffi::gcry_sexp_release(self.0);
         }
-    }
-}
-
-unsafe impl Wrapper for SExpression {
-    type Raw = ffi::gcry_sexp_t;
-
-    unsafe fn from_raw(raw: ffi::gcry_sexp_t) -> SExpression {
-        debug_assert!(!raw.is_null());
-        SExpression { raw: raw }
-    }
-
-    fn as_raw(&self) -> ffi::gcry_sexp_t {
-        self.raw
     }
 }
 
@@ -71,12 +58,12 @@ impl SExpression {
     }
 
     pub fn len_encoded(&self, format: Format) -> usize {
-        unsafe { ffi::gcry_sexp_sprint(self.raw, format as c_int, ptr::null_mut(), 0) }
+        unsafe { ffi::gcry_sexp_sprint(self.0, format as c_int, ptr::null_mut(), 0) }
     }
 
     pub fn encode(&self, format: Format, buf: &mut [u8]) -> Option<usize> {
         unsafe {
-            match ffi::gcry_sexp_sprint(self.raw,
+            match ffi::gcry_sexp_sprint(self.0,
                                         format as c_int,
                                         buf.as_mut_ptr() as *mut _,
                                         buf.len()) {
@@ -91,14 +78,14 @@ impl SExpression {
             Elements {
                 sexp: self,
                 first: 0,
-                last: ffi::gcry_sexp_length(self.raw),
+                last: ffi::gcry_sexp_length(self.0),
             }
         }
     }
 
     pub fn head(&self) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_car(self.raw);
+            let result = ffi::gcry_sexp_car(self.0);
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -109,7 +96,7 @@ impl SExpression {
 
     pub fn tail(&self) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_cdr(self.raw);
+            let result = ffi::gcry_sexp_cdr(self.0);
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -123,14 +110,14 @@ impl SExpression {
     }
 
     pub fn len(&self) -> usize {
-        unsafe { ffi::gcry_sexp_length(self.raw) as usize }
+        unsafe { ffi::gcry_sexp_length(self.0) as usize }
     }
 
     pub fn find_token<B: ?Sized + AsRef<[u8]>>(&self, token: &B) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
             let result =
-                ffi::gcry_sexp_find_token(self.raw, token.as_ptr() as *const _, token.len());
+                ffi::gcry_sexp_find_token(self.0, token.as_ptr() as *const _, token.len());
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -141,7 +128,7 @@ impl SExpression {
 
     pub fn get(&self, idx: u32) -> Option<SExpression> {
         unsafe {
-            let result = ffi::gcry_sexp_nth(self.raw, idx as c_int);
+            let result = ffi::gcry_sexp_nth(self.0, idx as c_int);
             if !result.is_null() {
                 Some(SExpression::from_raw(result))
             } else {
@@ -153,7 +140,7 @@ impl SExpression {
     pub fn get_bytes(&self, idx: u32) -> Option<&[u8]> {
         unsafe {
             let mut data_len = 0;
-            let result = ffi::gcry_sexp_nth_data(self.raw, idx as c_int, &mut data_len);
+            let result = ffi::gcry_sexp_nth_data(self.0, idx as c_int, &mut data_len);
             if !result.is_null() {
                 Some(slice::from_raw_parts(result as *const _, data_len))
             } else {
@@ -168,7 +155,7 @@ impl SExpression {
 
     pub fn get_integer(&self, idx: u32, fmt: IntegerFormat) -> Option<Integer> {
         unsafe {
-            let result = ffi::gcry_sexp_nth_mpi(self.raw, idx as c_int, fmt as c_int);
+            let result = ffi::gcry_sexp_nth_mpi(self.0, idx as c_int, fmt as c_int);
             if !result.is_null() {
                 Some(Integer::from_raw(result))
             } else {

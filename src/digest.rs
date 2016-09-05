@@ -5,7 +5,7 @@ use std::slice;
 use ffi;
 use libc::c_int;
 
-use {Wrapper, Token};
+use Token;
 use utils;
 use error::Result;
 
@@ -77,28 +77,15 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct MessageDigest {
-    raw: ffi::gcry_md_hd_t,
-}
+pub struct MessageDigest(ffi::gcry_md_hd_t);
+
+impl_wrapper!(MessageDigest: ffi::gcry_md_hd_t);
 
 impl Drop for MessageDigest {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_md_close(self.raw);
+            ffi::gcry_md_close(self.0);
         }
-    }
-}
-
-unsafe impl Wrapper for MessageDigest {
-    type Raw = ffi::gcry_md_hd_t;
-
-    unsafe fn from_raw(raw: ffi::gcry_md_hd_t) -> MessageDigest {
-        debug_assert!(!raw.is_null());
-        MessageDigest { raw: raw }
-    }
-
-    fn as_raw(&self) -> ffi::gcry_md_hd_t {
-        self.raw
     }
 }
 
@@ -107,58 +94,58 @@ impl MessageDigest {
         let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_md_open(&mut handle, algo.0, flags.bits()));
+            Ok(MessageDigest::from_raw(handle))
         }
-        Ok(MessageDigest { raw: handle })
     }
 
     pub fn try_clone(&self) -> Result<MessageDigest> {
         let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
         unsafe {
-            return_err!(ffi::gcry_md_copy(&mut handle, self.raw));
+            return_err!(ffi::gcry_md_copy(&mut handle, self.0));
+            Ok(MessageDigest::from_raw(handle))
         }
-        Ok(MessageDigest { raw: handle })
     }
 
     pub fn enable(&mut self, algo: Algorithm) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_md_enable(self.raw, algo.0));
+            return_err!(ffi::gcry_md_enable(self.0, algo.0));
         }
         Ok(())
     }
 
     pub fn is_enabled(&self, algo: Algorithm) -> bool {
-        unsafe { ffi::gcry_md_is_enabled(self.raw, algo.0) != 0 }
+        unsafe { ffi::gcry_md_is_enabled(self.0, algo.0) != 0 }
     }
 
     pub fn is_secure(&self) -> bool {
-        unsafe { ffi::gcry_md_is_secure(self.raw) != 0 }
+        unsafe { ffi::gcry_md_is_secure(self.0) != 0 }
     }
 
     pub fn set_key(&mut self, key: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_md_setkey(self.raw, key.as_ptr() as *const _, key.len()));
+            return_err!(ffi::gcry_md_setkey(self.0, key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
 
     pub fn reset(&mut self) {
-        unsafe { ffi::gcry_md_reset(self.raw) }
+        unsafe { ffi::gcry_md_reset(self.0) }
     }
 
     pub fn write(&mut self, bytes: &[u8]) {
         unsafe {
-            ffi::gcry_md_write(self.raw, bytes.as_ptr() as *const _, bytes.len());
+            ffi::gcry_md_write(self.0, bytes.as_ptr() as *const _, bytes.len());
         }
     }
 
     pub fn finish(&mut self) {
         unsafe {
-            ffi::gcry_md_final(self.raw);
+            ffi::gcry_md_final(self.0);
         }
     }
 
     pub fn get_only_digest(&mut self) -> Option<&[u8]> {
-        let algo = unsafe { ffi::gcry_md_get_algo(self.raw) };
+        let algo = unsafe { ffi::gcry_md_get_algo(self.0) };
         if algo != 0 {
             self.get_digest(Algorithm(algo))
         } else {
@@ -167,14 +154,15 @@ impl MessageDigest {
     }
 
     pub fn get_digest(&mut self, algo: Algorithm) -> Option<&[u8]> {
-        if algo.digest_len() == 0 {
+        let len = algo.digest_len();
+        if len == 0 {
             return None;
         }
 
         unsafe {
-            let result = ffi::gcry_md_read(self.raw, algo.0);
+            let result = ffi::gcry_md_read(self.0, algo.0);
             if !result.is_null() {
-                Some(slice::from_raw_parts(result, algo.digest_len()))
+                Some(slice::from_raw_parts(result, len))
             } else {
                 None
             }

@@ -4,7 +4,7 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use {Wrapper, Token};
+use Token;
 use utils;
 use error::Result;
 use sexp::SExpression;

@@ -25,7 +25,6 @@ pub extern crate gpg_error as error;
 extern crate libgcrypt_sys as ffi;
 
 use std::ffi::{CStr, CString};
-use std::mem;
 use std::ptr;
 use std::sync::Mutex;
 
@@ -183,19 +182,5 @@ pub fn get_token() -> Option<Token> {
         Some(Token(()))
     } else {
         None
-    }
-}
-
-pub unsafe trait Wrapper: Sized {
-    type Raw: Copy;
-
-    unsafe fn from_raw(raw: Self::Raw) -> Self;
-
-    fn as_raw(&self) -> Self::Raw;
-
-    fn into_raw(self) -> Self::Raw {
-        let raw = self.as_raw();
-        mem::forget(self);
-        raw
     }
 }

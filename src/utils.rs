@@ -38,6 +38,27 @@ macro_rules! enum_wrapper {
     };
 }
 
+macro_rules! impl_wrapper {
+    ($Name:ident: $Raw:ty) => {
+        impl $Name {
+            pub unsafe fn from_raw(raw: $Raw) -> Self {
+                debug_assert!(!raw.is_null());
+                $Name(raw)
+            }
+
+            pub fn as_raw(&self) -> $Raw {
+                self.0
+            }
+
+            pub fn into_raw(self) -> $Raw {
+                let raw = self.0;
+                ::std::mem::forget(self);
+                raw
+            }
+        }
+    };
+}
+
 pub unsafe fn from_cstr<'a>(s: *const c_char) -> Option<&'a str> {
     if !s.is_null() {
         CStr::from_ptr(s).to_str().ok()

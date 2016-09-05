@@ -5,7 +5,7 @@ use std::str;
 use ffi;
 use libc::c_int;
 
-use {Token, Wrapper};
+use Token;
 use error::Result;
 use super::{Integer, Point};
 use pkey::PK_ECC;
@@ -69,8 +69,8 @@ impl<'a> Iterator for Curves<'a> {
     type Item = Curve;
 
     fn next(&mut self) -> Option<Curve> {
+        let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
         unsafe {
-            let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
             let mut nbits = 0;
             let result = ffi::gcry_pk_get_curve(key, self.idx, &mut nbits);
             if !result.is_null() {
@@ -91,28 +91,15 @@ impl<'a> Iterator for Curves<'a> {
     }
 }
 
-pub struct Context {
-    raw: ffi::gcry_ctx_t,
-}
+pub struct Context(ffi::gcry_ctx_t);
+
+impl_wrapper!(Context: ffi::gcry_ctx_t);
 
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_ctx_release(self.raw);
+            ffi::gcry_ctx_release(self.0);
         }
-    }
-}
-
-unsafe impl Wrapper for Context {
-    type Raw = ffi::gcry_ctx_t;
-
-    unsafe fn from_raw(raw: ffi::gcry_ctx_t) -> Context {
-        debug_assert!(!raw.is_null());
-        Context { raw: raw }
-    }
-
-    fn as_raw(&self) -> ffi::gcry_ctx_t {
-        self.raw
     }
 }
 
@@ -137,7 +124,7 @@ impl Context {
     pub fn get_integer<S: Into<String>>(&self, name: S) -> Option<Integer> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
-            let mpi = ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.raw, 1);
+            let mpi = ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.0, 1);
             if !mpi.is_null() {
                 Some(Integer::from_raw(mpi))
             } else {
@@ -149,7 +136,7 @@ impl Context {
     pub fn set_integer<S: Into<String>>(&mut self, name: S, x: &Integer) -> Result<()> {
         let name = try!(CString::new(name.into()));
         unsafe {
-            return_err!(ffi::gcry_mpi_ec_set_mpi(name.as_ptr(), x.as_raw(), self.raw));
+            return_err!(ffi::gcry_mpi_ec_set_mpi(name.as_ptr(), x.as_raw(), self.0));
             Ok(())
         }
     }
@@ -157,7 +144,7 @@ impl Context {
     pub fn get_point<S: Into<String>>(&self, name: S) -> Option<Point> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
-            let point = ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.raw, 1);
+            let point = ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.0, 1);
             if !point.is_null() {
                 Some(Point::from_raw(point))
             } else {
@@ -169,7 +156,7 @@ impl Context {
     pub fn set_point<S: Into<String>>(&mut self, name: S, p: &Point) -> Result<()> {
         let name = try!(CString::new(name.into()));
         unsafe {
-            return_err!(ffi::gcry_mpi_ec_set_point(name.as_ptr(), p.as_raw(), self.raw));
+            return_err!(ffi::gcry_mpi_ec_set_point(name.as_ptr(), p.as_raw(), self.0));
             Ok(())
         }
     }
