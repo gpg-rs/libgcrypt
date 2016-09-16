@@ -1,7 +1,5 @@
 use ffi;
 
-use Token;
-
 enum_wrapper! {
     pub enum Level: ffi::gcry_random_level_t {
         WEAK_RANDOM        = ffi::GCRY_WEAK_RANDOM,
@@ -10,35 +8,16 @@ enum_wrapper! {
     }
 }
 
-pub trait Random {
-    fn make_nonce(&mut self, _: Token);
-    fn randomize(&mut self, _: Token, level: Level);
-}
-
-impl Random for [u8] {
-    fn make_nonce(&mut self, _: Token) {
-        unsafe {
-            ffi::gcry_create_nonce(self.as_mut_ptr() as *mut _, self.len());
-        }
-    }
-
-    fn randomize(&mut self, _: Token, level: Level) {
-        unsafe {
-            ffi::gcry_randomize(self.as_mut_ptr() as *mut _, self.len(), level.raw());
-        }
+pub fn make_nonce(buf: &mut [u8]) {
+    let _ = ::get_token();
+    unsafe {
+        ffi::gcry_create_nonce(buf.as_mut_ptr() as *mut _, buf.len());
     }
 }
 
-impl<'a> Random for &'a mut [u8] {
-    fn make_nonce(&mut self, _: Token) {
-        unsafe {
-            ffi::gcry_create_nonce(self.as_mut_ptr() as *mut _, self.len());
-        }
-    }
-
-    fn randomize(&mut self, _: Token, level: Level) {
-        unsafe {
-            ffi::gcry_randomize(self.as_mut_ptr() as *mut _, self.len(), level.raw());
-        }
+pub fn randomize(level: Level, buf: &mut [u8]) {
+    let _ = ::get_token();
+    unsafe {
+        ffi::gcry_randomize(buf.as_mut_ptr() as *mut _, buf.len(), level.raw());
     }
 }

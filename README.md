@@ -11,11 +11,14 @@
 Version 1.5.0 or greater of libgcrypt is required to use this wrapper.
 Some features may require a more recent version.
 
-The libgcrypt-sys crate requires the libgcrypt-config binary to be executable in order to
-build the crate. The path to this binary can be set using the environment variable LIBGCRYPT_CONFIG.
-A working installation of gcc is also required.
+The libgcrypt-sys crate will attempt to find the library by parsing the output
+of `libgcrypt-config`. The path to the library and its header files can also be
+configured by setting the environment variables `LIBGCRYPT_LIB` and
+`LIBGCRYPT_INCLUDE_DIR` before building the crate. A working installation of
+gcc is also required.
 
 The required libraries and binaries can be installed by running:
+
 #### Debian / Ubuntu
 ```shell
 $ sudo apt-get install libgcrypt11-dev
@@ -50,9 +53,20 @@ And this in your crate root:
 extern crate gcrypt;
 ```
 
-The library **must** be initialized using [```gcrypt::init```](https://johnschug.github.io/rust-gcrypt/gcrypt/fn.init.html) or
-[```gcrypt::init_fips_mode```](https://johnschug.github.io/rust-gcrypt/gcrypt/fn.init_fips_mode.html)
-before using any other function in the library or wrapper. An example of initialization can be found in
-the [```setup```](./tests/basic.rs#L17) function in tests/basic.rs
-(NB: the ```enable_quick_random``` option should **not** be used in most cases). More information on
-initialization can be found in the libgcrypt [documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).
+The library requires initialization before first use. The functions `init` and
+`init_fips` can be used to initialize the library. The closure passed to these
+functions is used to configure the library. More information on configuration
+options can be found in the libgcrypt
+[documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).
+
+An example:
+
+```rust
+let token = gcrypt::init(|mut x| {
+    x.disable_secmem();
+});
+```
+
+Calling any function in the wrapper that requires initialization before `init`
+or `init_fips` are called will cause the wrapper to attempt to initialize the
+library with a default configuration.

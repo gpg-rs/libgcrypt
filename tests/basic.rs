@@ -19,7 +19,7 @@ fn test_self_tests() {
     assert!(setup().run_self_tests());
 }
 
-fn check_cipher(token: Token, algo: cipher::Algorithm, mode: cipher::Mode, flags: cipher::Flags) {
+fn check_cipher(algo: cipher::Algorithm, mode: cipher::Mode, flags: cipher::Flags) {
     let key = b"0123456789abcdef.,;/[]{}-=ABCDEF";
     let mut plain = [0u8; 1040];
     (&mut plain[..16]).copy_from_slice(b"foobar42FOOBAR17");
@@ -38,7 +38,7 @@ fn check_cipher(token: Token, algo: cipher::Algorithm, mode: cipher::Mode, flags
         }
     }
 
-    let mut cipher = Cipher::with_flags(token, algo, mode, flags).unwrap();
+    let mut cipher = Cipher::with_flags(algo, mode, flags).unwrap();
     cipher.set_key(&key[..algo.key_len()]).unwrap();
 
     let mut input = [0u8; 1040];
@@ -83,25 +83,25 @@ fn test_block_ciphers() {
     ];
 
     for &algo in algos.iter() {
-        if !algo.is_available(token) {
+        if !algo.is_available() {
             continue;
         }
 
-        check_cipher(token, algo, cipher::MODE_ECB, cipher::FLAGS_NONE);
-        check_cipher(token, algo, cipher::MODE_CFB, cipher::FLAGS_NONE);
-        check_cipher(token, algo, cipher::MODE_OFB, cipher::FLAGS_NONE);
-        check_cipher(token, algo, cipher::MODE_CBC, cipher::FLAGS_NONE);
-        check_cipher(token, algo, cipher::MODE_CBC, cipher::FLAG_CBC_CTS);
-        check_cipher(token, algo, cipher::MODE_CTR, cipher::FLAGS_NONE);
+        check_cipher(algo, cipher::MODE_ECB, cipher::FLAGS_NONE);
+        check_cipher(algo, cipher::MODE_CFB, cipher::FLAGS_NONE);
+        check_cipher(algo, cipher::MODE_OFB, cipher::FLAGS_NONE);
+        check_cipher(algo, cipher::MODE_CBC, cipher::FLAGS_NONE);
+        check_cipher(algo, cipher::MODE_CBC, cipher::FLAG_CBC_CTS);
+        check_cipher(algo, cipher::MODE_CTR, cipher::FLAGS_NONE);
         if algo.block_len() == 16 && token.check_version("1.6.0") {
-            check_cipher(token, algo, cipher::MODE_GCM, cipher::FLAGS_NONE);
+            check_cipher(algo, cipher::MODE_GCM, cipher::FLAGS_NONE);
         }
     }
 }
 
 #[test]
 fn test_stream_ciphers() {
-    let token = setup();
+    setup();
 
     let algos = [
         cipher::CIPHER_ARCFOUR,
@@ -110,17 +110,17 @@ fn test_stream_ciphers() {
     ];
 
     for &algo in algos.iter() {
-        if !algo.is_available(token) {
+        if !algo.is_available() {
             continue;
         }
 
-        check_cipher(token, algo, cipher::MODE_STREAM, cipher::FLAGS_NONE);
+        check_cipher(algo, cipher::MODE_STREAM, cipher::FLAGS_NONE);
     }
 }
 
 #[test]
 fn test_bulk_cipher_modes() {
-    let token = setup();
+    setup();
 
     let specs: &[(cipher::Algorithm, cipher::Mode, &[u8], &[u8], [u8; 20])] = &[
         (cipher::CIPHER_AES, cipher::MODE_CFB,
@@ -192,15 +192,15 @@ fn test_bulk_cipher_modes() {
             *b = ((i & 0xff) ^ ((i >> 8) & 0xff)) as u8;
         }
 
-        let mut hde = Cipher::new(token, spec.0, spec.1).unwrap();
-        let mut hdd = Cipher::new(token, spec.0, spec.1).unwrap();
+        let mut hde = Cipher::new(spec.0, spec.1).unwrap();
+        let mut hdd = Cipher::new(spec.0, spec.1).unwrap();
         hde.set_key(spec.2).unwrap();
         hdd.set_key(spec.2).unwrap();
         hde.set_iv(spec.3).unwrap();
         hdd.set_iv(spec.3).unwrap();
         hde.encrypt(&buffer, &mut output).unwrap();
 
-        let mut digest = MessageDigest::new(token, digest::MD_SHA1).unwrap();
+        let mut digest = MessageDigest::new(digest::MD_SHA1).unwrap();
         digest.update(&output);
         assert_eq!(&spec.4, digest.get_only_digest().unwrap());
         hdd.decrypt_inplace(&mut output).unwrap();
@@ -208,8 +208,8 @@ fn test_bulk_cipher_modes() {
     }
 }
 
-fn check_digest(token: Token, algo: digest::Algorithm, data: &[u8], expected: &[u8]) {
-    let mut digest = MessageDigest::new(token, algo).unwrap();
+fn check_digest(algo: digest::Algorithm, data: &[u8], expected: &[u8]) {
+    let mut digest = MessageDigest::new(algo).unwrap();
     if data.starts_with(b"!") && data.len() == 1 {
         let aaa = [b'a'; 1000];
         for _ in 0..1000 {
@@ -223,7 +223,7 @@ fn check_digest(token: Token, algo: digest::Algorithm, data: &[u8], expected: &[
 
 #[test]
 fn test_digests() {
-    let token = setup();
+    setup();
 
     let specs: &[(digest::Algorithm, &[u8], &[u8])] = &[
         (digest::MD_MD4, b"", b"\x31\xD6\xCF\xE0\xD1\x6A\xE9\x31\xB7\x3C\x59\xD7\xE0\xC0\x89\xC0"),
@@ -436,16 +436,16 @@ fn test_digests() {
             ];
 
     for spec in specs {
-        if !spec.0.is_available(token) {
+        if !spec.0.is_available() {
             continue;
         }
 
-        check_digest(token, spec.0, spec.1, spec.2);
+        check_digest(spec.0, spec.1, spec.2);
     }
 }
 
-fn check_hmac(token: Token, algo: digest::Algorithm, data: &[u8], key: &[u8], expected: &[u8]) {
-    let mut hmac = MessageDigest::with_flags(token, algo, digest::FLAG_HMAC).unwrap();
+fn check_hmac(algo: digest::Algorithm, data: &[u8], key: &[u8], expected: &[u8]) {
+    let mut hmac = MessageDigest::with_flags(algo, digest::FLAG_HMAC).unwrap();
     hmac.set_key(key).unwrap();
     hmac.update(data);
     assert_eq!(Some(expected), hmac.get_only_digest());
@@ -453,7 +453,7 @@ fn check_hmac(token: Token, algo: digest::Algorithm, data: &[u8], key: &[u8], ex
 
 #[test]
 fn test_hmacs() {
-    let token = setup();
+    setup();
 
     let specs: &[(digest::Algorithm, &[u8], &[u8], &[u8])] = &[
         (digest::MD_MD5, b"what do ya want for nothing?", b"Jefe",
@@ -734,15 +734,15 @@ fn test_hmacs() {
     ];
 
     for spec in specs {
-        if !spec.0.is_available(token) {
+        if !spec.0.is_available() {
             continue;
         }
 
-        check_hmac(token, spec.0, spec.1, spec.2, spec.3);
+        check_hmac(spec.0, spec.1, spec.2, spec.3);
     }
 }
 
-fn check_s2k(token: Token) {
+fn check_s2k() {
     let test_vectors: &[(&[u8], digest::Algorithm, Option<&[u8]>, u32, &[u8])] = &[
         (b"\x61", digest::MD_MD5, None, 0,
          b"\x0c\xc1\x75\xb9\xc0\xf1\xb6\xa8\x31\xc3\x99\xe2\x69\x77\x26\x61"),
@@ -971,12 +971,12 @@ fn check_s2k(token: Token) {
     let mut key = [0u8; 32];
     for tv in test_vectors {
         assert!(tv.4.len() <= key.len());
-        kdf::s2k_derive(token, tv.1, tv.3, tv.0, tv.2, &mut key[..tv.4.len()]).unwrap();
+        kdf::s2k_derive(tv.1, tv.3, tv.0, tv.2, &mut key[..tv.4.len()]).unwrap();
         assert_eq!(tv.4, &key[..tv.4.len()]);
     }
 }
 
-fn check_pbkdf2(token: Token) {
+fn check_pbkdf2() {
     let test_vectors: &[(&str, &str, u32, &[u8])] = &[
         ("password", "salt", 1,
          b"\x0c\x60\xc8\x0f\x96\x1f\x0e\x71\xf3\xa9\
@@ -999,13 +999,13 @@ fn check_pbkdf2(token: Token) {
     let mut key = [0u8; 32];
     for tv in test_vectors {
         assert!(tv.3.len() <= key.len());
-        kdf::pbkdf2_derive(token, digest::MD_SHA1, tv.2, tv.0.as_bytes(),
+        kdf::pbkdf2_derive(digest::MD_SHA1, tv.2, tv.0.as_bytes(),
                            tv.1.as_bytes(), &mut key[..tv.3.len()]).unwrap();
         assert_eq!(tv.3, &key[..tv.3.len()]);
     }
 }
 
-fn check_scrypt(token: Token) {
+fn check_scrypt() {
     let test_vectors: &[(&str, &str, u32, u32, &[u8])] = &[
         ("password", "NaCl", 1024, 16,
          b"\xfd\xba\xbe\x1c\x9d\x34\x72\x00\x78\x56\xe7\x19\x0d\x01\xe9\xfe\
@@ -1022,7 +1022,7 @@ fn check_scrypt(token: Token) {
     let mut key = [0u8; 64];
     for tv in test_vectors {
         assert!(tv.4.len() <= key.len());
-        kdf::scrypt_derive(token, tv.2, tv.3, tv.0.as_bytes(),
+        kdf::scrypt_derive(tv.2, tv.3, tv.0.as_bytes(),
                            tv.1.as_bytes(), &mut key[..tv.4.len()]).unwrap();
         assert_eq!(tv.4, &key[..tv.4.len()]);
     }
@@ -1032,10 +1032,10 @@ fn check_scrypt(token: Token) {
 fn test_kdfs() {
     let token = setup();
 
-    check_s2k(token);
-    check_pbkdf2(token);
+    check_s2k();
+    check_pbkdf2();
     if token.check_version("1.6.0") {
-        check_scrypt(token);
+        check_scrypt();
     }
 }
 
@@ -1050,7 +1050,7 @@ fn verify_signature(pkey: &SExpression, hash: &SExpression, bad_hash: &SExpressi
                error::GPG_ERR_BAD_SIGNATURE);
 }
 
-fn check_pkey_sign(token: Token, algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpression) {
+fn check_pkey_sign(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpression) {
     let specs: &[(&[u8], Option<pkey::Algorithm>, ErrorCode)] = &[
         (b"(data\n (flags pkcs1)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
@@ -1087,7 +1087,7 @@ fn check_pkey_sign(token: Token, algo: pkey::Algorithm, skey: &SExpression, pkey
          Some(pkey::PK_RSA), 0),
     ];
 
-    let bad_hash = SExpression::from_bytes(token,
+    let bad_hash = SExpression::from_bytes(
         &b"(data\n (flags pkcs1)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203041#))\n"[..]
     ).unwrap();
@@ -1097,7 +1097,7 @@ fn check_pkey_sign(token: Token, algo: pkey::Algorithm, skey: &SExpression, pkey
             continue;
         }
 
-        let hash = SExpression::from_bytes(token, spec.0).unwrap();
+        let hash = SExpression::from_bytes(spec.0).unwrap();
         let sig = match skey.sign(&hash) {
             Ok(s) => s,
             Err(e) => {
@@ -1109,7 +1109,7 @@ fn check_pkey_sign(token: Token, algo: pkey::Algorithm, skey: &SExpression, pkey
     }
 }
 
-fn check_pkey_sign_ecdsa(token: Token, skey: &SExpression, pkey: &SExpression) {
+fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
     let specs: &[(usize, &[u8], ErrorCode, &[u8])] = &[
         (192,
          b"(data (flags raw)\n\
@@ -1156,8 +1156,8 @@ fn check_pkey_sign_ecdsa(token: Token, skey: &SExpression, pkey: &SExpression) {
             continue;
         }
 
-        let hash = SExpression::from_bytes(token, spec.1).unwrap();
-        let bad_hash = SExpression::from_bytes(token, spec.3).unwrap();
+        let hash = SExpression::from_bytes(spec.1).unwrap();
+        let bad_hash = SExpression::from_bytes(spec.3).unwrap();
         let sig = match skey.sign(&hash) {
             Ok(s) => s,
             Err(e) => {
@@ -1169,7 +1169,7 @@ fn check_pkey_sign_ecdsa(token: Token, skey: &SExpression, pkey: &SExpression) {
     }
 }
 
-fn check_pkey_crypt(token: Token, algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpression) {
+fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpression) {
     let specs: &[(Option<pkey::Algorithm>, &[u8], &[u8], bool, ErrorCode, ErrorCode, bool)] = &[
         (Some(pkey::PK_RSA),
          b"(data\n (flags pkcs1)\n\
@@ -1228,7 +1228,7 @@ fn check_pkey_crypt(token: Token, algo: pkey::Algorithm, skey: &SExpression, pke
             continue;
         }
 
-        let data = SExpression::from_bytes(token, spec.1).unwrap();
+        let data = SExpression::from_bytes(spec.1).unwrap();
         let cipher = {
             let cipher = match pkey.encrypt(&data) {
                 Ok(s) => s,
@@ -1239,7 +1239,7 @@ fn check_pkey_crypt(token: Token, algo: pkey::Algorithm, skey: &SExpression, pke
             };
 
             if !spec.2.is_empty() {
-                let hint = SExpression::from_bytes(token, spec.2).unwrap()
+                let hint = SExpression::from_bytes(spec.2).unwrap()
                     .to_bytes(sexp::Format::Canonical);
                 let len = cipher.len_encoded(sexp::Format::Canonical) + hint.len();
                 let mut buffer = vec![0u8; len];
@@ -1248,7 +1248,7 @@ fn check_pkey_crypt(token: Token, algo: pkey::Algorithm, skey: &SExpression, pke
                     buffer[i] = buffer[i + hint.len()];
                 }
                 (&mut buffer[10..(10 + hint.len())]).copy_from_slice(&hint);
-                SExpression::from_bytes(token, &buffer).unwrap()
+                SExpression::from_bytes(&buffer).unwrap()
             } else {
                 cipher
             }
@@ -1274,17 +1274,17 @@ fn check_pkey_crypt(token: Token, algo: pkey::Algorithm, skey: &SExpression, pke
     }
 }
 
-fn check_pkey(token: Token, algo: pkey::Algorithm, flags: usize, skey: &SExpression,
+fn check_pkey(algo: pkey::Algorithm, flags: usize, skey: &SExpression,
               pkey: &SExpression, grip: &[u8]) {
     if (flags & FLAG_SIGN) == FLAG_SIGN {
         if algo == pkey::PK_ECDSA {
-            check_pkey_sign_ecdsa(token, skey, pkey);
+            check_pkey_sign_ecdsa(skey, pkey);
         } else {
-            check_pkey_sign(token, algo, skey, pkey);
+            check_pkey_sign(algo, skey, pkey);
         }
     }
     if (flags & FLAG_CRYPT) == FLAG_CRYPT {
-        check_pkey_crypt(token, algo, skey, pkey);
+        check_pkey_crypt(algo, skey, pkey);
     }
     if (flags & FLAG_GRIP) == FLAG_GRIP {
         assert_eq!(grip, skey.key_grip().unwrap());
@@ -1294,7 +1294,7 @@ fn check_pkey(token: Token, algo: pkey::Algorithm, flags: usize, skey: &SExpress
 
 #[test]
 fn test_pkey() {
-  let token = setup();
+  setup();
 
   let keys: &[(pkey::Algorithm, usize, (&[u8], &[u8], &[u8]))] = &[
       (pkey::PK_RSA, FLAG_CRYPT | FLAG_SIGN,
@@ -1517,17 +1517,17 @@ fn test_pkey() {
           \x00\x00\x00\x00\x00\x00\x00\x00\x00\x00")),
   ];
   for &(algo, flags, key) in keys {
-    if !algo.is_available(token) {
+    if !algo.is_available() {
         continue;
     }
-    let skey = SExpression::from_bytes(token, key.0).unwrap();
-    let pkey = SExpression::from_bytes(token, key.1).unwrap();
-    check_pkey(token, algo, flags, &skey, &pkey, key.2);
+    let skey = SExpression::from_bytes(key.0).unwrap();
+    let pkey = SExpression::from_bytes(key.1).unwrap();
+    check_pkey(algo, flags, &skey, &pkey, key.2);
   }
 
-  let key_spec = SExpression::from_bytes(token, b"(genkey (rsa (nbits 4:1024)))").unwrap();
+  let key_spec = SExpression::from_bytes(b"(genkey (rsa (nbits 4:1024)))").unwrap();
   let key = key_spec.generate_key().unwrap();
   let pkey = key.find_token("public-key").unwrap();
   let skey = key.find_token("private-key").unwrap();
-  check_pkey(token, pkey::PK_RSA, FLAG_SIGN | FLAG_CRYPT, &skey, &pkey, b"");
+  check_pkey(pkey::PK_RSA, FLAG_SIGN | FLAG_CRYPT, &skey, &pkey, b"");
 }

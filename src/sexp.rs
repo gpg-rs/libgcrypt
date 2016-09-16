@@ -3,12 +3,11 @@ use std::fmt;
 use std::mem;
 use std::ptr;
 use std::slice;
-use std::str;
+use std::str::{self, FromStr};
 
 use libc::{c_char, c_int, c_void};
 use ffi;
 
-use Token;
 use error::{self, Error, Result};
 use mpi::Integer;
 use mpi::integer::Format as IntegerFormat;
@@ -34,8 +33,9 @@ impl Drop for SExpression {
 }
 
 impl SExpression {
-    pub fn from_bytes<B: AsRef<[u8]>>(_: Token, bytes: B) -> Result<SExpression> {
+    pub fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Result<SExpression> {
         let bytes = bytes.as_ref();
+        let _ = ::get_token();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
             return_err!(ffi::gcry_sexp_sscan(&mut result,
@@ -44,10 +44,6 @@ impl SExpression {
                                              bytes.len()));
             Ok(SExpression::from_raw(result))
         }
-    }
-
-    pub fn from_str<S: AsRef<str>>(token: Token, s: S) -> Result<SExpression> {
-        SExpression::from_bytes(token, s.as_ref())
     }
 
     pub fn to_bytes(&self, format: Format) -> Vec<u8> {
@@ -133,6 +129,14 @@ impl SExpression {
                 .as_mut()
                 .map(|x| Integer::from_raw(x))
         }
+    }
+}
+
+impl FromStr for SExpression {
+    type Err = Error;
+
+    fn from_str(s: &str) -> Result<SExpression> {
+        SExpression::from_bytes(s)
     }
 }
 
@@ -322,10 +326,11 @@ impl<'a> Builder<'a> {
         self
     }
 
-    pub fn build(self, _: Token) -> Result<SExpression> {
+    pub fn build(self) -> Result<SExpression> {
         if self.params.len() != self.template.params.len() {
             return Err(Error::from_code(error::GPG_ERR_INV_STATE));
         }
+        let _ = ::get_token();
         unsafe {
             let mut args = Vec::<*mut c_void>::with_capacity(self.params.len());
             for param in &self.params {
@@ -357,14 +362,10 @@ mod tests {
 
     #[test]
     fn test_build() {
-        let token = ::init(|mut x| {
-            x.disable_secmem();
-        });
-
         let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %d)(d %b)))")
             .unwrap();
         let mut builder = Builder::from(&template);
-        builder.add_str("Ed25519").add_int(1234).add_bytes("2324");
-        builder.build(token).unwrap();
+        builder.add_str("ed25519").add_int(1234).add_bytes("2324");
+        builder.build().unwrap();
     }
 }

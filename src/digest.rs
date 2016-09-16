@@ -6,7 +6,6 @@ use std::slice;
 use ffi;
 use libc::c_int;
 
-use Token;
 use utils;
 use error::Result;
 
@@ -53,7 +52,8 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self, _: Token) -> bool {
+    pub fn is_available(&self) -> bool {
+        let _ = ::get_token();
         unsafe { ffi::gcry_md_test_algo(self.0) == 0 }
     }
 
@@ -89,13 +89,14 @@ impl Drop for MessageDigest {
 }
 
 impl MessageDigest {
-    pub fn new(token: Token, algo: Algorithm) -> Result<MessageDigest> {
-        MessageDigest::with_flags(token, algo, FLAGS_NONE)
+    pub fn new(algo: Algorithm) -> Result<MessageDigest> {
+        MessageDigest::with_flags(algo, FLAGS_NONE)
     }
 
-    pub fn with_flags(_: Token, algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
-        let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
+    pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
+        let _ = ::get_token();
         unsafe {
+            let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_md_open(&mut handle, algo.0, flags.bits()));
             Ok(MessageDigest::from_raw(handle))
         }
@@ -180,9 +181,10 @@ impl Write for MessageDigest {
     }
 }
 
-pub fn hash(token: Token, algo: Algorithm, src: &[u8], dst: &mut [u8]) {
-    assert!(algo.is_available(token));
+pub fn hash(algo: Algorithm, src: &[u8], dst: &mut [u8]) {
+    assert!(algo.is_available());
     assert!(dst.len() >= algo.digest_len());
+    let _ = ::get_token();
     unsafe {
         ffi::gcry_md_hash_buffer(algo.0,
                                  dst.as_mut_ptr() as *mut _,

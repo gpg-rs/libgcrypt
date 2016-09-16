@@ -8,7 +8,6 @@ use std::str;
 use ffi;
 use libc::c_uint;
 
-use Token;
 use error::{self, Error, Result};
 use buffer::Buffer;
 use rand::Level;
@@ -49,28 +48,32 @@ impl Clone for Integer {
 }
 
 impl Integer {
-    pub fn zero(token: Token) -> Integer {
-        Integer::new(token, 0)
+    pub fn zero() -> Integer {
+        Integer::new(0)
     }
 
-    pub fn one(token: Token) -> Integer {
-        Integer::from_uint(token, 1)
+    pub fn one() -> Integer {
+        Integer::from_uint(1)
     }
 
-    pub fn new(_: Token, nbits: u32) -> Integer {
+    pub fn new(nbits: u32) -> Integer {
+        let _ = ::get_token();
         unsafe { Integer::from_raw(ffi::gcry_mpi_new(nbits.into())) }
     }
 
-    pub fn new_secure(_: Token, nbits: u32) -> Integer {
+    pub fn new_secure(nbits: u32) -> Integer {
+        let _ = ::get_token();
         unsafe { Integer::from_raw(ffi::gcry_mpi_snew(nbits.into())) }
     }
 
-    pub fn from_uint(_: Token, n: u32) -> Integer {
+    pub fn from_uint(n: u32) -> Integer {
+        let _ = ::get_token();
         unsafe { Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n.into())) }
     }
 
-    pub fn from_bytes<B: AsRef<[u8]>>(_: Token, format: Format, bytes: B) -> Result<Integer> {
+    pub fn from_bytes<B: AsRef<[u8]>>(format: Format, bytes: B) -> Result<Integer> {
         let bytes = bytes.as_ref();
+        let _ = ::get_token();
         unsafe {
             let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
             let len = if format != Format::Hex {
@@ -89,9 +92,9 @@ impl Integer {
         }
     }
 
-    pub fn from_str<S: Into<String>>(token: Token, s: S) -> Result<Integer> {
+    pub fn from_str<S: Into<String>>(s: S) -> Result<Integer> {
         let s = try!(CString::new(s.into()));
-        Integer::from_bytes(token, Format::Hex, s.as_bytes_with_nul())
+        Integer::from_bytes(Format::Hex, s.as_bytes_with_nul())
     }
 
     pub fn to_bytes(&self, format: Format) -> Result<Buffer> {
@@ -206,7 +209,7 @@ impl Integer {
     }
 
     pub fn div_rem(self, other: &Integer) -> (Integer, Integer) {
-        let rem = Integer::zero(::get_token().unwrap());
+        let rem = Integer::zero();
         unsafe {
             ffi::gcry_mpi_div(self.0, rem.0, self.0, other.0, 0);
         }
@@ -214,7 +217,7 @@ impl Integer {
     }
 
     pub fn div_mod_floor(self, other: &Integer) -> (Integer, Integer) {
-        let rem = Integer::zero(::get_token().unwrap());
+        let rem = Integer::zero();
         unsafe {
             ffi::gcry_mpi_div(self.0, rem.0, self.0, other.0, -1);
         }

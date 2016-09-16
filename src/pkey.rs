@@ -4,7 +4,6 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use Token;
 use utils;
 use error::Result;
 use sexp::SExpression;
@@ -36,7 +35,8 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self, _: Token) -> bool {
+    pub fn is_available(&self) -> bool {
+        let _ = ::get_token();
         unsafe { ffi::gcry_pk_test_algo(self.0) == 0 }
     }
 

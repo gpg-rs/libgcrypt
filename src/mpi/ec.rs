@@ -5,7 +5,6 @@ use std::str;
 use ffi;
 use libc::c_int;
 
-use Token;
 use error::Result;
 use super::{Integer, Point};
 use pkey::PK_ECC;
@@ -41,7 +40,8 @@ pub struct Curves<'a> {
 }
 
 impl<'a> Curves<'a> {
-    pub fn all(_: Token) -> Curves<'static> {
+    pub fn all() -> Curves<'static> {
+        let _ = ::get_token();
         Curves {
             key: None,
             idx: 0,
@@ -55,8 +55,8 @@ impl<'a> Curves<'a> {
         }
     }
 
-    pub fn get(token: Token, name: &str) -> Option<Curve> {
-        SExpression::from_bytes(token, format!("(curve {})", name)).ok().and_then(|s| s.curve())
+    pub fn get(name: &str) -> Option<Curve> {
+        SExpression::from_bytes(format!("(curve {})", name)).ok().and_then(|s| s.curve())
     }
 }
 

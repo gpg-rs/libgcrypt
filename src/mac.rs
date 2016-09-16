@@ -5,7 +5,6 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use Token;
 use utils;
 use error::Result;
 
@@ -60,7 +59,8 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self, _: Token) -> bool {
+    pub fn is_available(&self) -> bool {
+        let _ = ::get_token();
         unsafe { ffi::gcry_mac_test_algo(self.0) == 0 }
     }
 
@@ -98,13 +98,14 @@ impl Drop for Mac {
 }
 
 impl Mac {
-    pub fn new(token: Token, algo: Algorithm) -> Result<Mac> {
-        Mac::with_flags(token, algo, FLAGS_NONE)
+    pub fn new(algo: Algorithm) -> Result<Mac> {
+        Mac::with_flags(algo, FLAGS_NONE)
     }
 
-    pub fn with_flags(_: Token, algo: Algorithm, flags: Flags) -> Result<Mac> {
-        let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
+    pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<Mac> {
+        let _ = ::get_token();
         unsafe {
+            let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_mac_open(&mut handle, algo.0, flags.bits(), ptr::null_mut()));
             Ok(Mac::from_raw(handle))
         }

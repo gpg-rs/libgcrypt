@@ -4,7 +4,6 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use Token;
 use utils;
 use error::Result;
 
@@ -55,7 +54,8 @@ impl Algorithm {
         }
     }
 
-    pub fn is_available(&self, _: Token) -> bool {
+    pub fn is_available(&self) -> bool {
+        let _ = ::get_token();
         unsafe { ffi::gcry_cipher_test_algo(self.0) == 0 }
     }
 
@@ -125,13 +125,14 @@ impl Drop for Cipher {
 }
 
 impl Cipher {
-    pub fn new(token: Token, algo: Algorithm, mode: Mode) -> Result<Cipher> {
-        Cipher::with_flags(token, algo, mode, FLAGS_NONE)
+    pub fn new(algo: Algorithm, mode: Mode) -> Result<Cipher> {
+        Cipher::with_flags(algo, mode, FLAGS_NONE)
     }
 
-    pub fn with_flags(_: Token, algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
-        let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
+    pub fn with_flags(algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
+        let _ = ::get_token();
         unsafe {
+            let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_cipher_open(&mut handle, algo.0, mode.0, flags.bits()));
             Ok(Cipher::from_raw(handle))
         }

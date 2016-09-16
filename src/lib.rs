@@ -1,8 +1,7 @@
 //! ## Initialization
-//! The library **must** be initialized using [```gcrypt::init```](fn.init.html) or
-//! [```gcrypt::init_fips_mode```](fn.init_fips_mode.html) before
-//! using any other function in the library or wrapper. More information on initialization
-//! can be found in the libgcrypt
+//! Libgcrypt requires initialization before first use. The functions `init` and `init_fips` can be
+//! used to initialize the library. The closure passed to these functions is used to configure the
+//! library. More information on configuration options can be found in the libgcrypt
 //! [documentation](https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library).
 //!
 //! An example:
@@ -13,8 +12,9 @@
 //! });
 //! ```
 //!
-//! The token returned by ```init``` is used as an argument to various functions in the library
-//! to ensure that initialization has been completed.
+//! Calling any function in the wrapper that requires initialization before `init` or `init_fips`
+//! are called will cause the wrapper to attempt to initialize the library with a default
+//! configuration.
 extern crate libc;
 #[macro_use]
 extern crate bitflags;
@@ -27,6 +27,7 @@ extern crate libgcrypt_sys as ffi;
 use std::ffi::{CStr, CString};
 use std::ptr;
 use std::sync::Mutex;
+use std::sync::atomic::{ATOMIC_BOOL_INIT, AtomicBool, Ordering};
 
 use libc::c_int;
 
@@ -45,6 +46,7 @@ pub mod digest;
 pub mod mac;
 pub mod kdf;
 
+static INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT;
 lazy_static! {
     static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
 }
@@ -135,13 +137,26 @@ pub fn enable_memory_guard() -> bool {
     !initialized
 }
 
-pub fn is_initialized() -> bool {
+fn is_init_finished() -> bool {
     unsafe { ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED_P, 0) != 0 }
 }
 
-pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
+pub fn is_initialized() -> bool {
+    if INITIALIZED.load(Ordering::Acquire) {
+        return true;
+    }
+
     let _lock = CONTROL_LOCK.lock().unwrap();
-    if !is_initialized() {
+    is_init_finished()
+}
+
+pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
+    if INITIALIZED.load(Ordering::Acquire) {
+        return Token(());
+    }
+
+    let _lock = CONTROL_LOCK.lock().unwrap();
+    if !is_init_finished() {
         unsafe {
             if cfg!(unix) {
                 ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
@@ -154,12 +169,17 @@ pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
         }
     }
+    INITIALIZED.store(true, Ordering::Release);
     Token(())
 }
 
 pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
+    if INITIALIZED.load(Ordering::Acquire) {
+        return Token(());
+    }
+
     let _lock = CONTROL_LOCK.lock().unwrap();
-    if !is_initialized() {
+    if !is_init_finished() {
         unsafe {
             if cfg!(unix) {
                 ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
@@ -173,14 +193,10 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
             ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
         }
     }
+    INITIALIZED.store(true, Ordering::Release);
     Token(())
 }
 
-pub fn get_token() -> Option<Token> {
-    let _lock = CONTROL_LOCK.lock().unwrap();
-    if is_initialized() {
-        Some(Token(()))
-    } else {
-        None
-    }
+pub fn get_token() -> Token {
+    init(|mut x| { x.disable_secmem(); })
 }

@@ -39,7 +39,7 @@ fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
     for path in include_dirs.iter() {
         config.include(path);
     }
-    config.file("shim.c").compile("libgcrypt_shim.a");
+    config.flag("-Wno-deprecated-declarations").file("shim.c").compile("libgcrypt_shim.a");
 }
 
 #[cfg(not(feature = "shim"))]
