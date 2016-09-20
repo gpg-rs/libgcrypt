@@ -1045,8 +1045,8 @@ const FLAG_GRIP: usize = 4;
 
 fn verify_signature(pkey: &SExpression, hash: &SExpression, bad_hash: &SExpression,
                     sig: &SExpression) {
-    assert_eq!(pkey.verify(sig, hash).err(), None);
-    assert_eq!(pkey.verify(sig, bad_hash).err().map_or(0, |e| e.code()),
+    assert_eq!(pkey::verify(pkey, hash, sig), Ok(()));
+    assert_eq!(pkey::verify(pkey, bad_hash, sig).err().map_or(0, |e| e.code()),
                error::GPG_ERR_BAD_SIGNATURE);
 }
 
@@ -1098,12 +1098,12 @@ fn check_pkey_sign(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpression
         }
 
         let hash = SExpression::from_bytes(spec.0).unwrap();
-        let sig = match skey.sign(&hash) {
+        let sig = match pkey::sign(&skey, &hash) {
             Ok(s) => s,
             Err(e) => {
                 assert_eq!(spec.2, e.code());
                 return;
-            },
+            }
         };
         verify_signature(pkey, &hash, &bad_hash, &sig);
     }
@@ -1158,7 +1158,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
 
         let hash = SExpression::from_bytes(spec.1).unwrap();
         let bad_hash = SExpression::from_bytes(spec.3).unwrap();
-        let sig = match skey.sign(&hash) {
+        let sig = match pkey::sign(&skey, &hash) {
             Ok(s) => s,
             Err(e) => {
                 assert_eq!(spec.2, e.code());
@@ -1230,7 +1230,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
 
         let data = SExpression::from_bytes(spec.1).unwrap();
         let cipher = {
-            let cipher = match pkey.encrypt(&data) {
+            let cipher = match pkey::encrypt(&pkey, &data) {
                 Ok(s) => s,
                 Err(e) => {
                     assert_eq!(spec.4, e.code());
@@ -1248,12 +1248,12 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
                     buffer[i] = buffer[i + hint.len()];
                 }
                 (&mut buffer[10..(10 + hint.len())]).copy_from_slice(&hint);
-                SExpression::from_bytes(&buffer).unwrap()
+                SExpression::from_bytes(buffer).unwrap()
             } else {
                 cipher
             }
         };
-        let plain = match skey.decrypt(&cipher) {
+        let plain = match pkey::decrypt(&skey, &cipher) {
             Ok(s) => s,
             Err(e) => {
                 assert_eq!(spec.5, e.code());
@@ -1525,8 +1525,8 @@ fn test_pkey() {
     check_pkey(algo, flags, &skey, &pkey, key.2);
   }
 
-  let key_spec = SExpression::from_bytes(b"(genkey (rsa (nbits 4:1024)))").unwrap();
-  let key = key_spec.generate_key().unwrap();
+  let key_spec = "(genkey (rsa (nbits 4:1024)))".parse::<SExpression>().unwrap();
+  let key = pkey::generate_key(&key_spec).unwrap();
   let pkey = key.find_token("public-key").unwrap();
   let skey = key.find_token("private-key").unwrap();
   check_pkey(pkey::PK_RSA, FLAG_SIGN | FLAG_CRYPT, &skey, &pkey, b"");

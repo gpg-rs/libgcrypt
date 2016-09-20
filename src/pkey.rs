@@ -46,14 +46,6 @@ impl Algorithm {
 }
 
 impl SExpression {
-    pub fn generate_key(&self) -> Result<SExpression> {
-        unsafe {
-            let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_pk_genkey(&mut result, self.as_raw()));
-            Ok(SExpression::from_raw(result))
-        }
-    }
-
     pub fn num_bits(&self) -> Option<usize> {
         unsafe {
             let result = ffi::gcry_pk_get_nbits(self.as_raw());
@@ -86,35 +78,43 @@ impl SExpression {
             Ok(())
         }
     }
+}
 
-    pub fn encrypt(&self, data: &SExpression) -> Result<SExpression> {
-        unsafe {
-            let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_pk_encrypt(&mut result, data.as_raw(), self.as_raw()));
-            Ok(SExpression::from_raw(result))
-        }
+pub fn generate_key(config: &SExpression) -> Result<SExpression> {
+    unsafe {
+        let mut result: ffi::gcry_sexp_t = ptr::null_mut();
+        return_err!(ffi::gcry_pk_genkey(&mut result, config.as_raw()));
+        Ok(SExpression::from_raw(result))
     }
+}
 
-    pub fn decrypt(&self, data: &SExpression) -> Result<SExpression> {
-        unsafe {
-            let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_pk_decrypt(&mut result, data.as_raw(), self.as_raw()));
-            Ok(SExpression::from_raw(result))
-        }
+pub fn encrypt(key: &SExpression, data: &SExpression) -> Result<SExpression> {
+    unsafe {
+        let mut result: ffi::gcry_sexp_t = ptr::null_mut();
+        return_err!(ffi::gcry_pk_encrypt(&mut result, data.as_raw(), key.as_raw()));
+        Ok(SExpression::from_raw(result))
     }
+}
 
-    pub fn sign(&self, data: &SExpression) -> Result<SExpression> {
-        unsafe {
-            let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_pk_sign(&mut result, data.as_raw(), self.as_raw()));
-            Ok(SExpression::from_raw(result))
-        }
+pub fn decrypt(key: &SExpression, data: &SExpression) -> Result<SExpression> {
+    unsafe {
+        let mut result: ffi::gcry_sexp_t = ptr::null_mut();
+        return_err!(ffi::gcry_pk_decrypt(&mut result, data.as_raw(), key.as_raw()));
+        Ok(SExpression::from_raw(result))
     }
+}
 
-    pub fn verify(&self, sig: &SExpression, data: &SExpression) -> Result<()> {
-        unsafe {
-            return_err!(ffi::gcry_pk_verify(sig.as_raw(), data.as_raw(), self.as_raw()));
-            Ok(())
-        }
+pub fn sign(key: &SExpression, data: &SExpression) -> Result<SExpression> {
+    unsafe {
+        let mut result: ffi::gcry_sexp_t = ptr::null_mut();
+        return_err!(ffi::gcry_pk_sign(&mut result, data.as_raw(), key.as_raw()));
+        Ok(SExpression::from_raw(result))
+    }
+}
+
+pub fn verify(key: &SExpression, data: &SExpression, sig: &SExpression) -> Result<()> {
+    unsafe {
+        return_err!(ffi::gcry_pk_verify(sig.as_raw(), data.as_raw(), key.as_raw()));
+        Ok(())
     }
 }
