@@ -14,3 +14,5 @@ bitflags = "0.3"
 lazy_static = "0.2"
 gpg-error = "0.1"
 libgcrypt-sys = {path = "libgcrypt-sys", features = ["shim"], version = "0.3.0"}
+
+[workspace]
