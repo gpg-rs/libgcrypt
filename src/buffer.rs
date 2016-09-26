@@ -36,7 +36,7 @@ impl Buffer {
         unsafe {
             ffi::gcry_malloc(len).as_mut().map(|x| {
                 Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(|| Error::last_os_error())
+            }).ok_or_else(Error::last_os_error)
         }
     }
 
@@ -45,7 +45,7 @@ impl Buffer {
         unsafe {
             ffi::gcry_malloc_secure(len).as_mut().map(|x| {
                 Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(|| Error::last_os_error())
+            }).ok_or_else(Error::last_os_error)
         }
     }
 
@@ -66,7 +66,7 @@ impl Buffer {
         unsafe {
             ffi::gcry_random_bytes(len, level.raw()).as_mut().map(|x| {
                 Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(|| Error::last_os_error())
+            }).ok_or_else(Error::last_os_error)
         }
     }
 
@@ -75,7 +75,7 @@ impl Buffer {
         unsafe {
             ffi::gcry_random_bytes_secure(len, level.raw()).as_mut().map(|x| {
                 Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(|| Error::last_os_error())
+            }).ok_or_else(Error::last_os_error)
         }
     }
 
