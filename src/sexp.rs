@@ -1,14 +1,12 @@
-use std::ffi::CString;
 use std::fmt;
-use std::mem;
 use std::ptr;
 use std::slice;
 use std::str::{self, FromStr};
 
-use libc::{c_char, c_int, c_void};
+use libc::c_int;
 use ffi;
 
-use error::{self, Error, Result};
+use error::{Error, Result};
 use mpi::Integer;
 use mpi::integer::Format as IntegerFormat;
 
@@ -180,10 +178,6 @@ impl<'a> Iterator for Elements<'a> {
         }
     }
 
-    fn last(mut self) -> Option<Self::Item> {
-        self.next_back()
-    }
-
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
         self.first = if (n as u64) < (self.last as u64) {
             self.first + (n as c_int)
@@ -212,160 +206,3 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
     }
 }
 impl<'a> ExactSizeIterator for Elements<'a> {}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-enum ParameterKind {
-    Integer,
-    Bytes,
-    Mpi,
-    SExpression,
-}
-
-enum Parameter {
-    Integer(c_int),
-    Bytes(c_int, *const c_char),
-    Mpi(ffi::gcry_mpi_t),
-    SExpression(ffi::gcry_sexp_t),
-}
-
-#[derive(Debug, Clone)]
-pub struct Template {
-    format: CString,
-    params: Vec<ParameterKind>,
-}
-
-impl Template {
-    pub fn new(format: &str) -> Result<Template> {
-        let mut new_format = Vec::with_capacity(format.len());
-        let mut params = Vec::new();
-        let mut it = format.bytes();
-        loop {
-            match it.next() {
-                Some(b'%') => {
-                    new_format.push(b'%');
-                    let kind = match it.next() {
-                        Some(x) if (x == b'd') || (x == b'u') => {
-                            new_format.push(x);
-                            ParameterKind::Integer
-                        }
-                        Some(b'b') | Some(b's') => {
-                            new_format.push(b'b');
-                            ParameterKind::Bytes
-                        }
-                        Some(x) if (x == b'm') || (x == b'M') => {
-                            new_format.push(x);
-                            ParameterKind::Mpi
-                        }
-                        Some(b'S') => {
-                            new_format.push(b'S');
-                            ParameterKind::SExpression
-                        }
-                        _ => return Err(Error::from_code(error::GPG_ERR_INV_ARG)),
-                    };
-                    params.push(kind);
-                }
-                Some(b'\0') => return Err(Error::from_code(error::GPG_ERR_INV_ARG)),
-                Some(x) => new_format.push(x),
-                None => break,
-            }
-        }
-        unsafe {
-            Ok(Template {
-                format: CString::from_vec_unchecked(new_format),
-                params: params,
-            })
-        }
-    }
-}
-
-pub struct Builder<'a> {
-    template: &'a Template,
-    params: Vec<Parameter>,
-}
-
-impl<'a> Builder<'a> {
-    pub fn from(template: &Template) -> Builder {
-        Builder {
-            template: template,
-            params: Vec::new(),
-        }
-    }
-
-    pub fn add_int(&mut self, n: i32) -> &mut Self {
-        assert_eq!(self.template.params.get(self.params.len()),
-                   Some(&ParameterKind::Integer));
-        self.params.push(Parameter::Integer(n as c_int));
-        self
-    }
-
-    pub fn add_bytes<'s, 'b: 's, B: ?Sized>(&'s mut self, bytes: &'b B) -> &mut Self
-    where B: AsRef<[u8]> {
-        assert_eq!(self.template.params.get(self.params.len()),
-                   Some(&ParameterKind::Bytes));
-        let bytes = bytes.as_ref();
-        self.params.push(Parameter::Bytes(bytes.len() as c_int, bytes.as_ptr() as *const _));
-        self
-    }
-
-    pub fn add_str<'s, 'b: 's, S: ?Sized>(&'s mut self, string: &'b S) -> &mut Self
-    where S: AsRef<str> {
-        self.add_bytes(string.as_ref())
-    }
-
-    pub fn add_mpi<'s, 'b: 's>(&'s mut self, n: &'b Integer) -> &mut Self {
-        assert_eq!(self.template.params.get(self.params.len()),
-                   Some(&ParameterKind::Mpi));
-        self.params.push(Parameter::Mpi(n.as_raw()));
-        self
-    }
-
-    pub fn add_sexp<'s, 'b: 's>(&'s mut self, s: &'b SExpression) -> &mut Self {
-        assert_eq!(self.template.params.get(self.params.len()),
-                   Some(&ParameterKind::SExpression));
-        self.params.push(Parameter::SExpression(s.as_raw()));
-        self
-    }
-
-    pub fn build(self) -> Result<SExpression> {
-        if self.params.len() != self.template.params.len() {
-            return Err(Error::from_code(error::GPG_ERR_INV_STATE));
-        }
-        let _ = ::get_token();
-        unsafe {
-            let mut args = Vec::<*mut c_void>::with_capacity(self.params.len());
-            for param in &self.params {
-                match *param {
-                    Parameter::Integer(ref x) => args.push(mem::transmute(x)),
-                    Parameter::Bytes(ref len, ref data) => {
-                        args.push(mem::transmute(len));
-                        args.push(mem::transmute(data));
-                    }
-                    Parameter::Mpi(ref x) => args.push(mem::transmute(x)),
-                    Parameter::SExpression(ref s) => args.push(mem::transmute(s)),
-                }
-            }
-            args.push(ptr::null_mut());
-
-            let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_sexp_build_array(&mut result,
-                                                   ptr::null_mut(),
-                                                   self.template.format.as_ptr(),
-                                                   args.as_mut_ptr()));
-            Ok(SExpression::from_raw(result))
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_build() {
-        let template = Template::new("(private-key(ecc(curve %s)(flags eddsa)(q %d)(d %b)))")
-            .unwrap();
-        let mut builder = Builder::from(&template);
-        builder.add_str("ed25519").add_int(1234).add_bytes("2324");
-        builder.build().unwrap();
-    }
-}
