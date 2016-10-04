@@ -67,7 +67,7 @@ impl Algorithm {
 }
 
 bitflags! {
-    flags Flags: ffi::gcry_md_flags {
+    pub flags Flags: ffi::gcry_md_flags {
         const FLAGS_NONE   = 0,
         const FLAG_SECURE  = ffi::GCRY_MD_FLAG_SECURE,
         const FLAG_HMAC    = ffi::GCRY_MD_FLAG_HMAC,

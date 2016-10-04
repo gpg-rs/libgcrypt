@@ -102,7 +102,7 @@ impl Mode {
 }
 
 bitflags! {
-    flags Flags: ffi::gcry_cipher_flags {
+    pub flags Flags: ffi::gcry_cipher_flags {
         const FLAGS_NONE       = 0,
         const FLAG_SECURE      = ffi::GCRY_CIPHER_SECURE,
         const FLAG_ENABLE_SYNC = ffi::GCRY_CIPHER_ENABLE_SYNC,
