@@ -61,7 +61,7 @@ fn main() {
     } else {
         let mut command = Command::new(env::var_os("LIBGCRYPT_CONFIG")
                 .unwrap_or("libgcrypt-config".into()));
-        command.arg("--cflags").arg("--libs");
+        command.args(&["--cflags", "--libs"]);
 
         let output = command.output().unwrap();
         if !output.status.success() {
