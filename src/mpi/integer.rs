@@ -17,9 +17,9 @@ use rand::Level;
 pub enum Format {
     Standard = ffi::GCRYMPI_FMT_STD as usize,
     Unsigned = ffi::GCRYMPI_FMT_USG as usize,
-    Pgp      = ffi::GCRYMPI_FMT_PGP as usize,
-    Ssh      = ffi::GCRYMPI_FMT_SSH as usize,
-    Hex      = ffi::GCRYMPI_FMT_HEX as usize,
+    Pgp = ffi::GCRYMPI_FMT_PGP as usize,
+    Ssh = ffi::GCRYMPI_FMT_SSH as usize,
+    Hex = ffi::GCRYMPI_FMT_HEX as usize,
 }
 
 #[derive(Debug)]
@@ -364,7 +364,8 @@ macro_rules! impl_binary_op {
 impl_binary_op!(Add, add, |x, y| ffi::gcry_mpi_add(x, x, y));
 impl_binary_op!(Sub, sub, |x, y| ffi::gcry_mpi_sub(x, x, y));
 impl_binary_op!(Mul, mul, |x, y| ffi::gcry_mpi_mul(x, x, y));
-impl_binary_op!(Div, div,
+impl_binary_op!(Div,
+                div,
                 |x, y| ffi::gcry_mpi_div(x, ptr::null_mut(), x, y, 0));
 impl_binary_op!(Rem, rem, |x, y| ffi::gcry_mpi_mod(x, x, y));
 

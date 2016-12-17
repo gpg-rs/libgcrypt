@@ -12,10 +12,10 @@ use mpi::integer::Format as IntegerFormat;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Format {
-    Default   = ffi::GCRYSEXP_FMT_DEFAULT as isize,
+    Default = ffi::GCRYSEXP_FMT_DEFAULT as isize,
     Canonical = ffi::GCRYSEXP_FMT_CANON as isize,
-    Base64    = ffi::GCRYSEXP_FMT_BASE64 as isize,
-    Advanced  = ffi::GCRYSEXP_FMT_ADVANCED as isize,
+    Base64 = ffi::GCRYSEXP_FMT_BASE64 as isize,
+    Advanced = ffi::GCRYSEXP_FMT_ADVANCED as isize,
 }
 
 pub struct SExpression(ffi::gcry_sexp_t);

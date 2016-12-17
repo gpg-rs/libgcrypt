@@ -34,18 +34,20 @@ impl Buffer {
     pub fn new(len: usize) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
-            ffi::gcry_malloc(len).as_mut().map(|x| {
-                Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(Error::last_os_error)
+            ffi::gcry_malloc(len)
+                .as_mut()
+                .map(|x| Buffer::from_raw(x as *mut _ as *mut _, len))
+                .ok_or_else(Error::last_os_error)
         }
     }
 
     pub fn new_secure(len: usize) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
-            ffi::gcry_malloc_secure(len).as_mut().map(|x| {
-                Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(Error::last_os_error)
+            ffi::gcry_malloc_secure(len)
+                .as_mut()
+                .map(|x| Buffer::from_raw(x as *mut _ as *mut _, len))
+                .ok_or_else(Error::last_os_error)
         }
     }
 
@@ -64,18 +66,20 @@ impl Buffer {
     pub fn random(len: usize, level: Level) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
-            ffi::gcry_random_bytes(len, level.raw()).as_mut().map(|x| {
-                Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(Error::last_os_error)
+            ffi::gcry_random_bytes(len, level.raw())
+                .as_mut()
+                .map(|x| Buffer::from_raw(x as *mut _ as *mut _, len))
+                .ok_or_else(Error::last_os_error)
         }
     }
 
     pub fn random_secure(len: usize, level: Level) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
-            ffi::gcry_random_bytes_secure(len, level.raw()).as_mut().map(|x| {
-                Buffer::from_raw(x as *mut _ as *mut _, len)
-            }).ok_or_else(Error::last_os_error)
+            ffi::gcry_random_bytes_secure(len, level.raw())
+                .as_mut()
+                .map(|x| Buffer::from_raw(x as *mut _ as *mut _, len))
+                .ok_or_else(Error::last_os_error)
         }
     }
 
