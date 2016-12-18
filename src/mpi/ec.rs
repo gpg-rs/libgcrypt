@@ -9,7 +9,7 @@ use libc::c_int;
 
 #[cfg(feature = "v1_6_0")]
 use {NonZero, Result};
-use pkey::PK_ECC;
+use pkey::Algorithm;
 use sexp::SExpression;
 
 #[cfg(feature = "v1_6_0")]
@@ -32,7 +32,7 @@ impl Curve {
 
     pub fn parameters(&self) -> Option<SExpression> {
         unsafe {
-            ffi::gcry_pk_get_param(PK_ECC.raw(), self.name.as_ptr())
+            ffi::gcry_pk_get_param(Algorithm::Ecc.raw(), self.name.as_ptr())
                 .as_mut()
                 .map(|x| SExpression::from_raw(x))
         }

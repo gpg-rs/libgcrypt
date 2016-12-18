@@ -8,43 +8,44 @@ use libc::c_int;
 use utils;
 use {NonZero, Result};
 
-enum_wrapper! {
+ffi_enum_wrapper! {
+    #[allow(non_camel_case_types)]
     pub enum Algorithm: c_int {
-        HMAC_SHA256       = ffi::GCRY_MAC_HMAC_SHA256,
-        HMAC_SHA224       = ffi::GCRY_MAC_HMAC_SHA224,
-        HMAC_SHA512       = ffi::GCRY_MAC_HMAC_SHA512,
-        HMAC_SHA384       = ffi::GCRY_MAC_HMAC_SHA384,
-        HMAC_SHA1         = ffi::GCRY_MAC_HMAC_SHA1,
-        HMAC_MD5          = ffi::GCRY_MAC_HMAC_MD5,
-        HMAC_MD4          = ffi::GCRY_MAC_HMAC_MD4,
-        HMAC_RMD160       = ffi::GCRY_MAC_HMAC_RMD160,
-        HMAC_TIGER1       = ffi::GCRY_MAC_HMAC_TIGER1,
-        HMAC_WHIRLPOOL    = ffi::GCRY_MAC_HMAC_WHIRLPOOL,
-        HMAC_GOSTR3411_94 = ffi::GCRY_MAC_HMAC_GOSTR3411_94,
-        HMAC_STRIBOG256   = ffi::GCRY_MAC_HMAC_STRIBOG256,
-        HMAC_STRIBOG512   = ffi::GCRY_MAC_HMAC_STRIBOG512,
-        CMAC_AES          = ffi::GCRY_MAC_CMAC_AES,
-        CMAC_3DES         = ffi::GCRY_MAC_CMAC_3DES,
-        CMAC_CAMELLIA     = ffi::GCRY_MAC_CMAC_CAMELLIA,
-        CMAC_CAST5        = ffi::GCRY_MAC_CMAC_CAST5,
-        CMAC_BLOWFISH     = ffi::GCRY_MAC_CMAC_BLOWFISH,
-        CMAC_TWOFISH      = ffi::GCRY_MAC_CMAC_TWOFISH,
-        CMAC_SERPENT      = ffi::GCRY_MAC_CMAC_SERPENT,
-        CMAC_SEED         = ffi::GCRY_MAC_CMAC_SEED,
-        CMAC_RFC2268      = ffi::GCRY_MAC_CMAC_RFC2268,
-        CMAC_IDEA         = ffi::GCRY_MAC_CMAC_IDEA,
-        CMAC_GOST28147    = ffi::GCRY_MAC_CMAC_GOST28147,
-        GMAC_AES          = ffi::GCRY_MAC_GMAC_AES,
-        GMAC_CAMELLIA     = ffi::GCRY_MAC_GMAC_CAMELLIA,
-        GMAC_TWOFISH      = ffi::GCRY_MAC_GMAC_TWOFISH,
-        GMAC_SERPENT      = ffi::GCRY_MAC_GMAC_SERPENT,
-        GMAC_SEED         = ffi::GCRY_MAC_GMAC_SEED,
-        POLY1305          = ffi::GCRY_MAC_POLY1305,
-        POLY1305_AES      = ffi::GCRY_MAC_POLY1305_AES,
-        POLY1305_CAMELLIA = ffi::GCRY_MAC_POLY1305_CAMELLIA,
-        POLY1305_TWOFISH  = ffi::GCRY_MAC_POLY1305_TWOFISH,
-        POLY1305_SERPENT  = ffi::GCRY_MAC_POLY1305_SERPENT,
-        POLY1305_SEED     = ffi::GCRY_MAC_POLY1305_SEED,
+        HmacSha256        = ffi::GCRY_MAC_HMAC_SHA256,
+        HmacSha224        = ffi::GCRY_MAC_HMAC_SHA224,
+        HmacSha512        = ffi::GCRY_MAC_HMAC_SHA512,
+        HmacSha384        = ffi::GCRY_MAC_HMAC_SHA384,
+        HmacSha1          = ffi::GCRY_MAC_HMAC_SHA1,
+        HmacMd5           = ffi::GCRY_MAC_HMAC_MD5,
+        HmacMd4           = ffi::GCRY_MAC_HMAC_MD4,
+        HmacRmd160        = ffi::GCRY_MAC_HMAC_RMD160,
+        HmacTiger1        = ffi::GCRY_MAC_HMAC_TIGER1,
+        HmacWhirlpool     = ffi::GCRY_MAC_HMAC_WHIRLPOOL,
+        HmacGostR3411_94  = ffi::GCRY_MAC_HMAC_GOSTR3411_94,
+        HmacStribog256    = ffi::GCRY_MAC_HMAC_STRIBOG256,
+        HmacStribog512    = ffi::GCRY_MAC_HMAC_STRIBOG512,
+        CmacAes           = ffi::GCRY_MAC_CMAC_AES,
+        Cmac3des          = ffi::GCRY_MAC_CMAC_3DES,
+        CmacCamellia      = ffi::GCRY_MAC_CMAC_CAMELLIA,
+        CmacCast5         = ffi::GCRY_MAC_CMAC_CAST5,
+        CmacBlowfish      = ffi::GCRY_MAC_CMAC_BLOWFISH,
+        CmacTwofish       = ffi::GCRY_MAC_CMAC_TWOFISH,
+        CmacSerpent       = ffi::GCRY_MAC_CMAC_SERPENT,
+        CmacSeed          = ffi::GCRY_MAC_CMAC_SEED,
+        CmacRfc2268       = ffi::GCRY_MAC_CMAC_RFC2268,
+        CmacIdea          = ffi::GCRY_MAC_CMAC_IDEA,
+        CmacGost28147     = ffi::GCRY_MAC_CMAC_GOST28147,
+        GmacAes           = ffi::GCRY_MAC_GMAC_AES,
+        GmacCamellia      = ffi::GCRY_MAC_GMAC_CAMELLIA,
+        GmacTwofish       = ffi::GCRY_MAC_GMAC_TWOFISH,
+        GmacSerpent       = ffi::GCRY_MAC_GMAC_SERPENT,
+        GmacSeed          = ffi::GCRY_MAC_GMAC_SEED,
+        Poly1305          = ffi::GCRY_MAC_POLY1305,
+        Poly1305Aes       = ffi::GCRY_MAC_POLY1305_AES,
+        Poly1305Camellia  = ffi::GCRY_MAC_POLY1305_CAMELLIA,
+        Poly1305Twofish   = ffi::GCRY_MAC_POLY1305_TWOFISH,
+        Poly1305Serpent   = ffi::GCRY_MAC_POLY1305_SERPENT,
+        Poly1305Seed      = ffi::GCRY_MAC_POLY1305_SEED,
     }
 }
 
@@ -53,7 +54,7 @@ impl Algorithm {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_mac_map_name(name.as_ptr()) };
         if result != 0 {
-            Some(Algorithm(result))
+            unsafe { Some(Algorithm::from_raw(result)) }
         } else {
             None
         }
@@ -61,19 +62,19 @@ impl Algorithm {
 
     pub fn is_available(&self) -> bool {
         let _ = ::get_token();
-        unsafe { ffi::gcry_mac_test_algo(self.0) == 0 }
+        unsafe { ffi::gcry_mac_test_algo(self.raw()) == 0 }
     }
 
     pub fn name(&self) -> Option<&'static str> {
-        unsafe { utils::from_cstr(ffi::gcry_mac_algo_name(self.0)) }
+        unsafe { utils::from_cstr(ffi::gcry_mac_algo_name(self.raw())) }
     }
 
     pub fn key_len(&self) -> usize {
-        unsafe { ffi::gcry_mac_get_algo_keylen(self.0) as usize }
+        unsafe { ffi::gcry_mac_get_algo_keylen(self.raw()) as usize }
     }
 
     pub fn mac_len(&self) -> usize {
-        unsafe { ffi::gcry_mac_get_algo_maclen(self.0) as usize }
+        unsafe { ffi::gcry_mac_get_algo_maclen(self.raw()) as usize }
     }
 }
 
@@ -106,7 +107,7 @@ impl Mac {
         let _ = ::get_token();
         unsafe {
             let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
-            return_err!(ffi::gcry_mac_open(&mut handle, algo.0, flags.bits(), ptr::null_mut()));
+            return_err!(ffi::gcry_mac_open(&mut handle, algo.raw(), flags.bits(), ptr::null_mut()));
             Ok(Mac::from_raw(handle))
         }
     }

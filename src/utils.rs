@@ -6,38 +6,6 @@ macro_rules! try_opt {
     ($e:expr) => (match $e { Some(v) => v, None => return None });
 }
 
-macro_rules! enum_wrapper {
-    ($(#[$Attr:meta])* pub enum $Name:ident: $T:ty {
-        $($(#[$ItemAttr:meta])* $Item:ident = $Value:expr),+
-    }) => {
-        #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-        $(#[$Attr])*
-        pub struct $Name($T);
-
-        $($(#[$ItemAttr])* pub const $Item: $Name = $Name($Value as $T);)+
-
-        impl $Name {
-            pub unsafe fn from_raw(raw: $T) -> $Name {
-                $Name(raw)
-            }
-
-            pub fn raw(&self) -> $T {
-                self.0
-            }
-        }
-    };
-    ($(#[$Attr:meta])* pub enum $Name:ident: $T:ty {
-        $($(#[$ItemAttr:meta])* $Item:ident = $Value:expr,)+
-    }) => {
-        enum_wrapper! {
-            $(#[$Attr])*
-            pub enum $Name: $T {
-                $($(#[$ItemAttr])* $Item = $Value),+
-            }
-        }
-    };
-}
-
 macro_rules! impl_wrapper {
     ($Name:ident: $T:ty) => {
         #[inline]
@@ -56,6 +24,60 @@ macro_rules! impl_wrapper {
             let raw = *self.0;
             ::std::mem::forget(self);
             raw
+        }
+    };
+}
+
+macro_rules! ffi_enum_wrapper {
+    ($(#[$Attr:meta])* pub enum $Name:ident: $T:ty {
+        $($(#[$ItemAttr:meta])* $Item:ident = $Value:expr),+
+    }) => {
+        #[derive(Copy, Clone, Eq, PartialEq, Hash)]
+        $(#[$Attr])*
+        pub enum $Name {
+            $($(#[$ItemAttr])* $Item,)+
+            Other($T),
+        }
+
+        impl $Name {
+            #[inline]
+            pub unsafe fn from_raw(raw: $T) -> $Name {
+                $(if raw == ($Value as $T) {
+                    $Name::$Item
+                } else )+ {
+                    $Name::Other(raw)
+                }
+            }
+
+            #[inline]
+            pub fn raw(&self) -> $T {
+                match *self {
+                    $($Name::$Item => $Value as $T,)+
+                    $Name::Other(other) => other,
+                }
+            }
+        }
+
+        impl ::std::fmt::Debug for $Name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+                match *self {
+                    $($Name::$Item => {
+                        write!(f, concat!(stringify!($Name), "::",
+                                          stringify!($Item), "({:?})"), self.raw())
+                    })+
+                    _ => write!(f, concat!(stringify!($Name), "({:?})"), self.raw()),
+                }
+            }
+        }
+    };
+    ($(#[$Attr:meta])* pub enum $Name:ident: $T:ty {
+        $($(#[$ItemAttr:meta])* $Item:ident = $Value:expr,)+
+    }) => {
+        ffi_enum_wrapper! {
+            $(#[$Attr])*
+            pub enum $Name: $T {
+                $($(#[$ItemAttr])* $Item = $Value),+
+            }
         }
     };
 }

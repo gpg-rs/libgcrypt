@@ -9,18 +9,18 @@ use error::Result;
 use sexp::SExpression;
 use mpi::ec::{Curve, Curves};
 
-enum_wrapper! {
+ffi_enum_wrapper! {
     pub enum Algorithm: c_int {
-        PK_RSA   = ffi::GCRY_PK_RSA,
-        PK_RSA_E = ffi::GCRY_PK_RSA_E,
-        PK_RSA_S = ffi::GCRY_PK_RSA_S,
-        PK_ELG_E = ffi::GCRY_PK_ELG_E,
-        PK_DSA   = ffi::GCRY_PK_DSA,
-        PK_ECC   = ffi::GCRY_PK_ECC,
-        PK_ELG   = ffi::GCRY_PK_ELG,
-        PK_ECDSA = ffi::GCRY_PK_ECDSA,
-        PK_ECDH  = ffi::GCRY_PK_ECDH,
-        PK_EDDSA = ffi::GCRY_PK_EDDSA,
+        Rsa        = ffi::GCRY_PK_RSA,
+        RsaEncrypt = ffi::GCRY_PK_RSA_E,
+        RsaSign    = ffi::GCRY_PK_RSA_S,
+        ElgEncrypt = ffi::GCRY_PK_ELG_E,
+        Dsa        = ffi::GCRY_PK_DSA,
+        Ecc        = ffi::GCRY_PK_ECC,
+        Elg        = ffi::GCRY_PK_ELG,
+        Ecdsa      = ffi::GCRY_PK_ECDSA,
+        Ecdh       = ffi::GCRY_PK_ECDH,
+        Eddsa      = ffi::GCRY_PK_EDDSA,
     }
 }
 
@@ -29,7 +29,7 @@ impl Algorithm {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_pk_map_name(name.as_ptr()) };
         if result != 0 {
-            Some(Algorithm(result))
+            unsafe { Some(Algorithm::from_raw(result)) }
         } else {
             None
         }
@@ -37,11 +37,11 @@ impl Algorithm {
 
     pub fn is_available(&self) -> bool {
         let _ = ::get_token();
-        unsafe { ffi::gcry_pk_test_algo(self.0) == 0 }
+        unsafe { ffi::gcry_pk_test_algo(self.raw()) == 0 }
     }
 
     pub fn name(&self) -> Option<&'static str> {
-        unsafe { utils::from_cstr(ffi::gcry_pk_algo_name(self.0)) }
+        unsafe { utils::from_cstr(ffi::gcry_pk_algo_name(self.raw())) }
     }
 }
 

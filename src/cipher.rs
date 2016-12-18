@@ -7,39 +7,40 @@ use libc::c_int;
 use utils;
 use {NonZero, Result};
 
-enum_wrapper! {
+ffi_enum_wrapper! {
+    #[allow(non_camel_case_types)]
     pub enum Algorithm: c_int {
-        CIPHER_IDEA        = ffi::GCRY_CIPHER_IDEA,
-        CIPHER_3DES        = ffi::GCRY_CIPHER_3DES,
-        CIPHER_CAST5       = ffi::GCRY_CIPHER_CAST5,
-        CIPHER_BLOWFISH    = ffi::GCRY_CIPHER_BLOWFISH,
-        CIPHER_SAFER_SK128 = ffi::GCRY_CIPHER_SAFER_SK128,
-        CIPHER_DES_SK      = ffi::GCRY_CIPHER_DES_SK,
-        CIPHER_AES         = ffi::GCRY_CIPHER_AES,
-        CIPHER_AES128      = ffi::GCRY_CIPHER_AES128,
-        CIPHER_AES192      = ffi::GCRY_CIPHER_AES192,
-        CIPHER_AES256      = ffi::GCRY_CIPHER_AES256,
-        CIPHER_RIJNDAEL    = ffi::GCRY_CIPHER_RIJNDAEL,
-        CIPHER_RIJNDAEL128 = ffi::GCRY_CIPHER_RIJNDAEL128,
-        CIPHER_RIJNDAEL192 = ffi::GCRY_CIPHER_RIJNDAEL192,
-        CIPHER_RIJNDAEL256 = ffi::GCRY_CIPHER_RIJNDAEL256,
-        CIPHER_TWOFISH     = ffi::GCRY_CIPHER_TWOFISH,
-        CIPHER_ARCFOUR     = ffi::GCRY_CIPHER_ARCFOUR,
-        CIPHER_DES         = ffi::GCRY_CIPHER_DES,
-        CIPHER_TWOFISH128  = ffi::GCRY_CIPHER_TWOFISH128,
-        CIPHER_SERPENT128  = ffi::GCRY_CIPHER_SERPENT128,
-        CIPHER_SERPENT192  = ffi::GCRY_CIPHER_SERPENT192,
-        CIPHER_SERPENT256  = ffi::GCRY_CIPHER_SERPENT256,
-        CIPHER_RFC2268_40  = ffi::GCRY_CIPHER_RFC2268_40,
-        CIPHER_RFC2268_128 = ffi::GCRY_CIPHER_RFC2268_128,
-        CIPHER_SEED        = ffi::GCRY_CIPHER_SEED,
-        CIPHER_CAMELLIA128 = ffi::GCRY_CIPHER_CAMELLIA128,
-        CIPHER_CAMELLIA192 = ffi::GCRY_CIPHER_CAMELLIA192,
-        CIPHER_CAMELLIA256 = ffi::GCRY_CIPHER_CAMELLIA256,
-        CIPHER_SALSA20     = ffi::GCRY_CIPHER_SALSA20,
-        CIPHER_SALSA20R12  = ffi::GCRY_CIPHER_SALSA20R12,
-        CIPHER_GOST28147   = ffi::GCRY_CIPHER_GOST28147,
-        CIPHER_CHACHA20    = ffi::GCRY_CIPHER_CHACHA20,
+        Idea             = ffi::GCRY_CIPHER_IDEA,
+        TripleDes        = ffi::GCRY_CIPHER_3DES,
+        Cast5            = ffi::GCRY_CIPHER_CAST5,
+        Blowfish         = ffi::GCRY_CIPHER_BLOWFISH,
+        SaferSk128       = ffi::GCRY_CIPHER_SAFER_SK128,
+        DesSk            = ffi::GCRY_CIPHER_DES_SK,
+        Aes              = ffi::GCRY_CIPHER_AES,
+        Aes128           = ffi::GCRY_CIPHER_AES128,
+        Aes192           = ffi::GCRY_CIPHER_AES192,
+        Aes256           = ffi::GCRY_CIPHER_AES256,
+        Rijndael         = ffi::GCRY_CIPHER_RIJNDAEL,
+        Rijndael128      = ffi::GCRY_CIPHER_RIJNDAEL128,
+        Rijndael192      = ffi::GCRY_CIPHER_RIJNDAEL192,
+        Rijndael256      = ffi::GCRY_CIPHER_RIJNDAEL256,
+        Twofish          = ffi::GCRY_CIPHER_TWOFISH,
+        Arcfour          = ffi::GCRY_CIPHER_ARCFOUR,
+        Des              = ffi::GCRY_CIPHER_DES,
+        Twofish128       = ffi::GCRY_CIPHER_TWOFISH128,
+        Serpent128       = ffi::GCRY_CIPHER_SERPENT128,
+        Serpent192       = ffi::GCRY_CIPHER_SERPENT192,
+        Serpent256       = ffi::GCRY_CIPHER_SERPENT256,
+        Rfc2268_40       = ffi::GCRY_CIPHER_RFC2268_40,
+        Rfc2268_128      = ffi::GCRY_CIPHER_RFC2268_128,
+        Seed             = ffi::GCRY_CIPHER_SEED,
+        Camellia128      = ffi::GCRY_CIPHER_CAMELLIA128,
+        Camellia192      = ffi::GCRY_CIPHER_CAMELLIA192,
+        Camellia256      = ffi::GCRY_CIPHER_CAMELLIA256,
+        Salsa20          = ffi::GCRY_CIPHER_SALSA20,
+        Salsa20r12       = ffi::GCRY_CIPHER_SALSA20R12,
+        Gost28147        = ffi::GCRY_CIPHER_GOST28147,
+        Chacha20         = ffi::GCRY_CIPHER_CHACHA20,
     }
 }
 
@@ -48,7 +49,7 @@ impl Algorithm {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_cipher_map_name(name.as_ptr()) };
         if result != 0 {
-            Some(Algorithm(result))
+            unsafe { Some(Algorithm::from_raw(result)) }
         } else {
             None
         }
@@ -56,36 +57,36 @@ impl Algorithm {
 
     pub fn is_available(&self) -> bool {
         let _ = ::get_token();
-        unsafe { ffi::gcry_cipher_test_algo(self.0) == 0 }
+        unsafe { ffi::gcry_cipher_test_algo(self.raw()) == 0 }
     }
 
     pub fn name(&self) -> Option<&'static str> {
-        unsafe { utils::from_cstr(ffi::gcry_cipher_algo_name(self.0)) }
+        unsafe { utils::from_cstr(ffi::gcry_cipher_algo_name(self.raw())) }
     }
 
     pub fn key_len(&self) -> usize {
-        unsafe { ffi::gcry_cipher_get_algo_keylen(self.0) }
+        unsafe { ffi::gcry_cipher_get_algo_keylen(self.raw()) }
     }
 
     pub fn block_len(&self) -> usize {
-        unsafe { ffi::gcry_cipher_get_algo_blklen(self.0) }
+        unsafe { ffi::gcry_cipher_get_algo_blklen(self.raw()) }
     }
 }
 
-enum_wrapper! {
+ffi_enum_wrapper! {
     pub enum Mode: c_int {
-        MODE_ECB      = ffi::GCRY_CIPHER_MODE_ECB,
-        MODE_CFB      = ffi::GCRY_CIPHER_MODE_CFB,
-        MODE_CBC      = ffi::GCRY_CIPHER_MODE_CBC,
-        MODE_STREAM   = ffi::GCRY_CIPHER_MODE_STREAM,
-        MODE_OFB      = ffi::GCRY_CIPHER_MODE_OFB,
-        MODE_CTR      = ffi::GCRY_CIPHER_MODE_CTR,
-        MODE_AESWRAP  = ffi::GCRY_CIPHER_MODE_AESWRAP,
-        MODE_CCM      = ffi::GCRY_CIPHER_MODE_CCM,
-        MODE_GCM      = ffi::GCRY_CIPHER_MODE_GCM,
-        MODE_POLY1305 = ffi::GCRY_CIPHER_MODE_POLY1305,
-        MODE_OCB      = ffi::GCRY_CIPHER_MODE_OCB,
-        MODE_CFB8     = ffi::GCRY_CIPHER_MODE_CFB8,
+        Ecb      = ffi::GCRY_CIPHER_MODE_ECB,
+        Cfb      = ffi::GCRY_CIPHER_MODE_CFB,
+        Cbc      = ffi::GCRY_CIPHER_MODE_CBC,
+        Stream   = ffi::GCRY_CIPHER_MODE_STREAM,
+        Ofb      = ffi::GCRY_CIPHER_MODE_OFB,
+        Ctr      = ffi::GCRY_CIPHER_MODE_CTR,
+        AesWrap  = ffi::GCRY_CIPHER_MODE_AESWRAP,
+        Ccm      = ffi::GCRY_CIPHER_MODE_CCM,
+        Gcm      = ffi::GCRY_CIPHER_MODE_GCM,
+        Poly1305 = ffi::GCRY_CIPHER_MODE_POLY1305,
+        Ocb      = ffi::GCRY_CIPHER_MODE_OCB,
+        Cfb8     = ffi::GCRY_CIPHER_MODE_CFB8,
     }
 }
 
@@ -94,7 +95,7 @@ impl Mode {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_cipher_mode_from_oid(name.as_ptr()) };
         if result != 0 {
-            Some(Mode(result))
+            unsafe { Some(Mode::from_raw(result)) }
         } else {
             None
         }
@@ -133,7 +134,7 @@ impl Cipher {
         let _ = ::get_token();
         unsafe {
             let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
-            return_err!(ffi::gcry_cipher_open(&mut handle, algo.0, mode.0, flags.bits()));
+            return_err!(ffi::gcry_cipher_open(&mut handle, algo.raw(), mode.raw(), flags.bits()));
             Ok(Cipher::from_raw(handle))
         }
     }

@@ -1,10 +1,10 @@
 use ffi;
 
-enum_wrapper! {
+ffi_enum_wrapper! {
     pub enum Level: ffi::gcry_random_level_t {
-        WEAK_RANDOM        = ffi::GCRY_WEAK_RANDOM,
-        STRONG_RANDOM      = ffi::GCRY_STRONG_RANDOM,
-        VERY_STRONG_RANDOM = ffi::GCRY_VERY_STRONG_RANDOM,
+        Weak        = ffi::GCRY_WEAK_RANDOM,
+        Strong      = ffi::GCRY_STRONG_RANDOM,
+        VeryStrong  = ffi::GCRY_VERY_STRONG_RANDOM,
     }
 }
 
