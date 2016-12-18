@@ -43,6 +43,10 @@ fn main() {
         return;
     }
 
+    if !Path::new("libgcrypt/.git").exists() {
+        run(Command::new("git").args(&["submodule", "update", "--init"]));
+    }
+
     if try_build() || try_config("libgcrypt-config") {
         return;
     }
