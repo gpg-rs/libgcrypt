@@ -135,7 +135,7 @@ fn try_build() -> bool {
 fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
     let mut config = gcc::Config::new();
     for path in include_dirs.iter() {
-        config.include(msys_compatible(path));
+        config.include(path);
     }
     config.flag("-Wno-deprecated-declarations").file("shim.c").compile("libgcrypt_shim.a");
 }
