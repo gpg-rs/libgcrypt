@@ -15,6 +15,8 @@
 //! Calling any function in the wrapper that requires initialization before `init` or `init_fips`
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
+#[macro_use]
+extern crate cfg_if;
 extern crate libc;
 #[macro_use]
 extern crate bitflags;
@@ -45,6 +47,16 @@ pub mod cipher;
 pub mod digest;
 pub mod mac;
 pub mod kdf;
+
+cfg_if! {
+    if #[cfg(feature = "v1_7_0")] {
+        const TARGET_VERSION: &'static str = "1.7.0\0";
+    } else if #[cfg(feature = "v1_6_0")] {
+        const TARGET_VERSION: &'static str = "1.6.0\0";
+    } else {
+        const TARGET_VERSION: &'static str = "1.5.0\0";
+    }
+}
 
 static INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT;
 lazy_static! {
@@ -162,7 +174,7 @@ pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
                 ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
                                   ffi::gcry_threads_pthread_shim());
             }
-            ffi::gcry_check_version(ptr::null());
+            assert!(!ffi::gcry_check_version(TARGET_VERSION.as_ptr() as *const _).is_null());
         }
         f(&mut Initializer(()));
         unsafe {
@@ -186,7 +198,7 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
                                   ffi::gcry_threads_pthread_shim());
             }
             ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
-            ffi::gcry_check_version(ptr::null());
+            assert!(!ffi::gcry_check_version(TARGET_VERSION.as_ptr() as *const _).is_null());
         }
         f(&mut Initializer(()));
         unsafe {

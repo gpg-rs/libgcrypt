@@ -1,14 +1,19 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
+#[cfg(feature = "v1_6_0")]
+use std::ffi::CString;
 use std::ptr;
 use std::str;
 
 use ffi;
 use libc::c_int;
 
+#[cfg(feature = "v1_6_0")]
 use error::Result;
-use super::{Integer, Point};
 use pkey::PK_ECC;
 use sexp::SExpression;
+
+#[cfg(feature = "v1_6_0")]
+use super::{Integer, Point};
 
 #[derive(Copy, Clone)]
 pub struct Curve {
@@ -83,10 +88,13 @@ impl<'a> Iterator for Curves<'a> {
     }
 }
 
+#[cfg(feature = "v1_6_0")]
 pub struct Context(ffi::gcry_ctx_t);
 
+#[cfg(feature = "v1_6_0")]
 impl_wrapper!(Context: ffi::gcry_ctx_t);
 
+#[cfg(feature = "v1_6_0")]
 impl Drop for Context {
     fn drop(&mut self) {
         unsafe {
@@ -95,6 +103,7 @@ impl Drop for Context {
     }
 }
 
+#[cfg(feature = "v1_6_0")]
 impl Context {
     pub fn from_curve(curve: Curve) -> Result<Context> {
         let mut raw = ptr::null_mut();

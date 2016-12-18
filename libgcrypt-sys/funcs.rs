@@ -57,10 +57,12 @@ extern {
     pub fn gcry_sexp_cadr(list: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_nth_data(list: gcry_sexp_t, number: c_int,
             datalen: *mut size_t) -> *const c_char;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_sexp_nth_buffer(list: gcry_sexp_t, number: c_int,
             rlength: *mut size_t) -> *mut c_void;
     pub fn gcry_sexp_nth_string(list: gcry_sexp_t, number: c_int) -> *mut c_char;
     pub fn gcry_sexp_nth_mpi(list: gcry_sexp_t, number: c_int, mpifmt: c_int) -> gcry_mpi_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_sexp_extract_param(sexp: gcry_sexp_t, path: *const c_char,
             list: *const c_char, ...) -> gcry_error_t;
 
@@ -68,12 +70,16 @@ extern {
     pub fn gcry_mpi_snew(nbits: c_uint) -> gcry_mpi_t;
     pub fn gcry_mpi_release(a: gcry_mpi_t);
     pub fn gcry_mpi_copy(a: gcry_mpi_t) -> gcry_mpi_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_snatch(w: gcry_mpi_t, u: gcry_mpi_t);
     pub fn gcry_mpi_set(w: gcry_mpi_t, u: gcry_mpi_t) -> gcry_mpi_t;
     pub fn gcry_mpi_set_ui(w: gcry_mpi_t, u: c_ulong) -> gcry_mpi_t;
     pub fn gcry_mpi_swap(a: gcry_mpi_t, b: gcry_mpi_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_is_neg(a: gcry_mpi_t) -> c_int;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_neg(w: gcry_mpi_t, u: gcry_mpi_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_abs(w: gcry_mpi_t);
     pub fn gcry_mpi_cmp(u: gcry_mpi_t, v: gcry_mpi_t) -> c_int;
     pub fn gcry_mpi_cmp_ui(u: gcry_mpi_t, v: c_ulong) -> c_int;
@@ -104,37 +110,55 @@ extern {
             m: gcry_mpi_t);
     pub fn gcry_mpi_gcd(g: gcry_mpi_t, a: gcry_mpi_t, b: gcry_mpi_t) -> c_int;
     pub fn gcry_mpi_invm(x: gcry_mpi_t, a: gcry_mpi_t, m: gcry_mpi_t) -> c_int;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_point_new(nbits: c_uint) -> gcry_mpi_point_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_point_release(point: gcry_mpi_point_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_point_get(x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t,
             point: gcry_mpi_point_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_point_snatch_get(x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t,
             point: gcry_mpi_point_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_point_set(point: gcry_mpi_point_t,
             x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t) -> gcry_mpi_point_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_point_snatch_set(point: gcry_mpi_point_t,
             x: gcry_mpi_t, y: gcry_mpi_t,
             z: gcry_mpi_t) -> gcry_mpi_point_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_new(r_ctx: *mut gcry_ctx_t, keyparam: gcry_sexp_t,
             curvename: *const c_char) -> gcry_error_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_get_mpi(name: *const c_char, ctx: gcry_ctx_t, copy: c_int) -> gcry_mpi_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_get_point(name: *const c_char, ctx: gcry_ctx_t,
             copy: c_int) -> gcry_mpi_point_t ;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_set_mpi(name: *const c_char, newvalue: gcry_mpi_t,
             ctx: gcry_ctx_t) -> gcry_error_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_set_point(name: *const c_char, newvalue: gcry_mpi_point_t,
             ctx: gcry_ctx_t) -> gcry_error_t;
+    #[cfg(feature = "v1_7_0")]
     pub fn gcry_mpi_ec_decode_point(result: gcry_mpi_point_t,
             value: gcry_mpi_t, ctx: gcry_ctx_t) -> gcry_error_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_get_affine(x: gcry_mpi_t, y: gcry_mpi_t, point: gcry_mpi_point_t,
             ctx: gcry_ctx_t) -> c_int;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_dup(w: gcry_mpi_point_t, u: gcry_mpi_point_t, ctx: gcry_ctx_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_add(w: gcry_mpi_point_t, u: gcry_mpi_point_t, v: gcry_mpi_point_t,
             ctx: gcry_ctx_t);
+    #[cfg(feature = "v1_7_0")]
     pub fn gcry_mpi_ec_sub(w: gcry_mpi_point_t, u: gcry_mpi_point_t, v: gcry_mpi_point_t,
             ctx: gcry_ctx_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_mul(w: gcry_mpi_point_t, n: gcry_mpi_t, u: gcry_mpi_point_t,
             ctx: gcry_ctx_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_ec_curve_point(w: gcry_mpi_point_t, ctx: gcry_ctx_t) -> c_int;
     pub fn gcry_mpi_get_nbits(a: gcry_mpi_t) -> c_uint;
     pub fn gcry_mpi_test_bit(a: gcry_mpi_t, n: c_uint) -> c_int;
@@ -145,6 +169,7 @@ extern {
     pub fn gcry_mpi_rshift(x: gcry_mpi_t, a: gcry_mpi_t, n: c_uint);
     pub fn gcry_mpi_lshift(x: gcry_mpi_t, a: gcry_mpi_t, n: c_uint);
     pub fn gcry_mpi_set_opaque(a: gcry_mpi_t, p: *mut c_void, nbits: c_uint) -> gcry_mpi_t;
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_mpi_set_opaque_copy(a: gcry_mpi_t, p: *const c_void,
             nbits: c_uint) -> gcry_mpi_t;
     pub fn gcry_mpi_get_opaque(a: gcry_mpi_t, nbits: *mut c_uint) -> *mut c_void;
@@ -217,6 +242,7 @@ extern {
             buffer: *mut c_void, buflen: size_t) -> gcry_error_t;
     pub fn gcry_md_write(h: gcry_md_hd_t, buffer: *const c_void, length: size_t);
     pub fn gcry_md_read(h: gcry_md_hd_t, algo: c_int) -> *mut u8;
+    #[cfg(feature = "v1_7_0")]
     pub fn gcry_md_extract(hd: gcry_md_hd_t, algo: c_int, buffer: *mut c_void,
             length: size_t) -> gcry_error_t;
     pub fn gcry_md_hash_buffer(algo: c_int, digest: *mut c_void,
@@ -249,6 +275,7 @@ extern {
     pub fn gcry_mac_read(h: gcry_mac_hd_t, buffer: *mut c_void, buflen: *mut size_t) -> gcry_error_t;
     pub fn gcry_mac_verify(h: gcry_mac_hd_t, buffer: *const c_void,
             buflen: size_t) -> gcry_error_t;
+    #[cfg(feature = "v1_7_0")]
     pub fn gcry_mac_get_algo(hd: gcry_mac_hd_t) -> c_int;
     pub fn gcry_mac_get_algo_maclen(algo: c_int) -> c_uint;
     pub fn gcry_mac_get_algo_keylen(algo: c_int) -> c_uint;
@@ -280,11 +307,16 @@ extern {
     pub fn gcry_prime_release_factors(factors: *mut gcry_mpi_t);
     pub fn gcry_prime_check(x: gcry_mpi_t, flags: c_uint) -> gcry_error_t;
 
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_ctx_release(ctx: gcry_ctx_t);
 
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_log_debug(fmt: *const c_char, ...);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_log_debughex(text: *const c_char, buffer: *const c_void, length: size_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_log_debugmpi(text: *const c_char, mpi: gcry_mpi_t);
+    #[cfg(feature = "v1_6_0")]
     pub fn gcry_log_debugpnt(text: *const c_char, point: gcry_mpi_point_t, ctx: gcry_ctx_t);
     pub fn gcry_log_debugsxp(text: *const c_char, sexp: gcry_sexp_t);
 

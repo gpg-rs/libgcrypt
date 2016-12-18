@@ -6,20 +6,20 @@ addons:
     packages:
     - gcc
     - libgcrypt11-dev
+before_script:
+  - pip install 'travis-cargo<0.2' --user && export PATH=$HOME/.local/bin:$PATH
 script:
-- cargo build --verbose
-- cargo test --verbose
-- cargo doc
-after_success: |
-  [ $TRAVIS_BRANCH = master ] &&
-  [ $TRAVIS_PULL_REQUEST = false ] &&
-  echo '<meta http-equiv=refresh content=0;url=gcrypt/index.html>' > target/doc/index.html &&
-  pip install --user ghp-import &&
-  $HOME/.local/bin/ghp-import -n target/doc &&
-  git push -qf https://${GH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
+  - travis-cargo build -- --no-default-features
+  - travis-cargo test -- --no-default-features
+  - travis-cargo doc -- --no-default-features
+after_success:
+  - travis-cargo --only stable doc-upload
 env:
   global:
-    secure: IFIHfCQwQSBrQKF2BUZl3E6wpKM/XN09dH+pulmVqvxjIngVGndgtORY5ARBFOB5YzY2S10wKVeXwg66T19h2dnCQQSq03e5wohOziYdC+8mKLJRjhj+Tv0WkN9SKXieFYTq6bhSOUC/PfEMn32/wr5cNyLJQlJlf/pl1JsREG3jO84/0nci+4BCU1mDTlv7zYl42rMZwQMgQ7fIQgJvk7jbkgQLZWmmNhJQLFmKHDkwE14JA3H6smC4Pxj/RBkcuPwY5/0dw0vxpXIEBUHljkKhM6/1cJSsAOOdTUVmBCQTZZ2Nj8sL2wyJgzEdND9m/8eK1f5QNwMcbX+EtaHgo7cho/y18YzLGIdnCyBMiAbDZnMkCPI473OzW9ApgmjxNeXj36hFA+dSX0PuIv0uvGnWk+3ZPnWyJnPRzaOOarXkVsBx/n0EMtx4TlWFfvk9+fWj0rtoM5JWz8r9COi3/80JW948B14QzmO1G825QURnuppmoClVeNtzOFF7T0r1DISVznGespH+hqZ4WBNH4AzOfBX61UGI27GHYbn+dlgWseNxYI7LONBQEXzKSjIHJuCAyGLhbXhTtkK1faNE7EJ45Wgwwg5/1T/7dMnoOAmJ2QZ8hUsgbnVx4ogQ6wSn5CSO5AgYpd06uK+SUoxwXpIGut08IZQYSqI74FkGAmU=
+    - TRAVIS_CARGO_NIGHTLY_FEATURE=
+    - secure: IFIHfCQwQSBrQKF2BUZl3E6wpKM/XN09dH+pulmVqvxjIngVGndgtORY5ARBFOB5YzY2S10wKVeXwg66T19h2dnCQQSq03e5wohOziYdC+8mKLJRjhj+Tv0WkN9SKXieFYTq6bhSOUC/PfEMn32/wr5cNyLJQlJlf/pl1JsREG3jO84/0nci+4BCU1mDTlv7zYl42rMZwQMgQ7fIQgJvk7jbkgQLZWmmNhJQLFmKHDkwE14JA3H6smC4Pxj/RBkcuPwY5/0dw0vxpXIEBUHljkKhM6/1cJSsAOOdTUVmBCQTZZ2Nj8sL2wyJgzEdND9m/8eK1f5QNwMcbX+EtaHgo7cho/y18YzLGIdnCyBMiAbDZnMkCPI473OzW9ApgmjxNeXj36hFA+dSX0PuIv0uvGnWk+3ZPnWyJnPRzaOOarXkVsBx/n0EMtx4TlWFfvk9+fWj0rtoM5JWz8r9COi3/80JW948B14QzmO1G825QURnuppmoClVeNtzOFF7T0r1DISVznGespH+hqZ4WBNH4AzOfBX61UGI27GHYbn+dlgWseNxYI7LONBQEXzKSjIHJuCAyGLhbXhTtkK1faNE7EJ45Wgwwg5/1T/7dMnoOAmJ2QZ8hUsgbnVx4ogQ6wSn5CSO5AgYpd06uK+SUoxwXpIGut08IZQYSqI74FkGAmU=
 branches:
   except:
-  - "/^v[0-9]/"
+    - /^v[0-9]/
+notifications:
+    email: false
