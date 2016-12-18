@@ -1,10 +1,11 @@
-use std::ffi::CString;
+use std::ffi::{CStr, CString};
 use std::ptr;
+use std::result;
+use std::str::Utf8Error;
 
 use ffi;
 use libc::c_int;
 
-use utils;
 use {NonZero, Result};
 
 ffi_enum_wrapper! {
@@ -60,8 +61,14 @@ impl Algorithm {
         unsafe { ffi::gcry_cipher_test_algo(self.raw()) == 0 }
     }
 
-    pub fn name(&self) -> Option<&'static str> {
-        unsafe { utils::from_cstr(ffi::gcry_cipher_algo_name(self.raw())) }
+    pub fn name(&self) -> result::Result<&'static str, Option<Utf8Error>> {
+        self.name_raw().map_or(Err(None), |s| s.to_str().map_err(Some))
+    }
+
+    pub fn name_raw(&self) -> Option<&'static CStr> {
+        unsafe {
+            ffi::gcry_cipher_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s))
+        }
     }
 
     pub fn key_len(&self) -> usize {

@@ -1,7 +1,8 @@
 use std::fmt;
 use std::ptr;
+use std::result;
 use std::slice;
-use std::str::{self, FromStr};
+use std::str::{self, FromStr, Utf8Error};
 
 use libc::c_int;
 use ffi;
@@ -119,8 +120,8 @@ impl SExpression {
         }
     }
 
-    pub fn get_str(&self, idx: u32) -> Option<&str> {
-        self.get_bytes(idx).and_then(|b| str::from_utf8(b).ok())
+    pub fn get_str(&self, idx: u32) -> result::Result<&str, Option<Utf8Error>> {
+        self.get_bytes(idx).map_or(Err(None), |s| str::from_utf8(s).map_err(Some))
     }
 
     pub fn get_integer(&self, idx: u32, fmt: IntegerFormat) -> Option<Integer> {

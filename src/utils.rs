@@ -1,7 +1,3 @@
-use std::ffi::CStr;
-
-use libc::c_char;
-
 macro_rules! try_opt {
     ($e:expr) => (match $e { Some(v) => v, None => return None });
 }
@@ -80,10 +76,6 @@ macro_rules! ffi_enum_wrapper {
             }
         }
     };
-}
-
-pub unsafe fn from_cstr<'a>(s: *const c_char) -> Option<&'a str> {
-    s.as_ref().and_then(|s| CStr::from_ptr(s).to_str().ok())
 }
 
 cfg_if! {

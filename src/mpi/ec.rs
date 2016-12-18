@@ -2,7 +2,8 @@ use std::ffi::CStr;
 #[cfg(feature = "v1_6_0")]
 use std::ffi::CString;
 use std::ptr;
-use std::str;
+use std::result;
+use std::str::{self, Utf8Error};
 
 use ffi;
 use libc::c_int;
@@ -22,10 +23,13 @@ pub struct Curve {
 }
 
 impl Curve {
-    pub fn name(&self) -> &'static str {
-        str::from_utf8(self.name.to_bytes()).unwrap()
+    pub fn name(&self) -> result::Result<&'static str, Utf8Error> {
+        self.name.to_str()
     }
 
+    pub fn name_raw(&self) -> &'static CStr {
+        self.name
+    }
     pub fn num_bits(&self) -> usize {
         self.nbits
     }
