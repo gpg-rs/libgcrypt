@@ -1,0 +1,4 @@
+[submodule "libgcrypt-sys/libgcrypt"]
+	path = libgcrypt-sys/libgcrypt
+	url = git://git.gnupg.org/libgcrypt.git
+	shallow = true

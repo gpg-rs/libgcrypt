@@ -1,14 +1,14 @@
 #[macro_use]
 extern crate cfg_if;
-#[cfg(feature = "shim")]
 extern crate gcc;
 
 use std::cmp::Ordering;
 use std::env;
-use std::ffi::OsString;
+use std::ffi::{OsStr, OsString};
+use std::fs;
 use std::iter;
-use std::path::Path;
-use std::process::Command;
+use std::path::{Path, PathBuf};
+use std::process::{self, Child, Command, Stdio};
 use std::str;
 
 cfg_if! {
@@ -32,28 +32,112 @@ fn main() {
             Some(_) => "static",
             _ => "dylib",
         };
-        println!("cargo:rustc-link-lib={0}={1}", mode, lib);
-    } else {
-        let path = env::var_os("LIBGCRYPT_CONFIG").unwrap_or("libgcrypt-config".into());
-        let mut command = Command::new(&path);
-        command.arg("--version");
-        let output = command.output().unwrap();
-        if !output.status.success() {
-            panic!("`{:?}` did not exit successfully: {}", command, output.status);
-        }
-        test_version(&str::from_utf8(&output.stdout).unwrap());
 
-        let mut command = Command::new(&path);
-        command.args(&["--cflags", "--libs"]);
-        let output = command.output().unwrap();
-        if !output.status.success() {
-            panic!("`{:?}` did not exit successfully: {}", command, output.status);
+        build_shim(&include_dirs);
+        println!("cargo:rustc-link-lib={0}={1}", mode, lib);
+        return;
+    } else if let Some(path) = env::var_os("LIBGCRYPT_CONFIG") {
+        if !try_config(path) {
+            process::exit(1);
         }
-        parse_config_output(&str::from_utf8(&output.stdout).unwrap(), &mut include_dirs);
+        return;
     }
 
-    build_shim(&include_dirs);
+    if try_build() || try_config("libgcrypt-config") {
+        return;
+    }
+    process::exit(1);
 }
+
+fn try_config<S: AsRef<OsStr>>(path: S) -> bool {
+    let path = path.as_ref();
+
+    if let Some(output) = output(Command::new(&path).arg("--version")) {
+        test_version(&output);
+    } else {
+        return false;
+    }
+
+    if let Some(output) = output(Command::new(&path).arg("--prefix")) {
+        println!("cargo:root={}", output);
+    }
+
+    let mut command = Command::new(&path);
+    command.args(&["--cflags", "--libs"]);
+    if let Some(output) = output(&mut command) {
+        let mut include_dirs = Vec::new();
+        parse_config_output(&output, &mut include_dirs);
+        build_shim(&include_dirs);
+        return true;
+    }
+    false
+}
+
+fn try_build() -> bool {
+    let src = PathBuf::from(env::current_dir().unwrap()).join("libgcrypt");
+    let dst = env::var("OUT_DIR").unwrap();
+    let build = PathBuf::from(&dst).join("build");
+    let target = env::var("TARGET").unwrap();
+    let host = env::var("HOST").unwrap();
+    let gpgerror_root = env::var("DEP_GPG_ERROR_ROOT").unwrap();
+    let compiler = gcc::Config::new().get_compiler();
+    let cflags = compiler.args().iter().fold(OsString::new(), |mut c, a| {
+        c.push(a);
+        c.push(" ");
+        c
+    });
+
+    let _ = fs::create_dir_all(&build);
+
+    if !run(Command::new("sh").current_dir(&src).arg("autogen.sh")) {
+        return false;
+    }
+    if !run(Command::new("sh")
+        .current_dir(&build)
+        .env("CC", compiler.path())
+        .env("CFLAGS", &cflags)
+        .arg(src.join("configure"))
+        .args(&["--build", &host,
+                "--host", &target,
+                "--enable-static",
+                "--disable-shared",
+                "--disable-doc",
+                &format!("--with-libgpg-error-prefix={}", &gpgerror_root),
+                &format!("--prefix={}", &dst)])) {
+        return false;
+    }
+    if !run(Command::new("make")
+        .current_dir(&build)
+        .arg("-j").arg(env::var("NUM_JOBS").unwrap())) {
+        return false;
+    }
+    if !run(Command::new("make").current_dir(&build).arg("install")) {
+        return false;
+    }
+
+    build_shim(&[
+       PathBuf::from(gpgerror_root).join("include"),
+       PathBuf::from(dst.clone()).join("include"),
+    ]);
+
+    println!("cargo:rustc-link-search=native={}",
+             PathBuf::from(dst.clone()).join("lib").display());
+    println!("cargo:rustc-link-lib=static=gcrypt");
+    println!("cargo:root={}", &dst);
+    true
+}
+
+#[cfg(feature = "shim")]
+fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
+    let mut config = gcc::Config::new();
+    for path in include_dirs.iter() {
+        config.include(path);
+    }
+    config.flag("-Wno-deprecated-declarations").file("shim.c").compile("libgcrypt_shim.a");
+}
+
+#[cfg(not(feature = "shim"))]
+fn build_shim<P: AsRef<Path>>(_include_dirs: &[P]) {}
 
 fn test_version(version: &str) {
     let version = version.trim();
@@ -71,12 +155,10 @@ fn test_version(version: &str) {
 }
 
 fn parse_config_output(output: &str, include_dirs: &mut Vec<OsString>) {
-    let parts = output.split(|c: char| c.is_whitespace()).filter_map(|p| {
-        if p.len() > 2 {
-            Some(p.split_at(2))
-        } else {
-            None
-        }
+    let parts = output.split(|c: char| c.is_whitespace()).filter_map(|p| if p.len() > 2 {
+        Some(p.split_at(2))
+    } else {
+        None
     });
 
     for (flag, val) in parts {
@@ -84,26 +166,63 @@ fn parse_config_output(output: &str, include_dirs: &mut Vec<OsString>) {
             "-I" => include_dirs.push(val.into()),
             "-L" => {
                 println!("cargo:rustc-link-search=native={}", val);
-            },
+            }
             "-F" => {
                 println!("cargo:rustc-link-search=framework={}", val);
-            },
+            }
             "-l" => {
                 println!("cargo:rustc-link-lib={}", val);
-            },
-            _ => ()
+            }
+            _ => (),
         }
     }
 }
 
-#[cfg(feature = "shim")]
-fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
-    let mut config = gcc::Config::new();
-    for path in include_dirs.iter() {
-        config.include(path);
+fn spawn(cmd: &mut Command) -> Option<Child> {
+    println!("running: {:?}", cmd);
+    match cmd.stdin(Stdio::null()).spawn() {
+        Ok(child) => Some(child),
+        Err(e) => {
+            println!("failed to execute command: {:?}\nerror: {}", cmd, e);
+            None
+        }
     }
-    config.flag("-Wno-deprecated-declarations").file("shim.c").compile("libgcrypt_shim.a");
 }
 
-#[cfg(not(feature = "shim"))]
-fn build_shim<P: AsRef<Path>>(_include_dirs: &[P]) { }
+fn run(cmd: &mut Command) -> bool {
+    if let Some(mut child) = spawn(cmd) {
+        match child.wait() {
+            Ok(status) => {
+                if !status.success() {
+                    println!("command did not execute successfully: {:?}\n\
+                       expected success, got: {}", cmd, status);
+                } else {
+                    return true;
+                }
+            }
+            Err(e) => {
+                println!("failed to execute command: {:?}\nerror: {}", cmd, e);
+            }
+        }
+    }
+    false
+}
+
+fn output(cmd: &mut Command) -> Option<String> {
+    if let Some(child) = spawn(cmd.stdout(Stdio::piped())) {
+        match child.wait_with_output() {
+            Ok(output) => {
+                if !output.status.success() {
+                    println!("command did not execute successfully: {:?}\n\
+                       expected success, got: {}", cmd, output.status);
+                } else {
+                    return String::from_utf8(output.stdout).ok();
+                }
+            }
+            Err(e) => {
+                println!("failed to execute command: {:?}\nerror: {}", cmd, e);
+            }
+        }
+    }
+    None
+}
