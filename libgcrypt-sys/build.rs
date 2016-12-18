@@ -107,7 +107,7 @@ fn try_build() -> bool {
                 "--disable-shared",
                 "--disable-doc",
                 &format!("--with-libgpg-error-prefix={}", &msys_compatible(&gpgerror_root)),
-                &format!("--prefix={}", &dst)])) {
+                &format!("--prefix={}", msys_compatible(&dst))])) {
         return false;
     }
     if !run(Command::new("make")
