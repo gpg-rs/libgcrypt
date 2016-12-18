@@ -17,16 +17,16 @@ matrix:
         - curl -sL https://ftp.gnu.org/gnu/automake/automake-${AUTOMAKE_VERSION}.tar.gz -o automake-${AUTOMAKE_VERSION}.tar.gz
         - tar -xvf automake-${AUTOMAKE_VERSION}.tar.gz
         - pushd automake-${AUTOMAKE_VERSION}
-        - ./configure --prefix=${HOME}/.local
-        - make -j2
-        - make install
+        - ./configure --prefix=${HOME}/.local 1>/dev/null
+        - make -j2 1>/dev/null
+        - make install 1>/dev/null
         - popd
         - curl -sL https://ftp.gnu.org/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext-${GETTEXT_VERSION}.tar.gz
         - tar -xvf gettext-${GETTEXT_VERSION}.tar.gz
         - pushd gettext-${GETTEXT_VERSION}
-        - ./configure --without-emacs --disable-java --disable-c++ --enable-fast-install --prefix=${HOME}/.local
-        - make -j2
-        - make install
+        - ./configure --without-emacs --disable-java --disable-c++ --enable-fast-install --prefix=${HOME}/.local 1>/dev/null
+        - make -j2 1>/dev/null
+        - make install 1>/dev/null
         - popd
         - export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
       script:
@@ -41,16 +41,16 @@ matrix:
         - curl -sL https://ftp.gnu.org/gnu/automake/automake-${AUTOMAKE_VERSION}.tar.gz -o automake-${AUTOMAKE_VERSION}.tar.gz
         - tar -xvf automake-${AUTOMAKE_VERSION}.tar.gz
         - pushd automake-${AUTOMAKE_VERSION}
-        - ./configure --prefix=${HOME}/.local
-        - make -j2
-        - make install
+        - ./configure --prefix=${HOME}/.local 1>/dev/null
+        - make -j2 1>/dev/null
+        - make install 1>/dev/null
         - popd
         - curl -sL https://ftp.gnu.org/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext-${GETTEXT_VERSION}.tar.gz
         - tar -xvf gettext-${GETTEXT_VERSION}.tar.gz
         - pushd gettext-${GETTEXT_VERSION}
-        - ./configure --without-emacs --disable-java --disable-c++ --enable-fast-install --prefix=${HOME}/.local
-        - make -j2
-        - make install
+        - ./configure --without-emacs --disable-java --disable-c++ --enable-fast-install --prefix=${HOME}/.local 1>/dev/null
+        - make -j2 1>/dev/null
+        - make install 1>/dev/null
         - popd
         - export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
       script:
