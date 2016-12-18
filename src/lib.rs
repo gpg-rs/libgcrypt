@@ -67,6 +67,7 @@ lazy_static! {
 pub struct Initializer(());
 
 impl Initializer {
+    #[inline]
     pub fn check_version<S: Into<String>>(&mut self, version: S) -> bool {
         let version = match CString::new(version.into()) {
             Ok(v) => v,
@@ -75,6 +76,7 @@ impl Initializer {
         unsafe { !ffi::gcry_check_version(version.as_ptr()).is_null() }
     }
 
+    #[inline]
     pub fn enable_quick_random(&mut self) -> &mut Self {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_ENABLE_QUICK_RANDOM, 0);
@@ -82,6 +84,7 @@ impl Initializer {
         self
     }
 
+    #[inline]
     pub fn enable_secure_rndpool(&mut self) -> &mut Self {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_USE_SECURE_RNDPOOL, 0);
@@ -89,6 +92,7 @@ impl Initializer {
         self
     }
 
+    #[inline]
     pub fn disable_secmem(&mut self) -> &mut Self {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_DISABLE_SECMEM, 0);
@@ -96,6 +100,7 @@ impl Initializer {
         self
     }
 
+    #[inline]
     pub fn enable_secmem(&mut self, amt: usize) -> Result<&mut Self> {
         unsafe {
             return_err!(ffi::gcry_control(ffi::GCRYCTL_INIT_SECMEM, amt as c_int));
@@ -108,10 +113,12 @@ impl Initializer {
 pub struct Token(());
 
 impl Token {
+    #[inline]
     pub fn is_fips_mode_active(&self) -> bool {
         unsafe { ffi::gcry_fips_mode_active() }
     }
 
+    #[inline]
     pub fn check_version<S: Into<String>>(&self, version: S) -> bool {
         let version = match CString::new(version.into()) {
             Ok(v) => v,
@@ -120,6 +127,7 @@ impl Token {
         unsafe { !ffi::gcry_check_version(version.as_ptr()).is_null() }
     }
 
+    #[inline]
     pub fn version(&self) -> &'static str {
         unsafe {
             CStr::from_ptr(ffi::gcry_check_version(ptr::null()))
@@ -128,10 +136,12 @@ impl Token {
         }
     }
 
+    #[inline]
     pub fn run_self_tests(&self) -> bool {
         unsafe { ffi::gcry_control(ffi::GCRYCTL_SELFTEST, 0) == 0 }
     }
 
+    #[inline]
     pub fn destroy_secmem(&self) {
         unsafe {
             ffi::gcry_control(ffi::GCRYCTL_TERM_SECMEM, 0);
@@ -150,10 +160,12 @@ pub fn enable_memory_guard() -> bool {
     !initialized
 }
 
+#[inline]
 fn is_init_finished() -> bool {
     unsafe { ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED_P, 0) != 0 }
 }
 
+#[inline]
 pub fn is_initialized() -> bool {
     if INITIALIZED.load(Ordering::Acquire) {
         return true;
@@ -210,6 +222,7 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
     Token(())
 }
 
+#[inline]
 pub fn get_token() -> Token {
     init(|mut x| { x.disable_secmem(); })
 }

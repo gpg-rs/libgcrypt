@@ -51,6 +51,7 @@ ffi_enum_wrapper! {
 }
 
 impl Algorithm {
+    #[inline]
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_mac_map_name(name.as_ptr()) };
@@ -61,25 +62,28 @@ impl Algorithm {
         }
     }
 
+    #[inline]
     pub fn is_available(&self) -> bool {
         let _ = ::get_token();
         unsafe { ffi::gcry_mac_test_algo(self.raw()) == 0 }
     }
 
+    #[inline]
     pub fn name(&self) -> result::Result<&'static str, Option<Utf8Error>> {
         self.name_raw().map_or(Err(None), |s| s.to_str().map_err(Some))
     }
 
+    #[inline]
     pub fn name_raw(&self) -> Option<&'static CStr> {
-        unsafe {
-            ffi::gcry_mac_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s))
-        }
+        unsafe { ffi::gcry_mac_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s)) }
     }
 
+    #[inline]
     pub fn key_len(&self) -> usize {
         unsafe { ffi::gcry_mac_get_algo_keylen(self.raw()) as usize }
     }
 
+    #[inline]
     pub fn mac_len(&self) -> usize {
         unsafe { ffi::gcry_mac_get_algo_maclen(self.raw()) as usize }
     }
@@ -96,6 +100,7 @@ bitflags! {
 pub struct Mac(NonZero<ffi::gcry_mac_hd_t>);
 
 impl Drop for Mac {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             ffi::gcry_mac_close(self.as_raw());
@@ -106,10 +111,12 @@ impl Drop for Mac {
 impl Mac {
     impl_wrapper!(Mac: ffi::gcry_mac_hd_t);
 
+    #[inline]
     pub fn new(algo: Algorithm) -> Result<Mac> {
         Mac::with_flags(algo, FLAGS_NONE)
     }
 
+    #[inline]
     pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<Mac> {
         let _ = ::get_token();
         unsafe {
@@ -119,6 +126,7 @@ impl Mac {
         }
     }
 
+    #[inline]
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
@@ -127,6 +135,7 @@ impl Mac {
         Ok(())
     }
 
+    #[inline]
     pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: B) -> Result<()> {
         let iv = iv.as_ref();
         unsafe {
@@ -135,6 +144,7 @@ impl Mac {
         Ok(())
     }
 
+    #[inline]
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_mac_reset(self.as_raw()));
@@ -142,6 +152,7 @@ impl Mac {
         Ok(())
     }
 
+    #[inline]
     pub fn update(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_mac_write(self.as_raw(),
@@ -151,6 +162,7 @@ impl Mac {
         Ok(())
     }
 
+    #[inline]
     pub fn get_mac(&mut self, buf: &mut [u8]) -> Result<usize> {
         let mut len = buf.len();
         unsafe {
@@ -159,6 +171,7 @@ impl Mac {
         Ok(len)
     }
 
+    #[inline]
     pub fn verify(&mut self, buf: &[u8]) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_mac_verify(self.as_raw(), buf.as_ptr() as *mut _, buf.len()));
@@ -168,11 +181,13 @@ impl Mac {
 }
 
 impl Write for Mac {
+    #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         try!(self.update(buf));
         Ok(buf.len())
     }
 
+    #[inline]
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }

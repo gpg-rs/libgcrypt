@@ -44,6 +44,7 @@ ffi_enum_wrapper! {
 }
 
 impl Algorithm {
+    #[inline]
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_md_map_name(name.as_ptr()) };
@@ -54,21 +55,23 @@ impl Algorithm {
         }
     }
 
+    #[inline]
     pub fn is_available(&self) -> bool {
         let _ = ::get_token();
         unsafe { ffi::gcry_md_test_algo(self.raw()) == 0 }
     }
 
+    #[inline]
     pub fn name(&self) -> result::Result<&'static str, Option<Utf8Error>> {
         self.name_raw().map_or(Err(None), |s| s.to_str().map_err(Some))
     }
 
+    #[inline]
     pub fn name_raw(&self) -> Option<&'static CStr> {
-        unsafe {
-            ffi::gcry_md_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s))
-        }
+        unsafe { ffi::gcry_md_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s)) }
     }
 
+    #[inline]
     pub fn digest_len(&self) -> usize {
         unsafe { ffi::gcry_md_get_algo_dlen(self.raw()) as usize }
     }
@@ -87,6 +90,7 @@ bitflags! {
 pub struct MessageDigest(NonZero<ffi::gcry_md_hd_t>);
 
 impl Drop for MessageDigest {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             ffi::gcry_md_close(self.as_raw());
@@ -97,10 +101,12 @@ impl Drop for MessageDigest {
 impl MessageDigest {
     impl_wrapper!(MessageDigest: ffi::gcry_md_hd_t);
 
+    #[inline]
     pub fn new(algo: Algorithm) -> Result<MessageDigest> {
         MessageDigest::with_flags(algo, FLAGS_NONE)
     }
 
+    #[inline]
     pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
         let _ = ::get_token();
         unsafe {
@@ -110,6 +116,7 @@ impl MessageDigest {
         }
     }
 
+    #[inline]
     pub fn try_clone(&self) -> Result<MessageDigest> {
         let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
         unsafe {
@@ -118,6 +125,7 @@ impl MessageDigest {
         }
     }
 
+    #[inline]
     pub fn enable(&mut self, algo: Algorithm) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_md_enable(self.as_raw(), algo.raw()));
@@ -125,14 +133,17 @@ impl MessageDigest {
         Ok(())
     }
 
+    #[inline]
     pub fn is_enabled(&self, algo: Algorithm) -> bool {
         unsafe { ffi::gcry_md_is_enabled(self.as_raw(), algo.raw()) != 0 }
     }
 
+    #[inline]
     pub fn is_secure(&self) -> bool {
         unsafe { ffi::gcry_md_is_secure(self.as_raw()) != 0 }
     }
 
+    #[inline]
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
@@ -141,22 +152,26 @@ impl MessageDigest {
         Ok(())
     }
 
+    #[inline]
     pub fn reset(&mut self) {
         unsafe { ffi::gcry_md_reset(self.as_raw()) }
     }
 
+    #[inline]
     pub fn update(&mut self, bytes: &[u8]) {
         unsafe {
             ffi::gcry_md_write(self.as_raw(), bytes.as_ptr() as *const _, bytes.len());
         }
     }
 
+    #[inline]
     pub fn finish(&mut self) {
         unsafe {
             ffi::gcry_md_final(self.as_raw());
         }
     }
 
+    #[inline]
     pub fn get_only_digest(&mut self) -> Option<&[u8]> {
         let algo = unsafe { ffi::gcry_md_get_algo(self.as_raw()) };
         if algo != 0 {
@@ -166,6 +181,7 @@ impl MessageDigest {
         }
     }
 
+    #[inline]
     pub fn get_digest(&mut self, algo: Algorithm) -> Option<&[u8]> {
         let len = algo.digest_len();
         if len == 0 {
@@ -181,16 +197,19 @@ impl MessageDigest {
 }
 
 impl Write for MessageDigest {
+    #[inline]
     fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
         self.update(buf);
         Ok(buf.len())
     }
 
+    #[inline]
     fn flush(&mut self) -> io::Result<()> {
         Ok(())
     }
 }
 
+#[inline]
 pub fn hash(algo: Algorithm, src: &[u8], dst: &mut [u8]) {
     assert!(algo.is_available());
     assert!(dst.len() >= algo.digest_len());

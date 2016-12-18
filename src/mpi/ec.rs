@@ -23,17 +23,22 @@ pub struct Curve {
 }
 
 impl Curve {
+    #[inline]
     pub fn name(&self) -> result::Result<&'static str, Utf8Error> {
         self.name.to_str()
     }
 
+    #[inline]
     pub fn name_raw(&self) -> &'static CStr {
         self.name
     }
+
+    #[inline]
     pub fn num_bits(&self) -> usize {
         self.nbits
     }
 
+    #[inline]
     pub fn parameters(&self) -> Option<SExpression> {
         unsafe {
             ffi::gcry_pk_get_param(Algorithm::Ecc.raw(), self.name.as_ptr())
@@ -49,6 +54,7 @@ pub struct Curves<'a> {
 }
 
 impl<'a> Curves<'a> {
+    #[inline]
     pub fn all() -> Curves<'static> {
         let _ = ::get_token();
         Curves {
@@ -57,6 +63,7 @@ impl<'a> Curves<'a> {
         }
     }
 
+    #[inline]
     pub fn from(key: &SExpression) -> Curves {
         Curves {
             key: Some(key),
@@ -64,6 +71,7 @@ impl<'a> Curves<'a> {
         }
     }
 
+    #[inline]
     pub fn get(name: &str) -> Option<Curve> {
         SExpression::from_bytes(format!("(curve {})", name)).ok().and_then(|s| s.curve())
     }
@@ -72,6 +80,7 @@ impl<'a> Curves<'a> {
 impl<'a> Iterator for Curves<'a> {
     type Item = Curve;
 
+    #[inline]
     fn next(&mut self) -> Option<Curve> {
         let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
         unsafe {
@@ -86,6 +95,7 @@ impl<'a> Iterator for Curves<'a> {
         }
     }
 
+    #[inline]
     fn nth(&mut self, n: usize) -> Option<Curve> {
         self.idx = self.idx.saturating_add(n as c_int);
         self.next()
@@ -96,8 +106,8 @@ impl<'a> Iterator for Curves<'a> {
 pub struct Context(NonZero<ffi::gcry_ctx_t>);
 
 #[cfg(feature = "v1_6_0")]
-#[cfg(feature = "v1_6_0")]
 impl Drop for Context {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             ffi::gcry_ctx_release(self.as_raw());
@@ -109,6 +119,7 @@ impl Drop for Context {
 impl Context {
     impl_wrapper!(Context: ffi::gcry_ctx_t);
 
+    #[inline]
     pub fn from_curve(curve: Curve) -> Result<Context> {
         let mut raw = ptr::null_mut();
         unsafe {
@@ -117,6 +128,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub fn from_params(params: &SExpression, curve: Option<Curve>) -> Result<Context> {
         let mut raw = ptr::null_mut();
         unsafe {
@@ -126,6 +138,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub fn get_integer<S: Into<String>>(&self, name: S) -> Option<Integer> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
@@ -135,6 +148,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub fn set_integer<S: Into<String>>(&mut self, name: S, x: &Integer) -> Result<()> {
         let name = try!(CString::new(name.into()));
         unsafe {
@@ -143,6 +157,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub fn get_point<S: Into<String>>(&self, name: S) -> Option<Point> {
         let name = try_opt!(CString::new(name.into()).ok());
         unsafe {
@@ -152,6 +167,7 @@ impl Context {
         }
     }
 
+    #[inline]
     pub fn set_point<S: Into<String>>(&mut self, name: S, p: &Point) -> Result<()> {
         let name = try!(CString::new(name.into()));
         unsafe {

@@ -17,6 +17,7 @@ ffi_enum_wrapper! {
     }
 }
 
+#[inline]
 pub fn derive(algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8])
     -> Result<()> {
     let _ = ::get_token();
@@ -35,6 +36,7 @@ pub fn derive(algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Optio
     Ok(())
 }
 
+#[inline]
 pub fn s2k_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8])
     -> Result<()> {
     match (iter, salt.is_some()) {
@@ -65,6 +67,7 @@ pub fn s2k_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[
     }
 }
 
+#[inline]
 pub fn pbkdf1_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8])
     -> Result<()> {
     derive(Algorithm::Pbkdf1,
@@ -75,6 +78,7 @@ pub fn pbkdf1_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8],
            key)
 }
 
+#[inline]
 pub fn pbkdf2_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8])
     -> Result<()> {
     derive(Algorithm::Pbkdf2,
@@ -85,6 +89,7 @@ pub fn pbkdf2_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8],
            key)
 }
 
+#[inline]
 pub fn scrypt_derive(n: u32, p: u32, pass: &[u8], salt: &[u8], key: &mut [u8]) -> Result<()> {
     derive(Algorithm::Scrypt, n as i32, p, pass, Some(salt), key)
 }

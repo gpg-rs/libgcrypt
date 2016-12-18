@@ -8,6 +8,7 @@ ffi_enum_wrapper! {
     }
 }
 
+#[inline]
 pub fn make_nonce(buf: &mut [u8]) {
     let _ = ::get_token();
     unsafe {
@@ -15,6 +16,7 @@ pub fn make_nonce(buf: &mut [u8]) {
     }
 }
 
+#[inline]
 pub fn randomize(level: Level, buf: &mut [u8]) {
     let _ = ::get_token();
     unsafe {

@@ -9,6 +9,7 @@ use super::{Context, Integer};
 pub struct Point(NonZero<ffi::gcry_mpi_point_t>);
 
 impl Drop for Point {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             ffi::gcry_mpi_point_release(self.as_raw());
@@ -17,6 +18,7 @@ impl Drop for Point {
 }
 
 impl Clone for Point {
+    #[inline]
     fn clone(&self) -> Point {
         let (x, y, z) = self.to_coords();
         unsafe {
@@ -27,6 +29,7 @@ impl Clone for Point {
         }
     }
 
+    #[inline]
     fn clone_from(&mut self, source: &Point) {
         let (x, y, z) = source.to_coords();
         unsafe {
@@ -38,15 +41,18 @@ impl Clone for Point {
 impl Point {
     impl_wrapper!(Point: ffi::gcry_mpi_point_t);
 
+    #[inline]
     pub fn zero() -> Point {
         Point::new(0)
     }
 
+    #[inline]
     pub fn new(nbits: u32) -> Point {
         let _ = ::get_token();
         unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits.into())) }
     }
 
+    #[inline]
     pub fn from(x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) -> Point {
         let _ = ::get_token();
         unsafe {
@@ -57,6 +63,7 @@ impl Point {
         }
     }
 
+    #[inline]
     pub fn set(&mut self, x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) {
         unsafe {
             let x = x.map_or(ptr::null_mut(), |v| v.into_raw());
@@ -66,6 +73,7 @@ impl Point {
         }
     }
 
+    #[inline]
     pub fn to_coords(&self) -> (Integer, Integer, Integer) {
         let x = Integer::zero();
         let y = Integer::zero();
@@ -76,6 +84,7 @@ impl Point {
         (x, y, z)
     }
 
+    #[inline]
     pub fn into_coords(self) -> (Integer, Integer, Integer) {
         let x = Integer::zero();
         let y = Integer::zero();
@@ -86,6 +95,7 @@ impl Point {
         (x, y, z)
     }
 
+    #[inline]
     pub fn get_affine(&self, ctx: &Context) -> Option<(Integer, Integer)> {
         let x = Integer::zero();
         let y = Integer::zero();
@@ -94,10 +104,12 @@ impl Point {
         if result == 0 { Some((x, y)) } else { None }
     }
 
+    #[inline]
     pub fn on_curve(&self, ctx: &Context) -> bool {
         unsafe { ffi::gcry_mpi_ec_curve_point(self.as_raw(), ctx.as_raw()) != 0 }
     }
 
+    #[inline]
     pub fn add(self, other: &Point, ctx: &Context) -> Point {
         unsafe {
             ffi::gcry_mpi_ec_add(self.as_raw(), self.as_raw(), other.as_raw(), ctx.as_raw());
@@ -105,6 +117,7 @@ impl Point {
         self
     }
 
+    #[inline]
     pub fn mul(self, n: &Integer, ctx: &Context) -> Point {
         unsafe {
             ffi::gcry_mpi_ec_mul(self.as_raw(), n.as_raw(), self.as_raw(), ctx.as_raw());

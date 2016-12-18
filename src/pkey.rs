@@ -26,6 +26,7 @@ ffi_enum_wrapper! {
 }
 
 impl Algorithm {
+    #[inline]
     pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
         let name = try_opt!(CString::new(name.into()).ok());
         let result = unsafe { ffi::gcry_pk_map_name(name.as_ptr()) };
@@ -36,15 +37,18 @@ impl Algorithm {
         }
     }
 
+    #[inline]
     pub fn is_available(&self) -> bool {
         let _ = ::get_token();
         unsafe { ffi::gcry_pk_test_algo(self.raw()) == 0 }
     }
 
+    #[inline]
     pub fn name(&self) -> result::Result<&'static str, Option<Utf8Error>> {
         self.name_raw().map_or(Err(None), |s| s.to_str().map_err(Some))
     }
 
+    #[inline]
     pub fn name_raw(&self) -> Option<&'static CStr> {
         unsafe {
             ffi::gcry_pk_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s))
@@ -53,6 +57,7 @@ impl Algorithm {
 }
 
 impl SExpression {
+    #[inline]
     pub fn num_bits(&self) -> Option<usize> {
         unsafe {
             let result = ffi::gcry_pk_get_nbits(self.as_raw());
@@ -64,6 +69,7 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn key_grip(&self) -> Option<[u8; 20]> {
         unsafe {
             let mut buffer = [0u8; 20];
@@ -75,10 +81,12 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn curve(&self) -> Option<Curve> {
         Curves::from(self).next()
     }
 
+    #[inline]
     pub fn test_key(&self) -> Result<()> {
         unsafe {
             return_err!(ffi::gcry_pk_testkey(self.as_raw()));
@@ -87,6 +95,7 @@ impl SExpression {
     }
 }
 
+#[inline]
 pub fn generate_key(config: &SExpression) -> Result<SExpression> {
     unsafe {
         let mut result: ffi::gcry_sexp_t = ptr::null_mut();
@@ -95,6 +104,7 @@ pub fn generate_key(config: &SExpression) -> Result<SExpression> {
     }
 }
 
+#[inline]
 pub fn encrypt(key: &SExpression, data: &SExpression) -> Result<SExpression> {
     unsafe {
         let mut result: ffi::gcry_sexp_t = ptr::null_mut();
@@ -103,6 +113,7 @@ pub fn encrypt(key: &SExpression, data: &SExpression) -> Result<SExpression> {
     }
 }
 
+#[inline]
 pub fn decrypt(key: &SExpression, data: &SExpression) -> Result<SExpression> {
     unsafe {
         let mut result: ffi::gcry_sexp_t = ptr::null_mut();
@@ -111,6 +122,7 @@ pub fn decrypt(key: &SExpression, data: &SExpression) -> Result<SExpression> {
     }
 }
 
+#[inline]
 pub fn sign(key: &SExpression, data: &SExpression) -> Result<SExpression> {
     unsafe {
         let mut result: ffi::gcry_sexp_t = ptr::null_mut();
@@ -119,6 +131,7 @@ pub fn sign(key: &SExpression, data: &SExpression) -> Result<SExpression> {
     }
 }
 
+#[inline]
 pub fn verify(key: &SExpression, data: &SExpression, sig: &SExpression) -> Result<()> {
     unsafe {
         return_err!(ffi::gcry_pk_verify(sig.as_raw(), data.as_raw(), key.as_raw()));

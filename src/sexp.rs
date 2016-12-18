@@ -22,6 +22,7 @@ pub enum Format {
 pub struct SExpression(NonZero<ffi::gcry_sexp_t>);
 
 impl Drop for SExpression {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
             ffi::gcry_sexp_release(self.as_raw());
@@ -32,6 +33,7 @@ impl Drop for SExpression {
 impl SExpression {
     impl_wrapper!(SExpression: ffi::gcry_sexp_t);
 
+    #[inline]
     pub fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Result<SExpression> {
         let bytes = bytes.as_ref();
         let _ = ::get_token();
@@ -45,6 +47,7 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn to_bytes(&self, format: Format) -> Vec<u8> {
         let mut buffer = vec![0; self.len_encoded(format)];
         self.encode(format, &mut buffer);
@@ -52,10 +55,12 @@ impl SExpression {
         buffer
     }
 
+    #[inline]
     pub fn len_encoded(&self, format: Format) -> usize {
         unsafe { ffi::gcry_sexp_sprint(self.as_raw(), format as c_int, ptr::null_mut(), 0) }
     }
 
+    #[inline]
     pub fn encode(&self, format: Format, buf: &mut [u8]) -> Option<usize> {
         unsafe {
             match ffi::gcry_sexp_sprint(self.as_raw(),
@@ -68,6 +73,7 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn elements(&self) -> Elements {
         unsafe {
             Elements {
@@ -78,22 +84,27 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn head(&self) -> Option<SExpression> {
         unsafe { ffi::gcry_sexp_car(self.as_raw()).as_mut().map(|x| SExpression::from_raw(x)) }
     }
 
+    #[inline]
     pub fn tail(&self) -> Option<SExpression> {
         unsafe { ffi::gcry_sexp_cdr(self.as_raw()).as_mut().map(|x| SExpression::from_raw(x)) }
     }
 
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
+    #[inline]
     pub fn len(&self) -> usize {
         unsafe { ffi::gcry_sexp_length(self.as_raw()) as usize }
     }
 
+    #[inline]
     pub fn find_token<B: AsRef<[u8]>>(&self, token: B) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
@@ -103,6 +114,7 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn get(&self, idx: u32) -> Option<SExpression> {
         unsafe {
             ffi::gcry_sexp_nth(self.as_raw(), idx as c_int)
@@ -111,6 +123,7 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn get_bytes(&self, idx: u32) -> Option<&[u8]> {
         unsafe {
             let mut len = 0;
@@ -120,10 +133,12 @@ impl SExpression {
         }
     }
 
+    #[inline]
     pub fn get_str(&self, idx: u32) -> result::Result<&str, Option<Utf8Error>> {
         self.get_bytes(idx).map_or(Err(None), |s| str::from_utf8(s).map_err(Some))
     }
 
+    #[inline]
     pub fn get_integer(&self, idx: u32, fmt: IntegerFormat) -> Option<Integer> {
         unsafe {
             ffi::gcry_sexp_nth_mpi(self.as_raw(), idx as c_int, fmt as c_int)
@@ -136,6 +151,7 @@ impl SExpression {
 impl FromStr for SExpression {
     type Err = Error;
 
+    #[inline]
     fn from_str(s: &str) -> Result<SExpression> {
         SExpression::from_bytes(s)
     }
@@ -154,6 +170,7 @@ impl<'a> IntoIterator for &'a SExpression {
     type Item = SExpression;
     type IntoIter = Elements<'a>;
 
+    #[inline]
     fn into_iter(self) -> Self::IntoIter {
         self.elements()
     }
@@ -168,6 +185,7 @@ pub struct Elements<'a> {
 impl<'a> Iterator for Elements<'a> {
     type Item = SExpression;
 
+    #[inline]
     fn next(&mut self) -> Option<Self::Item> {
         if self.first < self.last {
             let elem = unsafe {
@@ -181,6 +199,7 @@ impl<'a> Iterator for Elements<'a> {
         }
     }
 
+    #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
         self.first = if (n as u64) < (self.last as u64) {
             self.first + (n as c_int)
@@ -190,6 +209,7 @@ impl<'a> Iterator for Elements<'a> {
         self.next()
     }
 
+    #[inline]
     fn size_hint(&self) -> (usize, Option<usize>) {
         let size = (self.last - self.first) as usize;
         (size, Some(size))
@@ -197,6 +217,7 @@ impl<'a> Iterator for Elements<'a> {
 }
 
 impl<'a> DoubleEndedIterator for Elements<'a> {
+    #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.first < self.last {
             self.last -= 1;

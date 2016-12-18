@@ -6,31 +6,34 @@ use std::str;
 
 use ffi;
 
-use error::{Error, Result};
+use {Error, NonZero, Result};
 use rand::Level;
 
 pub struct Buffer {
-    buf: *mut u8,
+    buf: NonZero<*mut u8>,
     len: usize,
 }
 
 impl Drop for Buffer {
+    #[inline]
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_free(self.buf as *mut _);
+            ffi::gcry_free(*self.buf as *mut _);
         }
     }
 }
 
 impl Buffer {
+    #[inline]
     pub unsafe fn from_raw(buf: *mut u8, len: usize) -> Buffer {
         debug_assert!(!buf.is_null());
         Buffer {
-            buf: buf,
+            buf: NonZero::new(buf),
             len: len,
         }
     }
 
+    #[inline]
     pub fn new(len: usize) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
@@ -41,6 +44,7 @@ impl Buffer {
         }
     }
 
+    #[inline]
     pub fn new_secure(len: usize) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
@@ -51,6 +55,7 @@ impl Buffer {
         }
     }
 
+    #[inline]
     pub fn try_clone(&self) -> Result<Buffer> {
         let result = if self.is_secure() {
             try!(Buffer::new_secure(self.len))
@@ -58,11 +63,12 @@ impl Buffer {
             try!(Buffer::new(self.len))
         };
         unsafe {
-            ptr::copy_nonoverlapping(self.buf, result.buf, self.len);
+            ptr::copy_nonoverlapping(*self.buf, *result.buf, self.len);
         }
         Ok(result)
     }
 
+    #[inline]
     pub fn random(len: usize, level: Level) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
@@ -73,6 +79,7 @@ impl Buffer {
         }
     }
 
+    #[inline]
     pub fn random_secure(len: usize, level: Level) -> Result<Buffer> {
         let _ = ::get_token();
         unsafe {
@@ -83,18 +90,22 @@ impl Buffer {
         }
     }
 
+    #[inline]
     pub fn is_secure(&self) -> bool {
-        unsafe { ffi::gcry_is_secure(self.buf as *const _) != 0 }
+        unsafe { ffi::gcry_is_secure(*self.buf as *const _) != 0 }
     }
 
+    #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.buf, self.len) }
+        unsafe { slice::from_raw_parts(*self.buf, self.len) }
     }
 
+    #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
-        unsafe { slice::from_raw_parts_mut(self.buf, self.len) }
+        unsafe { slice::from_raw_parts_mut(*self.buf, self.len) }
     }
 
+    #[inline]
     pub fn to_str(&self) -> result::Result<&str, str::Utf8Error> {
         str::from_utf8(self.as_bytes())
     }
@@ -103,24 +114,28 @@ impl Buffer {
 impl ops::Deref for Buffer {
     type Target = [u8];
 
+    #[inline]
     fn deref(&self) -> &[u8] {
         self.as_bytes()
     }
 }
 
 impl ops::DerefMut for Buffer {
+    #[inline]
     fn deref_mut(&mut self) -> &mut [u8] {
         self.as_mut_bytes()
     }
 }
 
 impl AsRef<[u8]> for Buffer {
+    #[inline]
     fn as_ref(&self) -> &[u8] {
         self.as_bytes()
     }
 }
 
 impl AsMut<[u8]> for Buffer {
+    #[inline]
     fn as_mut(&mut self) -> &mut [u8] {
         self.as_mut_bytes()
     }
