@@ -1,6 +1,7 @@
 # rust-gcrypt
 
 [![Build Status](https://travis-ci.org/johnschug/rust-gcrypt.svg?branch=master)](https://travis-ci.org/johnschug/rust-gcrypt)
+[![Build status](https://ci.appveyor.com/api/projects/status/bbdwaqw7xo6hbp76/branch/master?svg=true)](https://ci.appveyor.com/project/johnschug/rust-gcrypt/branch/master)
 [![LGPL-2.1 licensed](https://img.shields.io/badge/license-LGPL--2.1-blue.svg)](./COPYING)
 [![crates.io](https://meritbadge.herokuapp.com/gcrypt)](https://crates.io/crates/gcrypt)
 
@@ -8,35 +9,16 @@
 
 [Documentation](http://johnschug.github.io/rust-gcrypt)
 
-Version 1.5.0 or greater of libgcrypt is required to use this wrapper.
-Some features may require a more recent version.
+## Requirements
 
-The libgcrypt-sys crate will attempt to find the library by parsing the output
-of `libgcrypt-config`. The path to the library and its header files can also be
-configured by setting the environment variables `LIBGCRYPT_LIB` and
-`LIBGCRYPT_INCLUDE_DIR` before building the crate. A working installation of
-gcc is also required.
+The wrapper is usable with libgcrypt 1.5.0 or later. Some features may require
+a more recent version.
 
-The required libraries and binaries can be installed by running:
-
-#### Debian / Ubuntu
-```shell
-$ sudo apt-get install libgcrypt11-dev
-```
-or
-```shell
-$ sudo apt-get install libgcrypt20-dev
-```
-
-#### RHEL / CentOS / Fedora
-```shell
-$ sudo yum install libgcrypt-devel
-```
-
-#### Mac OS X
-```shell
-$ brew install libgcrypt
-```
+By default, the libgcrypt-sys crate will attempt to build the latest version of
+the library from source using autoconf and automake. An existing installation
+may be specified using `LIBGCRYPT_LIB`, `LIBGCRYPT_STATIC` (optional) and
+`LIBGCRYPT_INCLUDE_DIR`. Alternatively the path to the libgcrypt configuration
+program (`libgcrypt-config`) may be specified using `LIBGCRYPT_CONFIG`.
 
 ## Usage
 
