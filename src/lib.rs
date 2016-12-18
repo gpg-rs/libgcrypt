@@ -16,6 +16,7 @@
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
 #![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero))]
+extern crate core;
 #[macro_use]
 extern crate cfg_if;
 extern crate libc;
