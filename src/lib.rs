@@ -15,6 +15,7 @@
 //! Calling any function in the wrapper that requires initialization before `init` or `init_fips`
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
+#![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero))]
 #[macro_use]
 extern crate cfg_if;
 extern crate libc;
@@ -212,3 +213,5 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
 pub fn get_token() -> Token {
     init(|mut x| { x.disable_secmem(); })
 }
+
+type NonZero<T> = utils::NonZero<T>;

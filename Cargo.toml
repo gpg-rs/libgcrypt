@@ -12,6 +12,7 @@ description = "Libgcrypt bindings for Rust"
 default = ["v1_7_0"]
 v1_6_0 = ["libgcrypt-sys/v1_6_0"]
 v1_7_0 = ["v1_6_0", "libgcrypt-sys/v1_7_0"]
+nightly = []
 
 [dependencies]
 cfg-if = "0.1"

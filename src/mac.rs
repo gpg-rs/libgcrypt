@@ -6,7 +6,7 @@ use ffi;
 use libc::c_int;
 
 use utils;
-use error::Result;
+use {NonZero, Result};
 
 enum_wrapper! {
     pub enum Algorithm: c_int {
@@ -85,19 +85,19 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct Mac(ffi::gcry_mac_hd_t);
-
-impl_wrapper!(Mac: ffi::gcry_mac_hd_t);
+pub struct Mac(NonZero<ffi::gcry_mac_hd_t>);
 
 impl Drop for Mac {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_mac_close(self.0);
+            ffi::gcry_mac_close(self.as_raw());
         }
     }
 }
 
 impl Mac {
+    impl_wrapper!(Mac: ffi::gcry_mac_hd_t);
+
     pub fn new(algo: Algorithm) -> Result<Mac> {
         Mac::with_flags(algo, FLAGS_NONE)
     }
@@ -114,7 +114,7 @@ impl Mac {
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
-            return_err!(ffi::gcry_mac_setkey(self.0, key.as_ptr() as *const _, key.len()));
+            return_err!(ffi::gcry_mac_setkey(self.as_raw(), key.as_ptr() as *const _, key.len()));
         }
         Ok(())
     }
@@ -122,21 +122,23 @@ impl Mac {
     pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: B) -> Result<()> {
         let iv = iv.as_ref();
         unsafe {
-            return_err!(ffi::gcry_mac_setiv(self.0, iv.as_ptr() as *const _, iv.len()));
+            return_err!(ffi::gcry_mac_setiv(self.as_raw(), iv.as_ptr() as *const _, iv.len()));
         }
         Ok(())
     }
 
     pub fn reset(&mut self) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_reset(self.0));
+            return_err!(ffi::gcry_mac_reset(self.as_raw()));
         }
         Ok(())
     }
 
     pub fn update(&mut self, bytes: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_write(self.0, bytes.as_ptr() as *const _, bytes.len()));
+            return_err!(ffi::gcry_mac_write(self.as_raw(),
+                                            bytes.as_ptr() as *const _,
+                                            bytes.len()));
         }
         Ok(())
     }
@@ -144,14 +146,14 @@ impl Mac {
     pub fn get_mac(&mut self, buf: &mut [u8]) -> Result<usize> {
         let mut len = buf.len();
         unsafe {
-            return_err!(ffi::gcry_mac_read(self.0, buf.as_mut_ptr() as *mut _, &mut len));
+            return_err!(ffi::gcry_mac_read(self.as_raw(), buf.as_mut_ptr() as *mut _, &mut len));
         }
         Ok(len)
     }
 
     pub fn verify(&mut self, buf: &[u8]) -> Result<()> {
         unsafe {
-            return_err!(ffi::gcry_mac_verify(self.0, buf.as_ptr() as *mut _, buf.len()));
+            return_err!(ffi::gcry_mac_verify(self.as_raw(), buf.as_ptr() as *mut _, buf.len()));
         }
         Ok(())
     }

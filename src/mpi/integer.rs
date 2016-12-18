@@ -8,7 +8,8 @@ use std::str;
 use ffi;
 use libc::c_uint;
 
-use error::{self, Error, Result};
+use {Error, NonZero, Result};
+use error;
 use buffer::Buffer;
 use rand::Level;
 
@@ -23,31 +24,31 @@ pub enum Format {
 }
 
 #[derive(Debug)]
-pub struct Integer(ffi::gcry_mpi_t);
-
-impl_wrapper!(Integer: ffi::gcry_mpi_t);
+pub struct Integer(NonZero<ffi::gcry_mpi_t>);
 
 impl Drop for Integer {
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_mpi_release(self.0);
+            ffi::gcry_mpi_release(self.as_raw());
         }
     }
 }
 
 impl Clone for Integer {
     fn clone(&self) -> Integer {
-        unsafe { Integer::from_raw(ffi::gcry_mpi_copy(self.0)) }
+        unsafe { Integer::from_raw(ffi::gcry_mpi_copy(self.as_raw())) }
     }
 
     fn clone_from(&mut self, source: &Integer) {
         unsafe {
-            ffi::gcry_mpi_set(self.0, source.0);
+            ffi::gcry_mpi_set(self.as_raw(), source.as_raw());
         }
     }
 }
 
 impl Integer {
+    impl_wrapper!(Integer: ffi::gcry_mpi_t);
+
     pub fn zero() -> Integer {
         Integer::new(0)
     }
@@ -104,7 +105,7 @@ impl Integer {
             return_err!(ffi::gcry_mpi_aprint(format as ffi::gcry_mpi_format,
                                              &mut buffer,
                                              &mut len,
-                                             self.0));
+                                             self.as_raw()));
             Ok(Buffer::from_raw(buffer as *mut u8, len))
         }
     }
@@ -116,7 +117,7 @@ impl Integer {
                                             ptr::null_mut(),
                                             0,
                                             &mut len,
-                                            self.0));
+                                            self.as_raw()));
             Ok(len)
         }
     }
@@ -128,83 +129,91 @@ impl Integer {
                                             buf.as_mut_ptr() as *mut _,
                                             buf.len(),
                                             &mut written,
-                                            self.0));
+                                            self.as_raw()));
             Ok(written)
         }
     }
 
     pub fn set(&mut self, n: u32) {
         unsafe {
-            ffi::gcry_mpi_set_ui(self.0, n.into());
+            ffi::gcry_mpi_set_ui(self.as_raw(), n.into());
         }
     }
 
     pub fn randomize(&mut self, nbits: u32, level: Level) {
         unsafe {
-            ffi::gcry_mpi_randomize(self.0, nbits.into(), level.raw());
+            ffi::gcry_mpi_randomize(self.as_raw(), nbits.into(), level.raw());
         }
     }
 
     pub fn num_bits(&self) -> usize {
-        unsafe { ffi::gcry_mpi_get_nbits(self.0) as usize }
+        unsafe { ffi::gcry_mpi_get_nbits(self.as_raw()) as usize }
     }
 
     pub fn is_prime(&self) -> bool {
-        unsafe { ffi::gcry_prime_check(self.0, 0) == 0 }
+        unsafe { ffi::gcry_prime_check(self.as_raw(), 0) == 0 }
     }
 
     pub fn is_positive(&self) -> bool {
-        unsafe { ffi::gcry_mpi_cmp_ui(self.0, 0) > 0 }
+        unsafe { ffi::gcry_mpi_cmp_ui(self.as_raw(), 0) > 0 }
     }
 
     pub fn is_negative(&self) -> bool {
-        unsafe { ffi::gcry_mpi_cmp_ui(self.0, 0) < 0 }
+        unsafe { ffi::gcry_mpi_cmp_ui(self.as_raw(), 0) < 0 }
     }
 
     #[cfg(feature = "v1_6_0")]
     pub fn abs(self) -> Integer {
         unsafe {
-            ffi::gcry_mpi_abs(self.0);
+            ffi::gcry_mpi_abs(self.as_raw());
         }
         self
     }
 
     pub fn add_mod(self, other: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_addm(self.0, self.0, other.0, m.0);
+            ffi::gcry_mpi_addm(self.as_raw(), self.as_raw(), other.as_raw(), m.as_raw());
         }
         self
     }
 
     pub fn sub_mod(self, other: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_subm(self.0, self.0, other.0, m.0);
+            ffi::gcry_mpi_subm(self.as_raw(), self.as_raw(), other.as_raw(), m.as_raw());
         }
         self
     }
 
     pub fn mul_mod(self, other: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_mulm(self.0, self.0, other.0, m.0);
+            ffi::gcry_mpi_mulm(self.as_raw(), self.as_raw(), other.as_raw(), m.as_raw());
         }
         self
     }
 
     pub fn inv_mod(self, m: &Integer) -> Option<Integer> {
-        let result = unsafe { ffi::gcry_mpi_invm(self.0, self.0, m.0) };
+        let result = unsafe { ffi::gcry_mpi_invm(self.as_raw(), self.as_raw(), m.as_raw()) };
         if result != 0 { Some(self) } else { None }
     }
 
     pub fn div_floor(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_div(self.0, ptr::null_mut(), self.0, other.0, -1);
+            ffi::gcry_mpi_div(self.as_raw(),
+                              ptr::null_mut(),
+                              self.as_raw(),
+                              other.as_raw(),
+                              -1);
         }
         self
     }
 
     pub fn mod_floor(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_div(ptr::null_mut(), self.0, self.0, other.0, -1);
+            ffi::gcry_mpi_div(ptr::null_mut(),
+                              self.as_raw(),
+                              self.as_raw(),
+                              other.as_raw(),
+                              -1);
         }
         self
     }
@@ -212,7 +221,11 @@ impl Integer {
     pub fn div_rem(self, other: &Integer) -> (Integer, Integer) {
         let rem = Integer::zero();
         unsafe {
-            ffi::gcry_mpi_div(self.0, rem.0, self.0, other.0, 0);
+            ffi::gcry_mpi_div(self.as_raw(),
+                              rem.as_raw(),
+                              self.as_raw(),
+                              other.as_raw(),
+                              0);
         }
         (self, rem)
     }
@@ -220,28 +233,32 @@ impl Integer {
     pub fn div_mod_floor(self, other: &Integer) -> (Integer, Integer) {
         let rem = Integer::zero();
         unsafe {
-            ffi::gcry_mpi_div(self.0, rem.0, self.0, other.0, -1);
+            ffi::gcry_mpi_div(self.as_raw(),
+                              rem.as_raw(),
+                              self.as_raw(),
+                              other.as_raw(),
+                              -1);
         }
         (self, rem)
     }
 
     pub fn ldexp(self, e: u32) -> Integer {
         unsafe {
-            ffi::gcry_mpi_mul_2exp(self.0, self.0, e.into());
+            ffi::gcry_mpi_mul_2exp(self.as_raw(), self.as_raw(), e.into());
         }
         self
     }
 
     pub fn pow_mod(self, e: &Integer, m: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_powm(self.0, self.0, e.0, m.0);
+            ffi::gcry_mpi_powm(self.as_raw(), self.as_raw(), e.as_raw(), m.as_raw());
         }
         self
     }
 
     pub fn gcd(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_gcd(self.0, self.0, other.0);
+            ffi::gcry_mpi_gcd(self.as_raw(), self.as_raw(), other.as_raw());
         }
         self
     }
@@ -272,7 +289,7 @@ impl PartialEq<Integer> for u32 {
 
 impl PartialOrd<u32> for Integer {
     fn partial_cmp(&self, other: &u32) -> Option<Ordering> {
-        let result = unsafe { ffi::gcry_mpi_cmp_ui(self.0, (*other).into()) };
+        let result = unsafe { ffi::gcry_mpi_cmp_ui(self.as_raw(), (*other).into()) };
         match result {
             x if x < 0 => Some(Ordering::Less),
             x if x > 0 => Some(Ordering::Greater),
@@ -305,7 +322,7 @@ impl PartialOrd for Integer {
 }
 impl Ord for Integer {
     fn cmp(&self, other: &Integer) -> Ordering {
-        let result = unsafe { ffi::gcry_mpi_cmp(self.0, other.0) };
+        let result = unsafe { ffi::gcry_mpi_cmp(self.as_raw(), other.as_raw()) };
         match result {
             x if x < 0 => Ordering::Less,
             x if x > 0 => Ordering::Greater,
@@ -320,7 +337,7 @@ impl ops::Neg for Integer {
 
     fn neg(self) -> Integer {
         unsafe {
-            ffi::gcry_mpi_neg(self.0, self.0);
+            ffi::gcry_mpi_neg(self.as_raw(), self.as_raw());
         }
         self
     }
@@ -357,7 +374,7 @@ macro_rules! impl_binary_op {
 
             fn $method(self, other: &'a Integer) -> Integer {
                 unsafe {
-                    $body(self.0, other.0);
+                    $body(self.as_raw(), other.as_raw());
                 }
                 self
             }
@@ -377,7 +394,7 @@ impl ops::Shl<usize> for Integer {
 
     fn shl(self, other: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_lshift(self.0, self.0, other as c_uint);
+            ffi::gcry_mpi_lshift(self.as_raw(), self.as_raw(), other as c_uint);
         }
         self
     }
@@ -388,7 +405,7 @@ impl ops::Shr<usize> for Integer {
 
     fn shr(self, other: usize) -> Integer {
         unsafe {
-            ffi::gcry_mpi_rshift(self.0, self.0, other as c_uint);
+            ffi::gcry_mpi_rshift(self.as_raw(), self.as_raw(), other as c_uint);
         }
         self
     }
