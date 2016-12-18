@@ -96,13 +96,13 @@ fn try_build() -> bool {
         .current_dir(&build)
         .env("CC", compiler.path())
         .env("CFLAGS", &cflags)
-        .arg(src.join("configure"))
-        .args(&["--build", &host,
-                "--host", &target,
+        .arg(msys_compatible(src.join("configure")))
+        .args(&["--build", &gnu_target(&host),
+                "--host", &gnu_target(&target),
                 "--enable-static",
                 "--disable-shared",
                 "--disable-doc",
-                &format!("--with-libgpg-error-prefix={}", &gpgerror_root),
+                &format!("--with-libgpg-error-prefix={}", &msys_compatible(&gpgerror_root)),
                 &format!("--prefix={}", &dst)])) {
         return false;
     }
@@ -131,7 +131,7 @@ fn try_build() -> bool {
 fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
     let mut config = gcc::Config::new();
     for path in include_dirs.iter() {
-        config.include(path);
+        config.include(msys_compatible(path));
     }
     config.flag("-Wno-deprecated-declarations").file("shim.c").compile("libgcrypt_shim.a");
 }
@@ -225,4 +225,20 @@ fn output(cmd: &mut Command) -> Option<String> {
         }
     }
     None
+}
+
+fn msys_compatible<P: AsRef<Path>>(path: P) -> String {
+    let path = path.as_ref().to_str().unwrap();
+    if !cfg!(windows) {
+        return path.to_string();
+    }
+    path.replace("C:\\", "/c/").replace("\\", "/")
+}
+
+fn gnu_target(target: &str) -> String {
+    match target {
+        "i686-pc-windows-gnu" => "i686-w64-mingw32".to_string(),
+        "x86_64-pc-windows-gnu" => "x86_64-w64-mingw32".to_string(),
+        s => s.to_string(),
+    }
 }
