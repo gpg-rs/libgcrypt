@@ -344,6 +344,9 @@ extern {
     pub fn gcry_xstrdup(a: *const c_char) -> *mut c_char;
     pub fn gcry_free(a: *mut c_void);
     pub fn gcry_is_secure(a: *const c_void) -> c_int;
+
+    #[cfg(feature = "v1_6_0")]
+    fn _gcry_mpi_get_const(n: c_int) -> gcry_mpi_t;
 }
 
 #[inline]
@@ -405,4 +408,29 @@ pub unsafe fn gcry_md_get_asnoid(a: c_int, b: *mut c_void, n: &mut size_t) -> gc
 #[inline]
 pub unsafe fn gcry_mac_reset(h: gcry_mac_hd_t) -> gcry_error_t {
     gcry_mac_ctl(h, GCRYCTL_RESET, ptr::null_mut(), 0)
+}
+
+#[inline]
+pub unsafe fn gcrympi_const_one() -> gcry_mpi_t {
+    _gcry_mpi_get_const(1)
+}
+
+#[inline]
+pub unsafe fn gcrympi_const_two() -> gcry_mpi_t {
+    _gcry_mpi_get_const(2)
+}
+
+#[inline]
+pub unsafe fn gcrympi_const_three() -> gcry_mpi_t {
+    _gcry_mpi_get_const(3)
+}
+
+#[inline]
+pub unsafe fn gcrympi_const_four() -> gcry_mpi_t {
+    _gcry_mpi_get_const(4)
+}
+
+#[inline]
+pub unsafe fn gcrympi_const_eight() -> gcry_mpi_t {
+    _gcry_mpi_get_const(8)
 }

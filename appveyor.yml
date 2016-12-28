@@ -4,6 +4,10 @@ environment:
       MSYS_BITS: 64
     - TARGET: i686-pc-windows-gnu
       MSYS_BITS: 32
+branches:
+  except:
+    - gh-pages
+skip_tags: true
 install:
   - curl -sSf -o rustup-init.exe https://win.rustup.rs/
   - rustup-init.exe -y --default-host %TARGET%
@@ -11,9 +15,7 @@ install:
   - if defined MSYS_BITS set PATH=C:\msys64\mingw%MSYS_BITS%\bin;C:\msys64\usr\bin;%PATH%
   - rustc -V
   - cargo -V
-
 build: false
-
 test_script:
   - cargo build --verbose --verbose --target %TARGET%
   - cargo test --verbose --target %TARGET%

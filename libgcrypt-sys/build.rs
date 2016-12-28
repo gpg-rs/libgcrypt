@@ -239,10 +239,10 @@ fn msys_compatible<P: AsRef<Path>>(path: P) -> String {
     path.replace("C:\\", "/c/").replace("\\", "/")
 }
 
-fn gnu_target(target: &str) -> String {
+fn gnu_target(target: &str) -> &str {
     match target {
-        "i686-pc-windows-gnu" => "i686-w64-mingw32".to_string(),
-        "x86_64-pc-windows-gnu" => "x86_64-w64-mingw32".to_string(),
-        s => s.to_string(),
+        "i686-pc-windows-gnu" => "i686-w64-mingw32",
+        "x86_64-pc-windows-gnu" => "x86_64-w64-mingw32",
+        s => s,
     }
 }
