@@ -19,7 +19,7 @@ cfg-if = "0.1"
 libc = "0.2"
 bitflags = "0.7"
 lazy_static = "0.2"
-gpg-error = { git = "https://github.com/johnschug/rust-gpg-error.git" }
+gpg-error = "0.2"
 
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"
