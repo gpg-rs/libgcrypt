@@ -15,6 +15,7 @@
 //! Calling any function in the wrapper that requires initialization before `init` or `init_fips`
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
+#![deny(missing_debug_implementations)]
 #![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero))]
 extern crate core;
 #[macro_use]
@@ -65,6 +66,7 @@ lazy_static! {
     static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
 }
 
+#[derive(Debug)]
 pub struct Initializer(());
 
 impl Initializer {

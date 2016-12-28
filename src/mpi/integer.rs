@@ -23,7 +23,6 @@ pub enum Format {
     Hex = ffi::GCRYMPI_FMT_HEX as usize,
 }
 
-#[derive(Debug)]
 pub struct Integer(NonZero<ffi::gcry_mpi_t>);
 
 impl Drop for Integer {
@@ -300,10 +299,14 @@ impl Integer {
     }
 }
 
-impl fmt::Display for Integer {
+impl fmt::Debug for Integer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let buffer = try!(self.to_bytes(Format::Hex).or(Err(fmt::Error)));
-        f.write_str(str::from_utf8(&buffer[..(buffer.len() - 1)]).unwrap())
+        let mut s = f.debug_struct("Integer");
+        s.field("raw", &self.0);
+        if let Ok(bytes) = self.to_bytes(Format::Hex) {
+            s.field("hex", &str::from_utf8(&bytes[..(bytes.len() - 1)]).unwrap());
+        }
+        s.finish()
     }
 }
 

@@ -157,12 +157,18 @@ impl FromStr for SExpression {
     }
 }
 
-impl fmt::Display for SExpression {
+impl fmt::Debug for SExpression {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some((_, result)) = self.to_bytes(Format::Advanced).split_last() {
-            try!(f.write_str(&String::from_utf8_lossy(result)));
+        use std::ascii;
+        use std::fmt::Write;
+
+        try!(write!(f, "SExpression(\""));
+        for b in self.to_bytes(Format::Advanced)
+            .into_iter()
+            .flat_map(|b| ascii::escape_default(b)) {
+            try!(f.write_char(b as char));
         }
-        Ok(())
+        write!(f, "\")")
     }
 }
 
@@ -176,6 +182,7 @@ impl<'a> IntoIterator for &'a SExpression {
     }
 }
 
+#[derive(Debug)]
 pub struct Elements<'a> {
     sexp: &'a SExpression,
     first: c_int,
@@ -230,4 +237,3 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
         }
     }
 }
-impl<'a> ExactSizeIterator for Elements<'a> {}

@@ -16,7 +16,7 @@ use sexp::SExpression;
 #[cfg(feature = "v1_6_0")]
 use super::{Integer, Point};
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct Curve {
     name: &'static CStr,
     nbits: usize,
@@ -48,6 +48,7 @@ impl Curve {
     }
 }
 
+#[derive(Debug)]
 pub struct Curves<'a> {
     key: Option<&'a SExpression>,
     idx: c_int,
@@ -103,6 +104,7 @@ impl<'a> Iterator for Curves<'a> {
 }
 
 #[cfg(feature = "v1_6_0")]
+#[derive(Debug)]
 pub struct Context(NonZero<ffi::gcry_ctx_t>);
 
 #[cfg(feature = "v1_6_0")]

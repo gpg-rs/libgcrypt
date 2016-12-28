@@ -9,6 +9,7 @@ use ffi;
 use {Error, NonZero, Result};
 use rand::Level;
 
+#[derive(Debug)]
 pub struct Buffer {
     buf: NonZero<*mut u8>,
     len: usize,
