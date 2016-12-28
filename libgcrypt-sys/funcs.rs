@@ -411,26 +411,31 @@ pub unsafe fn gcry_mac_reset(h: gcry_mac_hd_t) -> gcry_error_t {
 }
 
 #[inline]
+#[cfg(feature = "v1_6_0")]
 pub unsafe fn gcrympi_const_one() -> gcry_mpi_t {
     _gcry_mpi_get_const(1)
 }
 
 #[inline]
+#[cfg(feature = "v1_6_0")]
 pub unsafe fn gcrympi_const_two() -> gcry_mpi_t {
     _gcry_mpi_get_const(2)
 }
 
 #[inline]
+#[cfg(feature = "v1_6_0")]
 pub unsafe fn gcrympi_const_three() -> gcry_mpi_t {
     _gcry_mpi_get_const(3)
 }
 
 #[inline]
+#[cfg(feature = "v1_6_0")]
 pub unsafe fn gcrympi_const_four() -> gcry_mpi_t {
     _gcry_mpi_get_const(4)
 }
 
 #[inline]
+#[cfg(feature = "v1_6_0")]
 pub unsafe fn gcrympi_const_eight() -> gcry_mpi_t {
     _gcry_mpi_get_const(8)
 }
