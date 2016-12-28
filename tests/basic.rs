@@ -1150,7 +1150,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
                     000102030405060708090A0B0C0D0E0F#))"),
              ];
 
-    let nbits = skey.num_bits();
+    let nbits = pkey::num_bits(&skey);
     for spec in specs {
         if Some(spec.0) != nbits {
             continue;
@@ -1287,8 +1287,8 @@ fn check_pkey(algo: pkey::Algorithm, flags: usize, skey: &SExpression,
         check_pkey_crypt(algo, skey, pkey);
     }
     if (flags & FLAG_GRIP) == FLAG_GRIP {
-        assert_eq!(grip, skey.key_grip().unwrap());
-        assert_eq!(grip, pkey.key_grip().unwrap());
+        assert_eq!(grip, pkey::key_grip(&skey).unwrap());
+        assert_eq!(grip, pkey::key_grip(&pkey).unwrap());
     }
 }
 

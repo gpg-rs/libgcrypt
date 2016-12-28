@@ -56,42 +56,40 @@ impl Algorithm {
     }
 }
 
-impl SExpression {
-    #[inline]
-    pub fn num_bits(&self) -> Option<usize> {
-        unsafe {
-            let result = ffi::gcry_pk_get_nbits(self.as_raw());
-            if result != 0 {
-                Some(result as usize)
-            } else {
-                None
-            }
+#[inline]
+pub fn num_bits(key: &SExpression) -> Option<usize> {
+    unsafe {
+        let result = ffi::gcry_pk_get_nbits(key.as_raw());
+        if result != 0 {
+            Some(result as usize)
+        } else {
+            None
         }
     }
+}
 
-    #[inline]
-    pub fn key_grip(&self) -> Option<[u8; 20]> {
-        unsafe {
-            let mut buffer = [0u8; 20];
-            if !ffi::gcry_pk_get_keygrip(self.as_raw(), buffer.as_mut_ptr()).is_null() {
-                Some(buffer)
-            } else {
-                None
-            }
+#[inline]
+pub fn key_grip(key: &SExpression) -> Option<[u8; 20]> {
+    unsafe {
+        let mut buffer = [0u8; 20];
+        if !ffi::gcry_pk_get_keygrip(key.as_raw(), buffer.as_mut_ptr()).is_null() {
+            Some(buffer)
+        } else {
+            None
         }
     }
+}
 
-    #[inline]
-    pub fn curve(&self) -> Option<Curve> {
-        Curves::from(self).next()
-    }
+#[inline]
+pub fn curve(key: &SExpression) -> Option<Curve> {
+    Curves::from(key).next()
+}
 
-    #[inline]
-    pub fn test_key(&self) -> Result<()> {
-        unsafe {
-            return_err!(ffi::gcry_pk_testkey(self.as_raw()));
-            Ok(())
-        }
+#[inline]
+pub fn test_key(key: &SExpression) -> Result<()> {
+    unsafe {
+        return_err!(ffi::gcry_pk_testkey(key.as_raw()));
+        Ok(())
     }
 }
 
