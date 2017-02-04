@@ -6,7 +6,12 @@ repository = "https://github.com/johnschug/rust-gcrypt"
 documentation = "https://johnschug.github.io/rust-gcrypt"
 license = "LGPL-2.1"
 keywords = ["crypto", "cryptography"]
+categories = ["cryptography", "api-bindings", "external-ffi-bindings"]
 description = "Libgcrypt bindings for Rust"
+
+[badges]
+travis-ci = { repository = "johnschug/rust-gcrypt" }
+appveyor = { repository = "johnschug/rust-gcrypt" }
 
 [features]
 default = ["v1_7_0"]
