@@ -22,19 +22,35 @@ cfg_if! {
 }
 
 fn main() {
-    let mut include_dirs = Vec::new();
-    if let Ok(lib) = env::var("LIBGCRYPT_LIB") {
-        if let Some(include) = env::var_os("LIBGCRYPT_INCLUDE_DIR") {
-            include_dirs.push(include);
-        }
-
+    let path = env::var_os("LIBGCRYPT_LIB_PATH");
+    let libs = env::var_os("LIBGCRYPT_LIBS");
+    let include = env::var_os("LIBGCRYPT_INCLUDE_DIR");
+    if path.is_some() || libs.is_some() || include.is_some() {
         let mode = match env::var_os("LIBGCRYPT_STATIC") {
             Some(_) => "static",
             _ => "dylib",
         };
 
-        build_shim(&include_dirs);
-        println!("cargo:rustc-link-lib={0}={1}", mode, lib);
+        for path in path.iter().flat_map(env::split_paths) {
+            println!("cargo:rustc-link-search=native={}", path.display());
+        }
+
+        let mut includes = Vec::new();
+        for include in include.iter().flat_map(env::split_paths) {
+            includes.push(include)
+        }
+        build_shim(&includes);
+
+        match libs {
+            Some(libs) => {
+                for lib in env::split_paths(&libs) {
+                    println!("cargo:rustc-link-lib={0}={1}", mode, lib.display());
+                }
+            }
+            None => {
+                println!("cargo:rustc-link-lib={0}={1}", mode, "gcrypt");
+            }
+        }
         return;
     } else if let Some(path) = env::var_os("LIBGCRYPT_CONFIG") {
         if !try_config(path) {
@@ -56,22 +72,26 @@ fn main() {
 fn try_config<S: AsRef<OsStr>>(path: S) -> bool {
     let path = path.as_ref();
 
-    if let Some(output) = output(Command::new(&path).arg("--version")) {
+    let mut cmd = path.to_owned();
+    cmd.push(" --version");
+    if let Some(output) = output(Command::new("sh").arg("-c").arg(cmd)) {
         test_version(&output);
     } else {
         return false;
     }
 
-    if let Some(output) = output(Command::new(&path).arg("--prefix")) {
+    let mut cmd = path.to_owned();
+    cmd.push(" --prefix");
+    if let Some(output) = output(Command::new("sh").arg("-c").arg(cmd)) {
         println!("cargo:root={}", output);
     }
 
-    let mut command = Command::new(&path);
-    command.args(&["--cflags", "--libs"]);
-    if let Some(output) = output(&mut command) {
-        let mut include_dirs = Vec::new();
-        parse_config_output(&output, &mut include_dirs);
-        build_shim(&include_dirs);
+    let mut cmd = path.to_owned();
+    cmd.push(" --cflags --libs");
+    if let Some(output) = output(Command::new("sh").arg("-c").arg(cmd)) {
+        let mut includes = Vec::new();
+        parse_config_output(&output, &mut includes);
+        build_shim(&includes);
         return true;
     }
     false
@@ -79,8 +99,8 @@ fn try_config<S: AsRef<OsStr>>(path: S) -> bool {
 
 fn try_build() -> bool {
     let src = PathBuf::from(env::current_dir().unwrap()).join("libgcrypt");
-    let dst = env::var("OUT_DIR").unwrap();
-    let build = PathBuf::from(&dst).join("build");
+    let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    let build = dst.clone().join("build");
     let target = env::var("TARGET").unwrap();
     let host = env::var("HOST").unwrap();
     let gpgerror_root = env::var("DEP_GPG_ERROR_ROOT").unwrap();
@@ -124,10 +144,9 @@ fn try_build() -> bool {
        PathBuf::from(dst.clone()).join("include"),
     ]);
 
-    println!("cargo:rustc-link-search=native={}",
-             PathBuf::from(dst.clone()).join("lib").display());
+    println!("cargo:rustc-link-search=native={}", dst.clone().join("lib").display());
     println!("cargo:rustc-link-lib=static=gcrypt");
-    println!("cargo:root={}", &dst);
+    println!("cargo:root={}", dst.display());
     true
 }
 
@@ -232,11 +251,21 @@ fn output(cmd: &mut Command) -> Option<String> {
 }
 
 fn msys_compatible<P: AsRef<Path>>(path: P) -> String {
-    let path = path.as_ref().to_str().unwrap();
-    if !cfg!(windows) {
-        return path.to_string();
+    use std::ascii::AsciiExt;
+
+    let mut path = path.as_ref().to_string_lossy().into_owned();
+    if !cfg!(windows) || Path::new(&path).is_relative() {
+        return path;
     }
-    path.replace("C:\\", "/c/").replace("\\", "/")
+
+    if let Some(b'a'...b'z') = path.as_bytes().first().map(u8::to_ascii_lowercase) {
+        if path.split_at(1).1.starts_with(":\\") {
+            (&mut path[..1]).make_ascii_lowercase();
+            path.remove(1);
+            path.insert(0, '/');
+        }
+    }
+    path.replace("\\", "/")
 }
 
 fn gnu_target(target: &str) -> &str {
