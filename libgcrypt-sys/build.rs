@@ -59,7 +59,7 @@ fn main() {
         return;
     }
 
-    if !Path::new("libgcrypt/.git").exists() {
+    if !Path::new("libgcrypt/autogen.sh").exists() {
         run(Command::new("git").args(&["submodule", "update", "--init"]));
     }
 
