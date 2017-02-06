@@ -1,12 +1,12 @@
 [package]
 name = "gcrypt"
-version = "0.5.1"
+version = "0.5.2"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 repository = "https://github.com/johnschug/rust-gcrypt"
 documentation = "https://johnschug.github.io/rust-gcrypt"
 license = "LGPL-2.1"
 keywords = ["crypto", "cryptography"]
-categories = ["cryptography", "api-bindings", "external-ffi-bindings"]
+categories = ["cryptography", "api-bindings"]
 description = "Libgcrypt bindings for Rust"
 
 [badges]
@@ -28,7 +28,7 @@ gpg-error = "0.2"
 
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"
-version = "0.5.1"
+version = "0.5.2"
 default-features = false
 features = ["shim"]
 
