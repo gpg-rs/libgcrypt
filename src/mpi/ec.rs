@@ -58,10 +58,7 @@ impl<'a> Curves<'a> {
     #[inline]
     pub fn all() -> Curves<'static> {
         let _ = ::get_token();
-        Curves {
-            key: None,
-            idx: 0,
-        }
+        Curves { key: None, idx: 0 }
     }
 
     #[inline]
@@ -88,13 +85,15 @@ impl<'a> Iterator for Curves<'a> {
         let key = self.key.as_ref().map_or(ptr::null_mut(), |k| k.as_raw());
         unsafe {
             let mut nbits = 0;
-            ffi::gcry_pk_get_curve(key, self.idx, &mut nbits).as_ref().map(|x| {
-                self.idx = self.idx.checked_add(1).unwrap_or(-1);
-                Curve {
-                    name: CStr::from_ptr(x),
-                    nbits: nbits as usize,
-                }
-            })
+            ffi::gcry_pk_get_curve(key, self.idx, &mut nbits)
+                .as_ref()
+                .map(|x| {
+                    self.idx = self.idx.checked_add(1).unwrap_or(-1);
+                    Curve {
+                        name: CStr::from_ptr(x),
+                        nbits: nbits as usize,
+                    }
+                })
         }
     }
 
@@ -127,7 +126,11 @@ impl Context {
     pub fn from_curve(curve: Curve) -> Result<Context> {
         let mut raw = ptr::null_mut();
         unsafe {
-            return_err!(ffi::gcry_mpi_ec_new(&mut raw, ptr::null_mut(), curve.name.as_ptr()));
+            return_err!(ffi::gcry_mpi_ec_new(
+                &mut raw,
+                ptr::null_mut(),
+                curve.name.as_ptr()
+            ));
             Ok(Context::from_raw(raw))
         }
     }
@@ -156,7 +159,11 @@ impl Context {
     pub fn set_integer<S: Into<String>>(&mut self, name: S, x: &Integer) -> Result<()> {
         let name = try!(CString::new(name.into()));
         unsafe {
-            return_err!(ffi::gcry_mpi_ec_set_mpi(name.as_ptr(), x.as_raw(), self.as_raw()));
+            return_err!(ffi::gcry_mpi_ec_set_mpi(
+                name.as_ptr(),
+                x.as_raw(),
+                self.as_raw()
+            ));
             Ok(())
         }
     }
@@ -175,7 +182,11 @@ impl Context {
     pub fn set_point<S: Into<String>>(&mut self, name: S, p: &Point) -> Result<()> {
         let name = try!(CString::new(name.into()));
         unsafe {
-            return_err!(ffi::gcry_mpi_ec_set_point(name.as_ptr(), p.as_raw(), self.as_raw()));
+            return_err!(ffi::gcry_mpi_ec_set_point(
+                name.as_ptr(),
+                p.as_raw(),
+                self.as_raw()
+            ));
             Ok(())
         }
     }

@@ -12,7 +12,9 @@ use std::process::{self, Child, Command, Stdio};
 use std::str;
 
 cfg_if! {
-    if #[cfg(feature = "v1_7_0")] {
+    if #[cfg(feature = "v1_8_0")] {
+        const TARGET_VERSION: &'static str = "1.8.0";
+    } else if #[cfg(feature = "v1_7_0")] {
         const TARGET_VERSION: &'static str = "1.7.0";
     } else if #[cfg(feature = "v1_6_0")] {
         const TARGET_VERSION: &'static str = "1.6.0";
@@ -42,11 +44,9 @@ fn main() {
         build_shim(&includes);
 
         match libs {
-            Some(libs) => {
-                for lib in env::split_paths(&libs) {
-                    println!("cargo:rustc-link-lib={0}={1}", mode, lib.display());
-                }
-            }
+            Some(libs) => for lib in env::split_paths(&libs) {
+                println!("cargo:rustc-link-lib={0}={1}", mode, lib.display());
+            },
             None => {
                 println!("cargo:rustc-link-lib={0}={1}", mode, "gcrypt");
             }
@@ -116,23 +116,35 @@ fn try_build() -> bool {
     if !run(Command::new("sh").current_dir(&src).arg("autogen.sh")) {
         return false;
     }
-    if !run(Command::new("sh")
-        .current_dir(&build)
-        .env("CC", compiler.path())
-        .env("CFLAGS", &cflags)
-        .arg(msys_compatible(src.join("configure")))
-        .args(&["--build", &gnu_target(&host),
-                "--host", &gnu_target(&target),
+    if !run(
+        Command::new("sh")
+            .current_dir(&build)
+            .env("CC", compiler.path())
+            .env("CFLAGS", &cflags)
+            .arg(msys_compatible(src.join("configure")))
+            .args(&[
+                "--build",
+                &gnu_target(&host),
+                "--host",
+                &gnu_target(&target),
                 "--enable-static",
                 "--disable-shared",
                 "--disable-doc",
-                &format!("--with-libgpg-error-prefix={}", &msys_compatible(&gpgerror_root)),
-                &format!("--prefix={}", msys_compatible(&dst))])) {
+                &format!(
+                    "--with-libgpg-error-prefix={}",
+                    &msys_compatible(&gpgerror_root)
+                ),
+                &format!("--prefix={}", msys_compatible(&dst)),
+            ]),
+    ) {
         return false;
     }
-    if !run(Command::new("make")
-        .current_dir(&build)
-        .arg("-j").arg(env::var("NUM_JOBS").unwrap())) {
+    if !run(
+        Command::new("make")
+            .current_dir(&build)
+            .arg("-j")
+            .arg(env::var("NUM_JOBS").unwrap()),
+    ) {
         return false;
     }
     if !run(Command::new("make").current_dir(&build).arg("install")) {
@@ -140,11 +152,14 @@ fn try_build() -> bool {
     }
 
     build_shim(&[
-       PathBuf::from(gpgerror_root).join("include"),
-       PathBuf::from(dst.clone()).join("include"),
+        PathBuf::from(gpgerror_root).join("include"),
+        PathBuf::from(dst.clone()).join("include"),
     ]);
 
-    println!("cargo:rustc-link-search=native={}", dst.clone().join("lib").display());
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dst.clone().join("lib").display()
+    );
     println!("cargo:rustc-link-lib=static=gcrypt");
     println!("cargo:root={}", dst.display());
     true
@@ -156,7 +171,10 @@ fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
     for path in include_dirs.iter() {
         config.include(path);
     }
-    config.flag("-Wno-deprecated-declarations").file("shim.c").compile("libgcrypt_shim.a");
+    config
+        .flag("-Wno-deprecated-declarations")
+        .file("shim.c")
+        .compile("libgcrypt_shim.a");
 }
 
 #[cfg(not(feature = "shim"))]
@@ -164,25 +182,31 @@ fn build_shim<P: AsRef<Path>>(_include_dirs: &[P]) {}
 
 fn test_version(version: &str) {
     let version = version.trim();
-    for (x, y) in TARGET_VERSION.split('.').zip(version.split('.').chain(iter::repeat("0"))) {
+    for (x, y) in TARGET_VERSION
+        .split('.')
+        .zip(version.split('.').chain(iter::repeat("0")))
+    {
         let (x, y): (u8, u8) = (x.parse().unwrap(), y.parse().unwrap());
         match x.cmp(&y) {
             Ordering::Less => break,
-            Ordering::Greater => {
-                panic!("gcrypt version `{}` is less than requested `{}`",
-                       version, TARGET_VERSION)
-            }
+            Ordering::Greater => panic!(
+                "gcrypt version `{}` is less than requested `{}`",
+                version,
+                TARGET_VERSION
+            ),
             _ => (),
         }
     }
 }
 
 fn parse_config_output(output: &str, include_dirs: &mut Vec<OsString>) {
-    let parts = output.split(|c: char| c.is_whitespace()).filter_map(|p| if p.len() > 2 {
-        Some(p.split_at(2))
-    } else {
-        None
-    });
+    let parts = output.split(|c: char| c.is_whitespace()).filter_map(
+        |p| if p.len() > 2 {
+            Some(p.split_at(2))
+        } else {
+            None
+        },
+    );
 
     for (flag, val) in parts {
         match flag {
@@ -215,14 +239,16 @@ fn spawn(cmd: &mut Command) -> Option<Child> {
 fn run(cmd: &mut Command) -> bool {
     if let Some(mut child) = spawn(cmd) {
         match child.wait() {
-            Ok(status) => {
-                if !status.success() {
-                    println!("command did not execute successfully: {:?}\n\
-                       expected success, got: {}", cmd, status);
-                } else {
-                    return true;
-                }
-            }
+            Ok(status) => if !status.success() {
+                println!(
+                    "command did not execute successfully: {:?}\n\
+                     expected success, got: {}",
+                    cmd,
+                    status
+                );
+            } else {
+                return true;
+            },
             Err(e) => {
                 println!("failed to execute command: {:?}\nerror: {}", cmd, e);
             }
@@ -234,14 +260,16 @@ fn run(cmd: &mut Command) -> bool {
 fn output(cmd: &mut Command) -> Option<String> {
     if let Some(child) = spawn(cmd.stdout(Stdio::piped())) {
         match child.wait_with_output() {
-            Ok(output) => {
-                if !output.status.success() {
-                    println!("command did not execute successfully: {:?}\n\
-                       expected success, got: {}", cmd, output.status);
-                } else {
-                    return String::from_utf8(output.stdout).ok();
-                }
-            }
+            Ok(output) => if !output.status.success() {
+                println!(
+                    "command did not execute successfully: {:?}\n\
+                     expected success, got: {}",
+                    cmd,
+                    output.status
+                );
+            } else {
+                return String::from_utf8(output.stdout).ok();
+            },
             Err(e) => {
                 println!("failed to execute command: {:?}\nerror: {}", cmd, e);
             }

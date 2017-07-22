@@ -19,13 +19,22 @@ impl Drop for Point {
 
 impl Clone for Point {
     #[inline]
+    #[cfg(feature = "v1_8_0")]
+    fn clone(&self) -> Point {
+        unsafe { Point::from_raw(ffi::gcry_mpi_point_copy(self.as_raw())) }
+    }
+
+    #[inline]
+    #[cfg(not(feature = "v1_8_0"))]
     fn clone(&self) -> Point {
         let (x, y, z) = self.to_coords();
         unsafe {
-            Point::from_raw(ffi::gcry_mpi_point_snatch_set(ptr::null_mut(),
-                                                           x.into_raw(),
-                                                           y.into_raw(),
-                                                           z.into_raw()))
+            Point::from_raw(ffi::gcry_mpi_point_snatch_set(
+                ptr::null_mut(),
+                x.into_raw(),
+                y.into_raw(),
+                z.into_raw(),
+            ))
         }
     }
 
@@ -99,9 +108,14 @@ impl Point {
     pub fn get_affine(&self, ctx: &Context) -> Option<(Integer, Integer)> {
         let x = Integer::zero();
         let y = Integer::zero();
-        let result =
-            unsafe { ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.as_raw(), ctx.as_raw()) };
-        if result == 0 { Some((x, y)) } else { None }
+        let result = unsafe {
+            ffi::gcry_mpi_ec_get_affine(x.as_raw(), y.as_raw(), self.as_raw(), ctx.as_raw())
+        };
+        if result == 0 {
+            Some((x, y))
+        } else {
+            None
+        }
     }
 
     #[inline]

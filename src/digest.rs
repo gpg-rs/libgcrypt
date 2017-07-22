@@ -25,21 +25,29 @@ ffi_enum_wrapper! {
         Sha224        = ffi::GCRY_MD_SHA224,
         Md4           = ffi::GCRY_MD_MD4,
         Crc32         = ffi::GCRY_MD_CRC32,
-        Crc32Rfc1510 = ffi::GCRY_MD_CRC32_RFC1510,
-        Crc24Rfc2440 = ffi::GCRY_MD_CRC24_RFC2440,
+        Crc32Rfc1510  = ffi::GCRY_MD_CRC32_RFC1510,
+        Crc24Rfc2440  = ffi::GCRY_MD_CRC24_RFC2440,
         Whirlpool     = ffi::GCRY_MD_WHIRLPOOL,
         Tiger1        = ffi::GCRY_MD_TIGER1,
         Tiger2        = ffi::GCRY_MD_TIGER2,
         GostR3411_94  = ffi::GCRY_MD_GOSTR3411_94,
         Stribog256    = ffi::GCRY_MD_STRIBOG256,
         Stribog512    = ffi::GCRY_MD_STRIBOG512,
-        Gostr3411Cp  = ffi::GCRY_MD_GOSTR3411_CP,
+        Gostr3411Cp   = ffi::GCRY_MD_GOSTR3411_CP,
         Sha3_224      = ffi::GCRY_MD_SHA3_224,
         Sha3_256      = ffi::GCRY_MD_SHA3_256,
         Sha3_384      = ffi::GCRY_MD_SHA3_384,
         Sha3_512      = ffi::GCRY_MD_SHA3_512,
         Shake128      = ffi::GCRY_MD_SHAKE128,
         Shake256      = ffi::GCRY_MD_SHAKE256,
+        Blake2B512    = ffi::GCRY_MD_BLAKE2B_512,
+        Blake2B384    = ffi::GCRY_MD_BLAKE2B_384,
+        Blake2B256    = ffi::GCRY_MD_BLAKE2B_256,
+        Blake2B160    = ffi::GCRY_MD_BLAKE2B_160,
+        Blake2S256    = ffi::GCRY_MD_BLAKE2S_256,
+        Blake2S224    = ffi::GCRY_MD_BLAKE2S_224,
+        Blake2S160    = ffi::GCRY_MD_BLAKE2S_160,
+        Blake2S128    = ffi::GCRY_MD_BLAKE2S_128,
     }
 }
 
@@ -63,12 +71,17 @@ impl Algorithm {
 
     #[inline]
     pub fn name(&self) -> result::Result<&'static str, Option<Utf8Error>> {
-        self.name_raw().map_or(Err(None), |s| s.to_str().map_err(Some))
+        self.name_raw()
+            .map_or(Err(None), |s| s.to_str().map_err(Some))
     }
 
     #[inline]
     pub fn name_raw(&self) -> Option<&'static CStr> {
-        unsafe { ffi::gcry_md_algo_name(self.raw()).as_ref().map(|s| CStr::from_ptr(s)) }
+        unsafe {
+            ffi::gcry_md_algo_name(self.raw())
+                .as_ref()
+                .map(|s| CStr::from_ptr(s))
+        }
     }
 
     #[inline]
@@ -147,7 +160,11 @@ impl MessageDigest {
     pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
         let key = key.as_ref();
         unsafe {
-            return_err!(ffi::gcry_md_setkey(self.as_raw(), key.as_ptr() as *const _, key.len()));
+            return_err!(ffi::gcry_md_setkey(
+                self.as_raw(),
+                key.as_ptr() as *const _,
+                key.len()
+            ));
         }
         Ok(())
     }
@@ -215,9 +232,11 @@ pub fn hash(algo: Algorithm, src: &[u8], dst: &mut [u8]) {
     assert!(dst.len() >= algo.digest_len());
     let _ = ::get_token();
     unsafe {
-        ffi::gcry_md_hash_buffer(algo.raw(),
-                                 dst.as_mut_ptr() as *mut _,
-                                 src.as_ptr() as *const _,
-                                 src.len().into());
+        ffi::gcry_md_hash_buffer(
+            algo.raw(),
+            dst.as_mut_ptr() as *mut _,
+            src.as_ptr() as *const _,
+            src.len().into(),
+        );
     }
 }

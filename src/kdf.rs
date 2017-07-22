@@ -23,15 +23,17 @@ pub fn derive(algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Optio
     let _ = ::get_token();
     unsafe {
         let salt = salt.map_or((ptr::null(), 0), |s| (s.as_ptr(), s.len()));
-        return_err!(ffi::gcry_kdf_derive(pass.as_ptr() as *const _,
-                                         pass.len(),
-                                         algo.raw(),
-                                         subalgo as c_int,
-                                         salt.0 as *const _,
-                                         salt.1,
-                                         iter.into(),
-                                         key.len(),
-                                         key.as_mut_ptr() as *mut _));
+        return_err!(ffi::gcry_kdf_derive(
+            pass.as_ptr() as *const _,
+            pass.len(),
+            algo.raw(),
+            subalgo as c_int,
+            salt.0 as *const _,
+            salt.1,
+            iter.into(),
+            key.len(),
+            key.as_mut_ptr() as *mut _
+        ));
     }
     Ok(())
 }
@@ -40,53 +42,57 @@ pub fn derive(algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Optio
 pub fn s2k_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8])
     -> Result<()> {
     match (iter, salt.is_some()) {
-        (x, true) if x != 0 => {
-            derive(Algorithm::IteratedSaltedS2K,
-                   algo.raw() as i32,
-                   iter,
-                   pass,
-                   salt,
-                   key)
-        }
-        (_, true) => {
-            derive(Algorithm::SaltedS2K,
-                   algo.raw() as i32,
-                   iter,
-                   pass,
-                   salt,
-                   key)
-        }
-        _ => {
-            derive(Algorithm::SimpleS2K,
-                   algo.raw() as i32,
-                   iter,
-                   pass,
-                   salt,
-                   key)
-        }
+        (x, true) if x != 0 => derive(
+            Algorithm::IteratedSaltedS2K,
+            algo.raw() as i32,
+            iter,
+            pass,
+            salt,
+            key,
+        ),
+        (_, true) => derive(
+            Algorithm::SaltedS2K,
+            algo.raw() as i32,
+            iter,
+            pass,
+            salt,
+            key,
+        ),
+        _ => derive(
+            Algorithm::SimpleS2K,
+            algo.raw() as i32,
+            iter,
+            pass,
+            salt,
+            key,
+        ),
     }
 }
 
 #[inline]
 pub fn pbkdf1_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8])
     -> Result<()> {
-    derive(Algorithm::Pbkdf1,
-           algo.raw() as i32,
-           iter,
-           pass,
-           Some(salt),
-           key)
+    derive(
+        Algorithm::Pbkdf1,
+        algo.raw() as i32,
+        iter,
+        pass,
+        Some(salt),
+        key,
+    )
 }
 
 #[inline]
 pub fn pbkdf2_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8])
     -> Result<()> {
-    derive(Algorithm::Pbkdf2,
-           algo.raw() as i32,
-           iter,
-           pass,
-           Some(salt),
-           key)
+    derive(
+        Algorithm::Pbkdf2,
+        algo.raw() as i32,
+        iter,
+        pass,
+        Some(salt),
+        key,
+    )
 }
 
 #[inline]

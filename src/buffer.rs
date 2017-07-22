@@ -19,7 +19,7 @@ impl Drop for Buffer {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_free(*self.buf as *mut _);
+            ffi::gcry_free(self.buf.get() as *mut _);
         }
     }
 }
@@ -64,7 +64,7 @@ impl Buffer {
             try!(Buffer::new(self.len))
         };
         unsafe {
-            ptr::copy_nonoverlapping(*self.buf, *result.buf, self.len);
+            ptr::copy_nonoverlapping(self.buf.get(), result.buf.get(), self.len);
         }
         Ok(result)
     }
@@ -93,17 +93,17 @@ impl Buffer {
 
     #[inline]
     pub fn is_secure(&self) -> bool {
-        unsafe { ffi::gcry_is_secure(*self.buf as *const _) != 0 }
+        unsafe { ffi::gcry_is_secure(self.buf.get() as *const _) != 0 }
     }
 
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(*self.buf, self.len) }
+        unsafe { slice::from_raw_parts(self.buf.get(), self.len) }
     }
 
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
-        unsafe { slice::from_raw_parts_mut(*self.buf, self.len) }
+        unsafe { slice::from_raw_parts_mut(self.buf.get(), self.len) }
     }
 
     #[inline]

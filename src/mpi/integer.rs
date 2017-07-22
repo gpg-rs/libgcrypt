@@ -92,11 +92,13 @@ impl Integer {
             } else {
                 return Err(Error::from_code(error::GPG_ERR_INV_ARG));
             };
-            return_err!(ffi::gcry_mpi_scan(&mut raw,
-                                           format as ffi::gcry_mpi_format,
-                                           bytes.as_ptr() as *const _,
-                                           len,
-                                           ptr::null_mut()));
+            return_err!(ffi::gcry_mpi_scan(
+                &mut raw,
+                format as ffi::gcry_mpi_format,
+                bytes.as_ptr() as *const _,
+                len,
+                ptr::null_mut()
+            ));
             Ok(Integer::from_raw(raw))
         }
     }
@@ -112,10 +114,12 @@ impl Integer {
         unsafe {
             let mut buffer = ptr::null_mut();
             let mut len = 0;
-            return_err!(ffi::gcry_mpi_aprint(format as ffi::gcry_mpi_format,
-                                             &mut buffer,
-                                             &mut len,
-                                             self.as_raw()));
+            return_err!(ffi::gcry_mpi_aprint(
+                format as ffi::gcry_mpi_format,
+                &mut buffer,
+                &mut len,
+                self.as_raw()
+            ));
             Ok(Buffer::from_raw(buffer as *mut u8, len))
         }
     }
@@ -124,11 +128,13 @@ impl Integer {
     pub fn len_encoded(&self, format: Format) -> Result<usize> {
         unsafe {
             let mut len = 0;
-            return_err!(ffi::gcry_mpi_print(format as ffi::gcry_mpi_format,
-                                            ptr::null_mut(),
-                                            0,
-                                            &mut len,
-                                            self.as_raw()));
+            return_err!(ffi::gcry_mpi_print(
+                format as ffi::gcry_mpi_format,
+                ptr::null_mut(),
+                0,
+                &mut len,
+                self.as_raw()
+            ));
             Ok(len)
         }
     }
@@ -137,11 +143,13 @@ impl Integer {
     pub fn encode(&self, format: Format, buf: &mut [u8]) -> Result<usize> {
         unsafe {
             let mut written = 0;
-            return_err!(ffi::gcry_mpi_print(format as ffi::gcry_mpi_format,
-                                            buf.as_mut_ptr() as *mut _,
-                                            buf.len(),
-                                            &mut written,
-                                            self.as_raw()));
+            return_err!(ffi::gcry_mpi_print(
+                format as ffi::gcry_mpi_format,
+                buf.as_mut_ptr() as *mut _,
+                buf.len(),
+                &mut written,
+                self.as_raw()
+            ));
             Ok(written)
         }
     }
@@ -216,17 +224,23 @@ impl Integer {
     #[inline]
     pub fn inv_mod(self, m: &Integer) -> Option<Integer> {
         let result = unsafe { ffi::gcry_mpi_invm(self.as_raw(), self.as_raw(), m.as_raw()) };
-        if result != 0 { Some(self) } else { None }
+        if result != 0 {
+            Some(self)
+        } else {
+            None
+        }
     }
 
     #[inline]
     pub fn div_floor(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_div(self.as_raw(),
-                              ptr::null_mut(),
-                              self.as_raw(),
-                              other.as_raw(),
-                              -1);
+            ffi::gcry_mpi_div(
+                self.as_raw(),
+                ptr::null_mut(),
+                self.as_raw(),
+                other.as_raw(),
+                -1,
+            );
         }
         self
     }
@@ -234,11 +248,13 @@ impl Integer {
     #[inline]
     pub fn mod_floor(self, other: &Integer) -> Integer {
         unsafe {
-            ffi::gcry_mpi_div(ptr::null_mut(),
-                              self.as_raw(),
-                              self.as_raw(),
-                              other.as_raw(),
-                              -1);
+            ffi::gcry_mpi_div(
+                ptr::null_mut(),
+                self.as_raw(),
+                self.as_raw(),
+                other.as_raw(),
+                -1,
+            );
         }
         self
     }
@@ -247,11 +263,13 @@ impl Integer {
     pub fn div_rem(self, other: &Integer) -> (Integer, Integer) {
         let rem = Integer::zero();
         unsafe {
-            ffi::gcry_mpi_div(self.as_raw(),
-                              rem.as_raw(),
-                              self.as_raw(),
-                              other.as_raw(),
-                              0);
+            ffi::gcry_mpi_div(
+                self.as_raw(),
+                rem.as_raw(),
+                self.as_raw(),
+                other.as_raw(),
+                0,
+            );
         }
         (self, rem)
     }
@@ -260,11 +278,13 @@ impl Integer {
     pub fn div_mod_floor(self, other: &Integer) -> (Integer, Integer) {
         let rem = Integer::zero();
         unsafe {
-            ffi::gcry_mpi_div(self.as_raw(),
-                              rem.as_raw(),
-                              self.as_raw(),
-                              other.as_raw(),
-                              -1);
+            ffi::gcry_mpi_div(
+                self.as_raw(),
+                rem.as_raw(),
+                self.as_raw(),
+                other.as_raw(),
+                -1,
+            );
         }
         (self, rem)
     }
@@ -431,9 +451,11 @@ macro_rules! impl_binary_op {
 impl_binary_op!(Add, add, |x, y| ffi::gcry_mpi_add(x, x, y));
 impl_binary_op!(Sub, sub, |x, y| ffi::gcry_mpi_sub(x, x, y));
 impl_binary_op!(Mul, mul, |x, y| ffi::gcry_mpi_mul(x, x, y));
-impl_binary_op!(Div,
-                div,
-                |x, y| ffi::gcry_mpi_div(x, ptr::null_mut(), x, y, 0));
+impl_binary_op!(
+    Div,
+    div,
+    |x, y| ffi::gcry_mpi_div(x, ptr::null_mut(), x, y, 0)
+);
 impl_binary_op!(Rem, rem, |x, y| ffi::gcry_mpi_mod(x, x, y));
 
 impl ops::Shl<usize> for Integer {

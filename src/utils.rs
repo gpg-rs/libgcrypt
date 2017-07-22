@@ -12,12 +12,12 @@ macro_rules! impl_wrapper {
 
         #[inline]
         pub fn as_raw(&self) -> $T {
-            *self.0
+            self.0.get()
         }
 
         #[inline]
         pub fn into_raw(self) -> $T {
-            let raw = *self.0;
+            let raw = self.0.get();
             ::std::mem::forget(self);
             raw
         }
@@ -90,13 +90,9 @@ cfg_if! {
             pub unsafe fn new(inner: T) -> NonZero<T> {
                 NonZero(inner)
             }
-        }
 
-        impl<T> ::std::ops::Deref for NonZero<T> {
-            type Target = T;
-
-            fn deref(&self) -> &T {
-                &self.0
+            pub fn get(self) -> T {
+                self.0
             }
         }
     }

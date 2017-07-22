@@ -1,6 +1,6 @@
 [package]
 name = "gcrypt"
-version = "0.5.2"
+version = "0.5.3"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 repository = "https://github.com/johnschug/rust-gcrypt"
 documentation = "https://johnschug.github.io/rust-gcrypt"
@@ -14,9 +14,10 @@ travis-ci = { repository = "johnschug/rust-gcrypt" }
 appveyor = { repository = "johnschug/rust-gcrypt" }
 
 [features]
-default = ["v1_7_0"]
+default = ["v1_8_0"]
 v1_6_0 = ["libgcrypt-sys/v1_6_0"]
 v1_7_0 = ["v1_6_0", "libgcrypt-sys/v1_7_0"]
+v1_8_0 = ["v1_7_0", "libgcrypt-sys/v1_8_0"]
 nightly = []
 
 [dependencies]
@@ -28,7 +29,7 @@ gpg-error = "0.2"
 
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"
-version = "0.5.2"
+version = "0.5.3"
 default-features = false
 features = ["shim"]
 

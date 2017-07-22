@@ -32,7 +32,7 @@ extern crate libgcrypt_sys as ffi;
 use std::ffi::{CStr, CString};
 use std::ptr;
 use std::sync::Mutex;
-use std::sync::atomic::{ATOMIC_BOOL_INIT, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 
 use libc::c_int;
 
@@ -52,7 +52,9 @@ pub mod mac;
 pub mod kdf;
 
 cfg_if! {
-    if #[cfg(feature = "v1_7_0")] {
+    if #[cfg(feature = "v1_8_0")] {
+        const TARGET_VERSION: &'static str = "1.8.0\0";
+    } else if #[cfg(feature = "v1_7_0")] {
         const TARGET_VERSION: &'static str = "1.7.0\0";
     } else if #[cfg(feature = "v1_6_0")] {
         const TARGET_VERSION: &'static str = "1.6.0\0";
@@ -187,10 +189,14 @@ pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
     if !is_init_finished() {
         unsafe {
             if cfg!(unix) {
-                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
-                                  ffi::gcry_threads_pthread_shim());
+                ffi::gcry_control(
+                    ffi::GCRYCTL_SET_THREAD_CBS,
+                    ffi::gcry_threads_pthread_shim(),
+                );
             }
-            assert!(!ffi::gcry_check_version(TARGET_VERSION.as_ptr() as *const _).is_null());
+            assert!(!ffi::gcry_check_version(
+                TARGET_VERSION.as_ptr() as *const _
+            ).is_null());
         }
         f(&mut Initializer(()));
         unsafe {
@@ -210,11 +216,15 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
     if !is_init_finished() {
         unsafe {
             if cfg!(unix) {
-                ffi::gcry_control(ffi::GCRYCTL_SET_THREAD_CBS,
-                                  ffi::gcry_threads_pthread_shim());
+                ffi::gcry_control(
+                    ffi::GCRYCTL_SET_THREAD_CBS,
+                    ffi::gcry_threads_pthread_shim(),
+                );
             }
             ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
-            assert!(!ffi::gcry_check_version(TARGET_VERSION.as_ptr() as *const _).is_null());
+            assert!(!ffi::gcry_check_version(
+                TARGET_VERSION.as_ptr() as *const _
+            ).is_null());
         }
         f(&mut Initializer(()));
         unsafe {

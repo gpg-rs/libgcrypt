@@ -39,10 +39,12 @@ impl SExpression {
         let _ = ::get_token();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
-            return_err!(ffi::gcry_sexp_sscan(&mut result,
-                                             ptr::null_mut(),
-                                             bytes.as_ptr() as *const _,
-                                             bytes.len()));
+            return_err!(ffi::gcry_sexp_sscan(
+                &mut result,
+                ptr::null_mut(),
+                bytes.as_ptr() as *const _,
+                bytes.len()
+            ));
             Ok(SExpression::from_raw(result))
         }
     }
@@ -63,10 +65,12 @@ impl SExpression {
     #[inline]
     pub fn encode(&self, format: Format, buf: &mut [u8]) -> Option<usize> {
         unsafe {
-            match ffi::gcry_sexp_sprint(self.as_raw(),
-                                        format as c_int,
-                                        buf.as_mut_ptr() as *mut _,
-                                        buf.len()) {
+            match ffi::gcry_sexp_sprint(
+                self.as_raw(),
+                format as c_int,
+                buf.as_mut_ptr() as *mut _,
+                buf.len(),
+            ) {
                 0 => None,
                 x => Some(x),
             }
@@ -86,12 +90,20 @@ impl SExpression {
 
     #[inline]
     pub fn head(&self) -> Option<SExpression> {
-        unsafe { ffi::gcry_sexp_car(self.as_raw()).as_mut().map(|x| SExpression::from_raw(x)) }
+        unsafe {
+            ffi::gcry_sexp_car(self.as_raw())
+                .as_mut()
+                .map(|x| SExpression::from_raw(x))
+        }
     }
 
     #[inline]
     pub fn tail(&self) -> Option<SExpression> {
-        unsafe { ffi::gcry_sexp_cdr(self.as_raw()).as_mut().map(|x| SExpression::from_raw(x)) }
+        unsafe {
+            ffi::gcry_sexp_cdr(self.as_raw())
+                .as_mut()
+                .map(|x| SExpression::from_raw(x))
+        }
     }
 
     #[inline]
@@ -135,7 +147,8 @@ impl SExpression {
 
     #[inline]
     pub fn get_str(&self, idx: u32) -> result::Result<&str, Option<Utf8Error>> {
-        self.get_bytes(idx).map_or(Err(None), |s| str::from_utf8(s).map_err(Some))
+        self.get_bytes(idx)
+            .map_or(Err(None), |s| str::from_utf8(s).map_err(Some))
     }
 
     #[inline]
@@ -165,7 +178,8 @@ impl fmt::Debug for SExpression {
         try!(write!(f, "SExpression(\""));
         for b in self.to_bytes(Format::Advanced)
             .into_iter()
-            .flat_map(|b| ascii::escape_default(b)) {
+            .flat_map(|b| ascii::escape_default(b))
+        {
             try!(f.write_char(b as char));
         }
         write!(f, "\")")
