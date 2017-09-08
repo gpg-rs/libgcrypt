@@ -44,7 +44,7 @@ options can be found in the libgcrypt [documentation][upstream docs].
 An example:
 
 ```rust
-let token = gcrypt::init(|mut x| {
+let token = gcrypt::init(|x| {
     x.disable_secmem();
 });
 ```
@@ -54,5 +54,5 @@ or `init_fips` are called will cause the wrapper to attempt to initialize the
 library with a default configuration.
 
 [upstream]: https://www.gnu.org/software/libgcrypt/
-[docs]: http://johnschug.github.io/rust-gcrypt
+[docs]: https://docs.rs/gcrypt
 [upstream docs]: https://www.gnupg.org/documentation/manuals/gcrypt/Initializing-the-library.html#Initializing-the-library

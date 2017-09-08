@@ -10,8 +10,8 @@ matrix:
           packages:
             - libgcrypt11-dev
       script:
-        - travis-cargo build -- --no-default-features
-        - travis-cargo test -- --no-default-features
+        - cargo build --no-default-features
+        - cargo test --no-default-features
     - os: linux
       rust: stable
       before_install:
@@ -29,13 +29,12 @@ matrix:
         - make -j2 >/dev/null
         - make install >/dev/null
         - popd
+        - export PATH=$HOME/.local/bin:$PATH
         - export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
       script:
-        - travis-cargo build -- --verbose --verbose
-        - travis-cargo test
-        - travis-cargo doc
-      after_success:
-        - travis-cargo doc-upload
+        - cargo build --verbose --verbose
+        - cargo test
+        - cargo doc
     - os: linux
       rust: nightly
       before_install:
@@ -53,21 +52,16 @@ matrix:
         - make -j2 >/dev/null
         - make install >/dev/null
         - popd
+        - export PATH=$HOME/.local/bin:$PATH
         - export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
       script:
-        - travis-cargo build -- --verbose --verbose
-        - travis-cargo test
-        - travis-cargo doc
-before_script:
-  - pip install 'travis-cargo<0.2' --user && export PATH=$HOME/.local/bin:$PATH
+        - cargo build --features nightly --verbose --verbose
+        - cargo test --features nightly
+        - cargo doc --features nightly
 env:
   global:
     - AUTOMAKE_VERSION=1.14.1
     - GETTEXT_VERSION=0.19.3
-    - TRAVIS_CARGO_NIGHTLY_FEATURE=nightly
-    - secure: IFIHfCQwQSBrQKF2BUZl3E6wpKM/XN09dH+pulmVqvxjIngVGndgtORY5ARBFOB5YzY2S10wKVeXwg66T19h2dnCQQSq03e5wohOziYdC+8mKLJRjhj+Tv0WkN9SKXieFYTq6bhSOUC/PfEMn32/wr5cNyLJQlJlf/pl1JsREG3jO84/0nci+4BCU1mDTlv7zYl42rMZwQMgQ7fIQgJvk7jbkgQLZWmmNhJQLFmKHDkwE14JA3H6smC4Pxj/RBkcuPwY5/0dw0vxpXIEBUHljkKhM6/1cJSsAOOdTUVmBCQTZZ2Nj8sL2wyJgzEdND9m/8eK1f5QNwMcbX+EtaHgo7cho/y18YzLGIdnCyBMiAbDZnMkCPI473OzW9ApgmjxNeXj36hFA+dSX0PuIv0uvGnWk+3ZPnWyJnPRzaOOarXkVsBx/n0EMtx4TlWFfvk9+fWj0rtoM5JWz8r9COi3/80JW948B14QzmO1G825QURnuppmoClVeNtzOFF7T0r1DISVznGespH+hqZ4WBNH4AzOfBX61UGI27GHYbn+dlgWseNxYI7LONBQEXzKSjIHJuCAyGLhbXhTtkK1faNE7EJ45Wgwwg5/1T/7dMnoOAmJ2QZ8hUsgbnVx4ogQ6wSn5CSO5AgYpd06uK+SUoxwXpIGut08IZQYSqI74FkGAmU=
 branches:
   except:
     - /^v[0-9]/
-notifications:
-    email: false
