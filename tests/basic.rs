@@ -9,7 +9,7 @@ use gcrypt::sexp::{self, SExpression};
 use gcrypt::pkey::{self, Algorithm as KeyAlgorithm};
 
 fn setup() -> Token {
-    gcrypt::init(|mut x| { x.disable_secmem().enable_quick_random(); })
+    gcrypt::init(|x| { x.disable_secmem().enable_quick_random(); })
 }
 
 #[test]
@@ -2019,7 +2019,9 @@ const FLAG_CRYPT: usize = 1;
 const FLAG_SIGN: usize = 2;
 const FLAG_GRIP: usize = 4;
 
-fn verify_signature(pkey: &SExpression, hash: &SExpression, bad_hash: &SExpression, sig: &SExpression) {
+fn verify_signature(
+    pkey: &SExpression, hash: &SExpression, bad_hash: &SExpression, sig: &SExpression
+) {
     assert_eq!(pkey::verify(pkey, hash, sig), Ok(()));
     assert_eq!(
         pkey::verify(pkey, bad_hash, sig)
@@ -2398,7 +2400,9 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
     }
 }
 
-fn check_pkey(algo: pkey::Algorithm, flags: usize, skey: &SExpression, pkey: &SExpression, grip: &[u8]) {
+fn check_pkey(
+    algo: pkey::Algorithm, flags: usize, skey: &SExpression, pkey: &SExpression, grip: &[u8]
+) {
     if (flags & FLAG_SIGN) == FLAG_SIGN {
         if algo == KeyAlgorithm::Ecdsa {
             check_pkey_sign_ecdsa(skey, pkey);

@@ -121,12 +121,12 @@ impl Mode {
 }
 
 bitflags! {
-    pub flags Flags: ffi::gcry_cipher_flags {
-        const FLAGS_NONE       = 0,
-        const FLAG_SECURE      = ffi::GCRY_CIPHER_SECURE,
-        const FLAG_ENABLE_SYNC = ffi::GCRY_CIPHER_ENABLE_SYNC,
-        const FLAG_CBC_CTS     = ffi::GCRY_CIPHER_CBC_CTS,
-        const FLAG_CBC_MAC     = ffi::GCRY_CIPHER_CBC_MAC,
+    pub struct Flags: ffi::gcry_cipher_flags {
+        const FLAGS_NONE       = 0;
+        const FLAG_SECURE      = ffi::GCRY_CIPHER_SECURE;
+        const FLAG_ENABLE_SYNC = ffi::GCRY_CIPHER_ENABLE_SYNC;
+        const FLAG_CBC_CTS     = ffi::GCRY_CIPHER_CBC_CTS;
+        const FLAG_CBC_MAC     = ffi::GCRY_CIPHER_CBC_MAC;
     }
 }
 

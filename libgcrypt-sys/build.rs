@@ -104,7 +104,7 @@ fn try_build() -> bool {
     let target = env::var("TARGET").unwrap();
     let host = env::var("HOST").unwrap();
     let gpgerror_root = env::var("DEP_GPG_ERROR_ROOT").unwrap();
-    let compiler = gcc::Config::new().get_compiler();
+    let compiler = gcc::Build::new().get_compiler();
     let cflags = compiler.args().iter().fold(OsString::new(), |mut c, a| {
         c.push(a);
         c.push(" ");
@@ -167,7 +167,7 @@ fn try_build() -> bool {
 
 #[cfg(feature = "shim")]
 fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
-    let mut config = gcc::Config::new();
+    let mut config = gcc::Build::new();
     for path in include_dirs.iter() {
         config.include(path);
     }
@@ -200,13 +200,13 @@ fn test_version(version: &str) {
 }
 
 fn parse_config_output(output: &str, include_dirs: &mut Vec<OsString>) {
-    let parts = output.split(|c: char| c.is_whitespace()).filter_map(
-        |p| if p.len() > 2 {
+    let parts = output
+        .split(|c: char| c.is_whitespace())
+        .filter_map(|p| if p.len() > 2 {
             Some(p.split_at(2))
         } else {
             None
-        },
-    );
+        });
 
     for (flag, val) in parts {
         match flag {

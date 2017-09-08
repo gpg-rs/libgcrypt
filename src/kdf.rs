@@ -18,8 +18,9 @@ ffi_enum_wrapper! {
 }
 
 #[inline]
-pub fn derive(algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8])
-    -> Result<()> {
+pub fn derive(
+    algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8]
+) -> Result<()> {
     let _ = ::get_token();
     unsafe {
         let salt = salt.map_or((ptr::null(), 0), |s| (s.as_ptr(), s.len()));
@@ -39,8 +40,9 @@ pub fn derive(algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Optio
 }
 
 #[inline]
-pub fn s2k_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8])
-    -> Result<()> {
+pub fn s2k_derive(
+    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8]
+) -> Result<()> {
     match (iter, salt.is_some()) {
         (x, true) if x != 0 => derive(
             Algorithm::IteratedSaltedS2K,
@@ -70,8 +72,9 @@ pub fn s2k_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[
 }
 
 #[inline]
-pub fn pbkdf1_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8])
-    -> Result<()> {
+pub fn pbkdf1_derive(
+    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8]
+) -> Result<()> {
     derive(
         Algorithm::Pbkdf1,
         algo.raw() as i32,
@@ -83,8 +86,9 @@ pub fn pbkdf1_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8],
 }
 
 #[inline]
-pub fn pbkdf2_derive(algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8])
-    -> Result<()> {
+pub fn pbkdf2_derive(
+    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8]
+) -> Result<()> {
     derive(
         Algorithm::Pbkdf2,
         algo.raw() as i32,

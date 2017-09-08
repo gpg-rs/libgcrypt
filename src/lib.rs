@@ -17,17 +17,17 @@
 //! configuration.
 #![deny(missing_debug_implementations)]
 #![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero))]
-extern crate core;
-#[macro_use]
-extern crate cfg_if;
-extern crate libc;
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
+extern crate cfg_if;
+extern crate core;
+#[macro_use]
 extern crate lazy_static;
+extern crate libc;
+extern crate libgcrypt_sys as ffi;
 #[macro_use]
 pub extern crate gpg_error as error;
-extern crate libgcrypt_sys as ffi;
 
 use std::ffi::{CStr, CString};
 use std::ptr;
@@ -237,7 +237,7 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
 
 #[inline]
 pub fn get_token() -> Token {
-    init(|mut x| { x.disable_secmem(); })
+    init(|x| { x.disable_secmem(); })
 }
 
 type NonZero<T> = utils::NonZero<T>;

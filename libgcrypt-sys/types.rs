@@ -1,6 +1,3 @@
-#![allow(non_upper_case_globals)]
-extern crate libgpg_error_sys;
-
 use libc::{c_char, c_int, c_uint, c_void, size_t};
 
 pub use libgpg_error_sys::gpg_error_t as gcry_error_t;

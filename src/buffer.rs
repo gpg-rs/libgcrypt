@@ -27,9 +27,8 @@ impl Drop for Buffer {
 impl Buffer {
     #[inline]
     pub unsafe fn from_raw(buf: *mut u8, len: usize) -> Buffer {
-        debug_assert!(!buf.is_null());
         Buffer {
-            buf: NonZero::new(buf),
+            buf: NonZero::new(buf).unwrap(),
             len: len,
         }
     }

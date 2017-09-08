@@ -91,11 +91,11 @@ impl Algorithm {
 }
 
 bitflags! {
-    pub flags Flags: ffi::gcry_md_flags {
-        const FLAGS_NONE   = 0,
-        const FLAG_SECURE  = ffi::GCRY_MD_FLAG_SECURE,
-        const FLAG_HMAC    = ffi::GCRY_MD_FLAG_HMAC,
-        const FLAG_BUGEMU1 = ffi::GCRY_MD_FLAG_BUGEMU1,
+    pub struct Flags: ffi::gcry_md_flags {
+        const FLAGS_NONE   = 0;
+        const FLAG_SECURE  = ffi::GCRY_MD_FLAG_SECURE;
+        const FLAG_HMAC    = ffi::GCRY_MD_FLAG_HMAC;
+        const FLAG_BUGEMU1 = ffi::GCRY_MD_FLAG_BUGEMU1;
     }
 }
 

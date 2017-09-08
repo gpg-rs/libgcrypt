@@ -95,9 +95,9 @@ impl Algorithm {
 }
 
 bitflags! {
-    pub flags Flags: ffi::gcry_mac_flags {
-        const FLAGS_NONE  = 0,
-        const FLAG_SECURE = ffi::GCRY_MAC_FLAG_SECURE,
+    pub struct Flags: ffi::gcry_mac_flags {
+        const FLAGS_NONE  = 0;
+        const FLAG_SECURE = ffi::GCRY_MAC_FLAG_SECURE;
     }
 }
 
