@@ -1,10 +1,11 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::ptr;
 use std::result;
 use std::str::Utf8Error;
 
 use ffi;
 use libc::c_int;
+use cstr_argument::CStrArgument;
 
 use Result;
 use sexp::SExpression;
@@ -27,9 +28,9 @@ ffi_enum_wrapper! {
 
 impl Algorithm {
     #[inline]
-    pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
-        let name = try_opt!(CString::new(name.into()).ok());
-        let result = unsafe { ffi::gcry_pk_map_name(name.as_ptr()) };
+    pub fn from_name<S: CStrArgument>(name: S) -> Option<Algorithm> {
+        let name = name.into_cstr();
+        let result = unsafe { ffi::gcry_pk_map_name(name.as_ref().as_ptr()) };
         if result != 0 {
             unsafe { Some(Algorithm::from_raw(result)) }
         } else {

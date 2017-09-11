@@ -175,12 +175,12 @@ impl fmt::Debug for SExpression {
         use std::ascii;
         use std::fmt::Write;
 
-        try!(write!(f, "SExpression(\""));
+        write!(f, "SExpression(\"")?;
         for b in self.to_bytes(Format::Advanced)
             .into_iter()
             .flat_map(|b| ascii::escape_default(b))
         {
-            try!(f.write_char(b as char));
+            f.write_char(b as char)?;
         }
         write!(f, "\")")
     }
@@ -210,8 +210,7 @@ impl<'a> Iterator for Elements<'a> {
     fn next(&mut self) -> Option<Self::Item> {
         if self.first < self.last {
             let elem = unsafe {
-                let raw = ffi::gcry_sexp_nth(self.sexp.as_raw(), self.first);
-                SExpression::from_raw(raw)
+                SExpression::from_raw(ffi::gcry_sexp_nth(self.sexp.as_raw(), self.first))
             };
             self.first += 1;
             Some(elem)
@@ -243,8 +242,9 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
         if self.first < self.last {
             self.last -= 1;
             unsafe {
-                let raw = ffi::gcry_sexp_nth(self.sexp.as_raw(), self.last);
-                Some(SExpression::from_raw(raw))
+                Some(SExpression::from_raw(
+                    ffi::gcry_sexp_nth(self.sexp.as_raw(), self.last),
+                ))
             }
         } else {
             None

@@ -1,5 +1,4 @@
 use std::ops;
-use std::ptr;
 use std::slice;
 use std::result;
 use std::str;
@@ -57,14 +56,12 @@ impl Buffer {
 
     #[inline]
     pub fn try_clone(&self) -> Result<Buffer> {
-        let result = if self.is_secure() {
-            try!(Buffer::new_secure(self.len))
+        let mut result = if self.is_secure() {
+            Buffer::new_secure(self.len)?
         } else {
-            try!(Buffer::new(self.len))
+            Buffer::new(self.len)?
         };
-        unsafe {
-            ptr::copy_nonoverlapping(self.buf.get(), result.buf.get(), self.len);
-        }
+        result.copy_from_slice(self);
         Ok(result)
     }
 

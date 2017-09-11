@@ -2,14 +2,17 @@ extern crate gcrypt;
 
 use gcrypt::Token;
 use gcrypt::error::{self, ErrorCode};
-use gcrypt::cipher::{self, Algorithm as CipherAlgorithm, Cipher, Mode as CipherMode};
-use gcrypt::digest::{self, Algorithm as DigestAlgorithm, MessageDigest};
+use gcrypt::cipher::{self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags,
+                     Mode as CipherMode};
+use gcrypt::digest::{self, Algorithm as DigestAlgorithm, Flags as DigestFlags, MessageDigest};
 use gcrypt::kdf;
 use gcrypt::sexp::{self, SExpression};
 use gcrypt::pkey::{self, Algorithm as KeyAlgorithm};
 
 fn setup() -> Token {
-    gcrypt::init(|x| { x.disable_secmem().enable_quick_random(); })
+    gcrypt::init(|x| {
+        x.disable_secmem().enable_quick_random();
+    })
 }
 
 #[test]
@@ -85,14 +88,14 @@ fn test_block_ciphers() {
             continue;
         }
 
-        check_cipher(algo, CipherMode::Ecb, cipher::FLAGS_NONE);
-        check_cipher(algo, CipherMode::Cfb, cipher::FLAGS_NONE);
-        check_cipher(algo, CipherMode::Ofb, cipher::FLAGS_NONE);
-        check_cipher(algo, CipherMode::Cbc, cipher::FLAGS_NONE);
-        check_cipher(algo, CipherMode::Cbc, cipher::FLAG_CBC_CTS);
-        check_cipher(algo, CipherMode::Ctr, cipher::FLAGS_NONE);
+        check_cipher(algo, CipherMode::Ecb, CipherFlags::NONE);
+        check_cipher(algo, CipherMode::Cfb, CipherFlags::NONE);
+        check_cipher(algo, CipherMode::Ofb, CipherFlags::NONE);
+        check_cipher(algo, CipherMode::Cbc, CipherFlags::NONE);
+        check_cipher(algo, CipherMode::Cbc, CipherFlags::CBC_CTS);
+        check_cipher(algo, CipherMode::Ctr, CipherFlags::NONE);
         if algo.block_len() == 16 && token.check_version("1.6.0") {
-            check_cipher(algo, CipherMode::Gcm, cipher::FLAGS_NONE);
+            check_cipher(algo, CipherMode::Gcm, CipherFlags::NONE);
         }
     }
 }
@@ -112,7 +115,7 @@ fn test_stream_ciphers() {
             continue;
         }
 
-        check_cipher(algo, CipherMode::Stream, cipher::FLAGS_NONE);
+        check_cipher(algo, CipherMode::Stream, CipherFlags::NONE);
     }
 }
 
@@ -989,7 +992,7 @@ fn test_digests() {
 }
 
 fn check_hmac(algo: DigestAlgorithm, data: &[u8], key: &[u8], expected: &[u8]) {
-    let mut hmac = MessageDigest::with_flags(algo, digest::FLAG_HMAC).unwrap();
+    let mut hmac = MessageDigest::with_flags(algo, DigestFlags::HMAC).unwrap();
     hmac.set_key(key).unwrap();
     hmac.update(data);
     assert_eq!(Some(expected), hmac.get_only_digest());

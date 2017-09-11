@@ -7,7 +7,7 @@
 //! An example:
 //!
 //! ```rust
-//! let token = gcrypt::init(|mut x| {
+//! let token = gcrypt::init(|x| {
 //!     x.disable_secmem();
 //! });
 //! ```
@@ -22,6 +22,7 @@ extern crate bitflags;
 #[macro_use]
 extern crate cfg_if;
 extern crate core;
+extern crate cstr_argument;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;
@@ -29,11 +30,12 @@ extern crate libgcrypt_sys as ffi;
 #[macro_use]
 pub extern crate gpg_error as error;
 
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::ptr;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 
+use cstr_argument::CStrArgument;
 use libc::c_int;
 
 pub use error::{Error, Result};
@@ -73,12 +75,9 @@ pub struct Initializer(());
 
 impl Initializer {
     #[inline]
-    pub fn check_version<S: Into<String>>(&mut self, version: S) -> bool {
-        let version = match CString::new(version.into()) {
-            Ok(v) => v,
-            Err(..) => return false,
-        };
-        unsafe { !ffi::gcry_check_version(version.as_ptr()).is_null() }
+    pub fn check_version<S: CStrArgument>(&mut self, version: S) -> bool {
+        let version = version.into_cstr();
+        unsafe { !ffi::gcry_check_version(version.as_ref().as_ptr()).is_null() }
     }
 
     #[inline]
@@ -124,12 +123,9 @@ impl Token {
     }
 
     #[inline]
-    pub fn check_version<S: Into<String>>(&self, version: S) -> bool {
-        let version = match CString::new(version.into()) {
-            Ok(v) => v,
-            Err(..) => return false,
-        };
-        unsafe { !ffi::gcry_check_version(version.as_ptr()).is_null() }
+    pub fn check_version<S: CStrArgument>(&self, version: S) -> bool {
+        let version = version.into_cstr();
+        unsafe { !ffi::gcry_check_version(version.as_ref().as_ptr()).is_null() }
     }
 
     #[inline]
@@ -237,7 +233,9 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
 
 #[inline]
 pub fn get_token() -> Token {
-    init(|x| { x.disable_secmem(); })
+    init(|x| {
+        x.disable_secmem();
+    })
 }
 
 type NonZero<T> = utils::NonZero<T>;

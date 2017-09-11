@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::ptr;
 use std::result;
 use std::str::Utf8Error;
@@ -7,6 +7,7 @@ use ffi;
 use libc::c_int;
 
 use {NonZero, Result};
+use cstr_argument::CStrArgument;
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -47,9 +48,9 @@ ffi_enum_wrapper! {
 
 impl Algorithm {
     #[inline]
-    pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
-        let name = try_opt!(CString::new(name.into()).ok());
-        let result = unsafe { ffi::gcry_cipher_map_name(name.as_ptr()) };
+    pub fn from_name<S: CStrArgument>(name: S) -> Option<Algorithm> {
+        let name = name.into_cstr();
+        let result = unsafe { ffi::gcry_cipher_map_name(name.as_ref().as_ptr()) };
         if result != 0 {
             unsafe { Some(Algorithm::from_raw(result)) }
         } else {
@@ -109,9 +110,9 @@ ffi_enum_wrapper! {
 
 impl Mode {
     #[inline]
-    pub fn from_oid<S: Into<String>>(name: S) -> Option<Mode> {
-        let name = try_opt!(CString::new(name.into()).ok());
-        let result = unsafe { ffi::gcry_cipher_mode_from_oid(name.as_ptr()) };
+    pub fn from_oid<S: CStrArgument>(name: S) -> Option<Mode> {
+        let name = name.into_cstr();
+        let result = unsafe { ffi::gcry_cipher_mode_from_oid(name.as_ref().as_ptr()) };
         if result != 0 {
             unsafe { Some(Mode::from_raw(result)) }
         } else {
@@ -122,11 +123,11 @@ impl Mode {
 
 bitflags! {
     pub struct Flags: ffi::gcry_cipher_flags {
-        const FLAGS_NONE       = 0;
-        const FLAG_SECURE      = ffi::GCRY_CIPHER_SECURE;
-        const FLAG_ENABLE_SYNC = ffi::GCRY_CIPHER_ENABLE_SYNC;
-        const FLAG_CBC_CTS     = ffi::GCRY_CIPHER_CBC_CTS;
-        const FLAG_CBC_MAC     = ffi::GCRY_CIPHER_CBC_MAC;
+        const NONE       = 0;
+        const SECURE      = ffi::GCRY_CIPHER_SECURE;
+        const ENABLE_SYNC = ffi::GCRY_CIPHER_ENABLE_SYNC;
+        const CBC_CTS     = ffi::GCRY_CIPHER_CBC_CTS;
+        const CBC_MAC     = ffi::GCRY_CIPHER_CBC_MAC;
     }
 }
 
@@ -147,7 +148,7 @@ impl Cipher {
 
     #[inline]
     pub fn new(algo: Algorithm, mode: Mode) -> Result<Cipher> {
-        Cipher::with_flags(algo, mode, FLAGS_NONE)
+        Cipher::with_flags(algo, mode, Flags::NONE)
     }
 
     #[inline]

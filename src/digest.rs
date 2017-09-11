@@ -1,4 +1,4 @@
-use std::ffi::{CStr, CString};
+use std::ffi::CStr;
 use std::io::{self, Write};
 use std::ptr;
 use std::result;
@@ -6,6 +6,7 @@ use std::slice;
 use std::str::Utf8Error;
 
 use ffi;
+use cstr_argument::CStrArgument;
 use libc::c_int;
 
 use {NonZero, Result};
@@ -53,9 +54,9 @@ ffi_enum_wrapper! {
 
 impl Algorithm {
     #[inline]
-    pub fn from_name<S: Into<String>>(name: S) -> Option<Algorithm> {
-        let name = try_opt!(CString::new(name.into()).ok());
-        let result = unsafe { ffi::gcry_md_map_name(name.as_ptr()) };
+    pub fn from_name<S: CStrArgument>(name: S) -> Option<Algorithm> {
+        let name = name.into_cstr();
+        let result = unsafe { ffi::gcry_md_map_name(name.as_ref().as_ptr()) };
         if result != 0 {
             unsafe { Some(Algorithm::from_raw(result)) }
         } else {
@@ -92,10 +93,10 @@ impl Algorithm {
 
 bitflags! {
     pub struct Flags: ffi::gcry_md_flags {
-        const FLAGS_NONE   = 0;
-        const FLAG_SECURE  = ffi::GCRY_MD_FLAG_SECURE;
-        const FLAG_HMAC    = ffi::GCRY_MD_FLAG_HMAC;
-        const FLAG_BUGEMU1 = ffi::GCRY_MD_FLAG_BUGEMU1;
+        const NONE   = 0;
+        const SECURE  = ffi::GCRY_MD_FLAG_SECURE;
+        const HMAC    = ffi::GCRY_MD_FLAG_HMAC;
+        const BUGEMU1 = ffi::GCRY_MD_FLAG_BUGEMU1;
     }
 }
 
@@ -116,7 +117,7 @@ impl MessageDigest {
 
     #[inline]
     pub fn new(algo: Algorithm) -> Result<MessageDigest> {
-        MessageDigest::with_flags(algo, FLAGS_NONE)
+        MessageDigest::with_flags(algo, Flags::NONE)
     }
 
     #[inline]

@@ -1,5 +1,4 @@
 use std::cmp::Ordering;
-use std::ffi::CString;
 use std::fmt;
 use std::ops;
 use std::ptr;
@@ -7,6 +6,7 @@ use std::str;
 
 use ffi;
 use libc::c_uint;
+use cstr_argument::CStrArgument;
 
 use {Error, NonZero, Result};
 use error;
@@ -84,7 +84,7 @@ impl Integer {
         let bytes = bytes.as_ref();
         let _ = ::get_token();
         unsafe {
-            let mut raw: ffi::gcry_mpi_t = ptr::null_mut();
+            let mut raw = ptr::null_mut();
             let len = if format != Format::Hex {
                 bytes.len()
             } else if bytes.contains(&0) {
@@ -104,9 +104,9 @@ impl Integer {
     }
 
     #[inline]
-    pub fn from_str<S: Into<String>>(s: S) -> Result<Integer> {
-        let s = try!(CString::new(s.into()));
-        Integer::from_bytes(Format::Hex, s.as_bytes_with_nul())
+    pub fn from_str<S: CStrArgument>(s: S) -> Result<Integer> {
+        let s = s.into_cstr();
+        Integer::from_bytes(Format::Hex, s.as_ref().to_bytes_with_nul())
     }
 
     #[inline]
@@ -359,11 +359,7 @@ impl PartialOrd<u32> for Integer {
 impl PartialOrd<Integer> for u32 {
     #[inline]
     fn partial_cmp(&self, other: &Integer) -> Option<Ordering> {
-        match other.partial_cmp(self) {
-            Some(Ordering::Less) => Some(Ordering::Greater),
-            Some(Ordering::Greater) => Some(Ordering::Less),
-            _ => Some(Ordering::Equal),
-        }
+        other.partial_cmp(self).map(Ordering::reverse)
     }
 }
 

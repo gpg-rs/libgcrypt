@@ -1,6 +1,4 @@
 use std::ffi::CStr;
-#[cfg(feature = "v1_6_0")]
-use std::ffi::CString;
 use std::ptr;
 use std::result;
 use std::str::{self, Utf8Error};
@@ -8,13 +6,8 @@ use std::str::{self, Utf8Error};
 use ffi;
 use libc::c_int;
 
-#[cfg(feature = "v1_6_0")]
-use {NonZero, Result};
 use pkey::Algorithm;
 use sexp::SExpression;
-
-#[cfg(feature = "v1_6_0")]
-use super::{Integer, Point};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Curve {
@@ -104,90 +97,95 @@ impl<'a> Iterator for Curves<'a> {
     }
 }
 
-#[cfg(feature = "v1_6_0")]
-#[derive(Debug)]
-pub struct Context(NonZero<ffi::gcry_ctx_t>);
+cfg_if! {
+    if #[cfg(feature = "v1_6_0")] {
+        use cstr_argument::CStrArgument;
+        use {NonZero, Result};
+        use super::{Integer, Point};
 
-#[cfg(feature = "v1_6_0")]
-impl Drop for Context {
-    #[inline]
-    fn drop(&mut self) {
-        unsafe {
-            ffi::gcry_ctx_release(self.as_raw());
+        #[derive(Debug)]
+        pub struct Context(NonZero<ffi::gcry_ctx_t>);
+
+        impl Drop for Context {
+            #[inline]
+            fn drop(&mut self) {
+                unsafe {
+                    ffi::gcry_ctx_release(self.as_raw());
+                }
+            }
         }
-    }
-}
 
-#[cfg(feature = "v1_6_0")]
-impl Context {
-    impl_wrapper!(Context: ffi::gcry_ctx_t);
+        impl Context {
+            impl_wrapper!(Context: ffi::gcry_ctx_t);
 
-    #[inline]
-    pub fn from_curve(curve: Curve) -> Result<Context> {
-        let mut raw = ptr::null_mut();
-        unsafe {
-            return_err!(ffi::gcry_mpi_ec_new(
-                &mut raw,
-                ptr::null_mut(),
-                curve.name.as_ptr()
-            ));
-            Ok(Context::from_raw(raw))
-        }
-    }
+            #[inline]
+            pub fn from_curve(curve: Curve) -> Result<Context> {
+                let mut raw = ptr::null_mut();
+                unsafe {
+                    return_err!(ffi::gcry_mpi_ec_new(
+                            &mut raw,
+                            ptr::null_mut(),
+                            curve.name.as_ptr()
+                            ));
+                    Ok(Context::from_raw(raw))
+                }
+            }
 
-    #[inline]
-    pub fn from_params(params: &SExpression, curve: Option<Curve>) -> Result<Context> {
-        let mut raw = ptr::null_mut();
-        unsafe {
-            let curve = curve.map_or(ptr::null(), |c| c.name.as_ptr());
-            return_err!(ffi::gcry_mpi_ec_new(&mut raw, params.as_raw(), curve));
-            Ok(Context::from_raw(raw))
-        }
-    }
+            #[inline]
+            pub fn from_params(params: &SExpression, curve: Option<Curve>) -> Result<Context> {
+                let mut raw = ptr::null_mut();
+                unsafe {
+                    let curve = curve.map_or(ptr::null(), |c| c.name.as_ptr());
+                    return_err!(ffi::gcry_mpi_ec_new(&mut raw, params.as_raw(), curve));
+                    Ok(Context::from_raw(raw))
+                }
+            }
 
-    #[inline]
-    pub fn get_integer<S: Into<String>>(&self, name: S) -> Option<Integer> {
-        let name = try_opt!(CString::new(name.into()).ok());
-        unsafe {
-            ffi::gcry_mpi_ec_get_mpi(name.as_ptr(), self.as_raw(), 1)
-                .as_mut()
-                .map(|x| Integer::from_raw(x))
-        }
-    }
+            #[inline]
+            pub fn get_integer<S: CStrArgument>(&self, name: S) -> Option<Integer> {
+                let name = name.into_cstr();
+                unsafe {
+                    ffi::gcry_mpi_ec_get_mpi(name.as_ref().as_ptr(), self.as_raw(), 1)
+                        .as_mut()
+                        .map(|x| Integer::from_raw(x))
+                }
+            }
 
-    #[inline]
-    pub fn set_integer<S: Into<String>>(&mut self, name: S, x: &Integer) -> Result<()> {
-        let name = try!(CString::new(name.into()));
-        unsafe {
-            return_err!(ffi::gcry_mpi_ec_set_mpi(
-                name.as_ptr(),
-                x.as_raw(),
-                self.as_raw()
-            ));
-            Ok(())
-        }
-    }
+            #[inline]
+            pub fn set_integer<S: CStrArgument>(&mut self, name: S, x: &Integer) -> Result<()> {
+                let name = name.into_cstr();
+                unsafe {
+                    return_err!(ffi::gcry_mpi_ec_set_mpi(
+                            name.as_ref().as_ptr(),
+                            x.as_raw(),
+                            self.as_raw()
+                            ));
+                    Ok(())
+                }
+            }
 
-    #[inline]
-    pub fn get_point<S: Into<String>>(&self, name: S) -> Option<Point> {
-        let name = try_opt!(CString::new(name.into()).ok());
-        unsafe {
-            ffi::gcry_mpi_ec_get_point(name.as_ptr(), self.as_raw(), 1)
-                .as_mut()
-                .map(|x| Point::from_raw(x))
-        }
-    }
+            #[inline]
+            pub fn get_point<S: CStrArgument>(&self, name: S) -> Option<Point> {
+                let name = name.into_cstr();
+                unsafe {
+                    ffi::gcry_mpi_ec_get_point(name.as_ref().as_ptr(), self.as_raw(), 1)
+                        .as_mut()
+                        .map(|x| Point::from_raw(x))
+                }
+            }
 
-    #[inline]
-    pub fn set_point<S: Into<String>>(&mut self, name: S, p: &Point) -> Result<()> {
-        let name = try!(CString::new(name.into()));
-        unsafe {
-            return_err!(ffi::gcry_mpi_ec_set_point(
-                name.as_ptr(),
-                p.as_raw(),
-                self.as_raw()
-            ));
-            Ok(())
+            #[inline]
+            pub fn set_point<S: CStrArgument>(&mut self, name: S, p: &Point) -> Result<()> {
+                let name = name.into_cstr();
+                unsafe {
+                    return_err!(ffi::gcry_mpi_ec_set_point(
+                            name.as_ref().as_ptr(),
+                            p.as_raw(),
+                            self.as_raw()
+                            ));
+                    Ok(())
+                }
+            }
         }
     }
 }
