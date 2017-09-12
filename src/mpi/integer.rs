@@ -188,7 +188,6 @@ impl Integer {
     }
 
     #[inline]
-    #[cfg(feature = "v1_6_0")]
     pub fn abs(self) -> Integer {
         unsafe {
             ffi::gcry_mpi_abs(self.as_raw());
@@ -388,7 +387,6 @@ impl Ord for Integer {
     }
 }
 
-#[cfg(feature = "v1_6_0")]
 impl ops::Neg for Integer {
     type Output = Integer;
 
@@ -401,7 +399,6 @@ impl ops::Neg for Integer {
     }
 }
 
-#[cfg(feature = "v1_6_0")]
 impl<'a> ops::Neg for &'a Integer {
     type Output = Integer;
 

@@ -1,30 +1,19 @@
-#[macro_use]
-extern crate cfg_if;
+extern crate semver;
 extern crate gcc;
 
-use std::cmp::Ordering;
 use std::env;
 use std::ffi::{OsStr, OsString};
 use std::fs;
-use std::iter;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command, Stdio};
 use std::result;
 use std::str;
 
+use semver::Version;
+
 type Result<T> = result::Result<T, ()>;
 
-cfg_if! {
-    if #[cfg(feature = "v1_8_0")] {
-        const TARGET_VERSION: &'static str = "1.8.0";
-    } else if #[cfg(feature = "v1_7_0")] {
-        const TARGET_VERSION: &'static str = "1.7.0";
-    } else if #[cfg(feature = "v1_6_0")] {
-        const TARGET_VERSION: &'static str = "1.6.0";
-    } else {
-        const TARGET_VERSION: &'static str = "1.5.0";
-    }
-}
+const INCLUDED_VERSION: &str = "1.8.1";
 
 fn main() {
     if let Err(_) = configure() {
@@ -46,13 +35,14 @@ fn configure() -> Result<()> {
             _ => "dylib",
         };
 
+        let includes = include.iter().flat_map(env::split_paths).collect::<Vec<_>>();
+        let version = detect_version(&includes)?;
+        build_shim(&includes)?;
+
+        print_version(version);
         for path in path.iter().flat_map(env::split_paths) {
             println!("cargo:rustc-link-search=native={}", path.display());
         }
-
-        let includes = include.iter().flat_map(env::split_paths).collect::<Vec<_>>();
-        build_shim(&includes)?;
-
         for lib in env::split_paths(libs.as_ref().map(|s| &**s).unwrap_or("gcrypt".as_ref())) {
             println!("cargo:rustc-link-lib={0}={1}", mode, lib.display());
         }
@@ -71,29 +61,55 @@ fn configure() -> Result<()> {
     try_build().or_else(|_| try_config("libgcrypt-config"))
 }
 
-fn test_version(version: &str) {
-    let version = version.trim();
-    for (x, y) in TARGET_VERSION
-        .split('.')
-        .zip(version.split('.').chain(iter::repeat("0")))
-    {
-        let (x, y): (u8, u8) = (x.parse().unwrap(), y.parse().unwrap());
-        match x.cmp(&y) {
-            Ordering::Less => break,
-            Ordering::Greater => panic!(
-                "gcrypt version `{}` is less than requested `{}`",
-                version,
-                TARGET_VERSION
-            ),
-            _ => (),
+fn detect_version<P: AsRef<Path>>(includes_dirs: &[P]) -> Result<Version> {
+    use std::fs::File;
+    use std::io::{self, BufRead, BufReader};
+
+    eprintln!("detecting installed version of libgcrypt");
+    let defaults = &["/usr/include".as_ref(), "/usr/local/include".as_ref()];
+    for dir in includes_dirs.iter().map(|x| x.as_ref()).chain(defaults.iter().cloned()) {
+        let name = dir.join("gcrypt.h");
+        let mut file = match File::open(name.clone()) {
+            Ok(f) => BufReader::new(f),
+            Err(e) => {
+                if e.kind() == io::ErrorKind::NotFound {
+                    eprintln!("skipping not existent file: {}", name.display());
+                } else {
+                    eprintln!("unable to inspect file `{}`: {}", name.display(), e);
+                }
+                continue;
+            }
+        };
+        let mut line = String::new();
+        loop {
+            line.clear();
+            if file.read_line(&mut line).unwrap() == 0 {
+                break;
+            }
+
+            if let Some(p) = line.find("GCRYPT_VERSION ") {
+                if let Some(v) = (&line[p..]).split('\"').nth(1).and_then(|s| Version::parse(s).ok()) {
+                    eprintln!("found version: {}", v);
+                    return Ok(v);
+                }
+                break;
+            }
         }
     }
+    Err(())
+}
+
+fn print_version(v: Version) {
+    println!("cargo:version={}", v.major);
+    println!("cargo:version_major={}", v.major);
+    println!("cargo:version_minor={}", v.minor);
+    println!("cargo:version_patch={}", v.patch);
 }
 
 #[cfg(feature = "shim")]
 fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) -> Result<()> {
     let mut config = gcc::Build::new();
-    for path in include_dirs.iter() {
+    for path in include_dirs {
         config.include(path);
     }
     config
@@ -135,7 +151,7 @@ fn try_config<S: Into<OsString>>(path: S) -> Result<()> {
     let path = path.into();
     let mut cmd = path.clone();
     cmd.push(" --version");
-    test_version(&output(Command::new("sh").arg("-c").arg(cmd))?);
+    let version = Version::parse(&output(Command::new("sh").arg("-c").arg(cmd))?).or(Err(()))?;
 
     let mut cmd = path;
     cmd.push(" --cflags --libs");
@@ -144,6 +160,7 @@ fn try_config<S: Into<OsString>>(path: S) -> Result<()> {
     let mut includes = Vec::new();
     parse_config_output(&output, &mut includes);
     build_shim(&includes)?;
+    print_version(version);
     Ok(())
 }
 
@@ -204,6 +221,7 @@ fn try_build() -> Result<()> {
     );
     println!("cargo:rustc-link-lib=static=gcrypt");
     println!("cargo:root={}", dst.display());
+    print_version(Version::parse(INCLUDED_VERSION).unwrap());
     Ok(())
 }
 

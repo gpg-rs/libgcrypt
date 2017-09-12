@@ -53,18 +53,6 @@ pub mod digest;
 pub mod mac;
 pub mod kdf;
 
-cfg_if! {
-    if #[cfg(feature = "v1_8_0")] {
-        const TARGET_VERSION: &'static str = "1.8.0\0";
-    } else if #[cfg(feature = "v1_7_0")] {
-        const TARGET_VERSION: &'static str = "1.7.0\0";
-    } else if #[cfg(feature = "v1_6_0")] {
-        const TARGET_VERSION: &'static str = "1.6.0\0";
-    } else {
-        const TARGET_VERSION: &'static str = "1.5.0\0";
-    }
-}
-
 static INITIALIZED: AtomicBool = ATOMIC_BOOL_INIT;
 lazy_static! {
     static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
@@ -190,9 +178,7 @@ pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
                     ffi::gcry_threads_pthread_shim(),
                 );
             }
-            assert!(!ffi::gcry_check_version(
-                TARGET_VERSION.as_ptr() as *const _
-            ).is_null());
+            assert!(!ffi::gcry_check_version(ptr::null()).is_null());
         }
         f(&mut Initializer(()));
         unsafe {
@@ -218,9 +204,7 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
                 );
             }
             ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
-            assert!(!ffi::gcry_check_version(
-                TARGET_VERSION.as_ptr() as *const _
-            ).is_null());
+            assert!(!ffi::gcry_check_version(ptr::null()).is_null());
         }
         f(&mut Initializer(()));
         unsafe {

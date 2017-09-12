@@ -21,14 +21,11 @@ name = "libgcrypt_sys"
 path = "lib.rs"
 
 [features]
-default = ["v1_8_0"]
 shim = []
-v1_6_0 = []
-v1_7_0 = ["v1_6_0"]
-v1_8_0 = ["v1_7_0"]
 
 [build-dependencies]
 cfg-if = "0.1"
+semver = "0.8"
 gcc = "0.3"
 
 [dependencies]

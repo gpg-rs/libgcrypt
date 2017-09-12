@@ -15,10 +15,6 @@ appveyor = { repository = "johnschug/rust-gcrypt" }
 maintenance = { status = "experimental" }
 
 [features]
-default = ["v1_8_0"]
-v1_6_0 = ["libgcrypt-sys/v1_6_0"]
-v1_7_0 = ["v1_6_0", "libgcrypt-sys/v1_7_0"]
-v1_8_0 = ["v1_7_0", "libgcrypt-sys/v1_8_0"]
 nightly = []
 
 [dependencies]
@@ -32,7 +28,6 @@ gpg-error = "0.2"
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"
 version = "0.5.4"
-default-features = false
 features = ["shim"]
 
 [replace]

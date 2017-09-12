@@ -1,7 +1,6 @@
 extern crate gcrypt;
 
-use gcrypt::Token;
-use gcrypt::error::{self, ErrorCode};
+use gcrypt::{Token, Error};
 use gcrypt::cipher::{self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags,
                      Mode as CipherMode};
 use gcrypt::digest::{self, Algorithm as DigestAlgorithm, Flags as DigestFlags, MessageDigest};
@@ -2027,83 +2026,81 @@ fn verify_signature(
 ) {
     assert_eq!(pkey::verify(pkey, hash, sig), Ok(()));
     assert_eq!(
-        pkey::verify(pkey, bad_hash, sig)
-            .err()
-            .map_or(0, |e| e.code()),
-        error::GPG_ERR_BAD_SIGNATURE
+        pkey::verify(pkey, bad_hash, sig).map_err(|e| e.with_source(Error::SOURCE_UNKNOWN)),
+        Err(Error::BAD_SIGNATURE)
     );
 }
 
 fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
-    let specs: &[(&[u8], Option<KeyAlgorithm>, ErrorCode)] = &[
+    let specs: &[(&[u8], Option<KeyAlgorithm>, Error)] = &[
         (
             b"(data\n (flags pkcs1)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             Some(KeyAlgorithm::Rsa),
-            0,
+            Error::NO_ERROR,
         ),
         (
             b"(data\n (flags oaep)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             None,
-            error::GPG_ERR_CONFLICT,
+            Error::CONFLICT,
         ),
         (
             b"(data\n (flags pkcs1)\n\
             (hash oid.1.3.14.3.2.29 \
                   #11223344556677889900AABBCCDDEEFF10203040#))\n",
             Some(KeyAlgorithm::Rsa),
-            0,
+            Error::NO_ERROR,
         ),
         (
             b"(data\n (flags )\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             None,
-            error::GPG_ERR_CONFLICT,
+            Error::CONFLICT,
         ),
         (
             b"(data\n (flags pkcs1)\n\
             (hash foo #11223344556677889900AABBCCDDEEFF10203040#))\n",
             Some(KeyAlgorithm::Rsa),
-            error::GPG_ERR_DIGEST_ALGO,
+            Error::DIGEST_ALGO,
         ),
         (
             b"(data\n (flags )\n (value #11223344556677889900AA#))\n",
             None,
-            0,
+            Error::NO_ERROR,
         ),
         (
             b"(data\n (flags )\n (value #0090223344556677889900AA#))\n",
             None,
-            0,
+            Error::NO_ERROR,
         ),
         (
             b"(data\n (flags raw)\n (value #11223344556677889900AA#))\n",
             None,
-            0,
+            Error::NO_ERROR,
         ),
         (
             b"(data\n (flags pkcs1)\n (value #11223344556677889900AA#))\n",
             Some(KeyAlgorithm::Rsa),
-            error::GPG_ERR_CONFLICT,
+            Error::CONFLICT,
         ),
         (
             b"(data\n (flags raw foo)\n (value #11223344556677889900AA#))\n",
             None,
-            error::GPG_ERR_INV_FLAG,
+            Error::INV_FLAG,
         ),
         (
             b"(data\n (flags pss)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             Some(KeyAlgorithm::Rsa),
-            0,
+            Error::NO_ERROR,
         ),
         (
             b"(data\n (flags pss)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#)\n\
             (random-override #4253647587980912233445566778899019283747#))\n",
             Some(KeyAlgorithm::Rsa),
-            0,
+            Error::NO_ERROR,
         ),
     ];
 
@@ -2121,7 +2118,7 @@ fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
         let sig = match pkey::sign(&skey, &hash) {
             Ok(s) => s,
             Err(e) => {
-                assert_eq!(spec.2, e.code());
+                assert_eq!(spec.2, e.with_source(Error::SOURCE_UNKNOWN));
                 return;
             }
         };
@@ -2130,12 +2127,12 @@ fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
 }
 
 fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
-    let specs: &[(usize, &[u8], ErrorCode, &[u8])] = &[
+    let specs: &[(usize, &[u8], Error, &[u8])] = &[
         (
             192,
             b"(data (flags raw)\n\
             (value #00112233445566778899AABBCCDDEEFF0001020304050607#))",
-            0,
+            Error::NO_ERROR,
             b"(data (flags raw)\n\
            (value #80112233445566778899AABBCCDDEEFF0001020304050607#))",
         ),
@@ -2144,7 +2141,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
             b"(data (flags raw)\n\
             (value #00112233445566778899AABBCCDDEEFF\
                     000102030405060708090A0B0C0D0E0F#))",
-            0,
+            Error::NO_ERROR,
             b"(data (flags raw)\n\
             (value #80112233445566778899AABBCCDDEEFF\
                     000102030405060708090A0B0C0D0E0F#))",
@@ -2154,7 +2151,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
             b"(data (flags raw)\n\
             (hash sha256 #00112233445566778899AABBCCDDEEFF\
                           000102030405060708090A0B0C0D0E0F#))",
-            0,
+            Error::NO_ERROR,
             b"(data (flags raw)\n\
             (hash sha256 #80112233445566778899AABBCCDDEEFF\
                           000102030405060708090A0B0C0D0E0F#))",
@@ -2164,7 +2161,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
             b"(data (flags gost)\n\
             (value #00112233445566778899AABBCCDDEEFF\
                     000102030405060708090A0B0C0D0E0F#))",
-            0,
+            Error::NO_ERROR,
             b"(data (flags gost)\n\
             (value #80112233445566778899AABBCCDDEEFF\
                     000102030405060708090A0B0C0D0E0F#))",
@@ -2176,7 +2173,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
                     000102030405060708090A0B0C0D0E0F\
                     000102030405060708090A0B0C0D0E0F\
                     000102030405060708090A0B0C0D0E0F#))",
-            0,
+            Error::NO_ERROR,
             b"(data (flags gost)\n\
             (value #80112233445566778899AABBCCDDEEFF\
                     000102030405060708090A0B0C0D0E0F\
@@ -2196,7 +2193,7 @@ fn check_pkey_sign_ecdsa(skey: &SExpression, pkey: &SExpression) {
         let sig = match pkey::sign(&skey, &hash) {
             Ok(s) => s,
             Err(e) => {
-                assert_eq!(spec.2, e.code());
+                assert_eq!(spec.2, e);
                 return;
             }
         };
@@ -2210,8 +2207,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
         &[u8],
         &[u8],
         bool,
-        ErrorCode,
-        ErrorCode,
+        Error,
+        Error,
         bool,
     )] = &[
         (
@@ -2220,8 +2217,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (value #11223344556677889900AA#))\n",
             b"",
             false,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2230,8 +2227,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (value #11223344556677889900AA#))\n",
             b"(flags pkcs1)",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2240,8 +2237,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (value #11223344556677889900AA#))\n",
             b"(flags oaep)",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2250,8 +2247,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (value #11223344556677889900AA#))\n",
             b"(flags oaep)(hash-algo sha1)",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2260,8 +2257,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (value #11223344556677889900AA#))\n",
             b"(flags oaep)(hash-algo sha1)(label \"test\")",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2271,8 +2268,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (random-override #4253647587980912233445566778899019283747#))\n",
             b"(flags oaep)(hash-algo sha1)(label \"test\")",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2280,8 +2277,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags )\n (value #11223344556677889900AA#))\n",
             b"",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2289,8 +2286,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags )\n (value #0090223344556677889900AA#))\n",
             b"",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2298,8 +2295,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags raw)\n (value #11223344556677889900AA#))\n",
             b"",
             true,
-            0,
-            0,
+            Error::NO_ERROR,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2308,8 +2305,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             b"",
             false,
-            error::GPG_ERR_CONFLICT,
-            0,
+            Error::CONFLICT,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2318,8 +2315,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             b"",
             false,
-            error::GPG_ERR_INV_FLAG,
-            0,
+            Error::INV_FLAG,
+            Error::NO_ERROR,
             false,
         ),
         (
@@ -2327,8 +2324,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags raw)\n (value #11223344556677889900AA#))\n",
             b"(flags oaep)",
             true,
-            0,
-            error::GPG_ERR_ENCODING_PROBLEM,
+            Error::NO_ERROR,
+            Error::ENCODING_PROBLEM,
             true,
         ),
         (
@@ -2336,8 +2333,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags oaep)\n (value #11223344556677889900AA#))\n",
             b"(flags pkcs1)",
             true,
-            0,
-            error::GPG_ERR_ENCODING_PROBLEM,
+            Error::NO_ERROR,
+            Error::ENCODING_PROBLEM,
             true,
         ),
         (
@@ -2345,8 +2342,8 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags pss)\n (value #11223344556677889900AA#))\n",
             b"",
             false,
-            error::GPG_ERR_CONFLICT,
-            0,
+            Error::CONFLICT,
+            Error::NO_ERROR,
             false,
         ),
     ];
@@ -2361,7 +2358,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             let cipher = match pkey::encrypt(&pkey, &data) {
                 Ok(s) => s,
                 Err(e) => {
-                    assert_eq!(spec.4, e.code());
+                    assert_eq!(spec.4, e.with_source(Error::SOURCE_UNKNOWN));
                     return;
                 }
             };
@@ -2385,7 +2382,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
         let plain = match pkey::decrypt(&skey, &cipher) {
             Ok(s) => s,
             Err(e) => {
-                assert_eq!(spec.5, e.code());
+                assert_eq!(spec.5, e.with_source(Error::SOURCE_UNKNOWN));
                 return;
             }
         };
