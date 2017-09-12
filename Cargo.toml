@@ -3,11 +3,11 @@ name = "gcrypt"
 version = "0.5.4"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
-description = "Libgcrypt bindings for Rust"
 repository = "https://github.com/johnschug/rust-gcrypt"
 documentation = "https://docs.rs/gcrypt"
 categories = ["cryptography", "api-bindings"]
 keywords = ["crypto", "cryptography"]
+description = "Libgcrypt bindings for Rust"
 
 [badges]
 travis-ci = { repository = "johnschug/rust-gcrypt" }
@@ -34,5 +34,9 @@ path = "libgcrypt-sys"
 version = "0.5.4"
 default-features = false
 features = ["shim"]
+
+[replace]
+"gpg-error:0.2.2" = { git = "https://github.com/johnschug/rust-gpg-error" }
+"libgpg-error-sys:0.2.3" = { git = "https://github.com/johnschug/rust-gpg-error" }
 
 [workspace]

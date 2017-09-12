@@ -8,8 +8,11 @@ use std::ffi::{OsStr, OsString};
 use std::fs;
 use std::iter;
 use std::path::{Path, PathBuf};
-use std::process::{self, Child, Command, Stdio};
+use std::process::{self, Command, Stdio};
+use std::result;
 use std::str;
+
+type Result<T> = result::Result<T, ()>;
 
 cfg_if! {
     if #[cfg(feature = "v1_8_0")] {
@@ -24,10 +27,20 @@ cfg_if! {
 }
 
 fn main() {
-    let path = env::var_os("LIBGCRYPT_LIB_PATH");
+    if let Err(_) = configure() {
+        process::exit(1);
+    }
+}
+
+fn configure() -> Result<()> {
+    println!("cargo:rerun-if-env-changed=LIBGCRYPT_LIB_DIR");
+    let path = env::var_os("LIBGCRYPT_LIB_DIR");
+    println!("cargo:rerun-if-env-changed=LIBGCRYPT_LIBS");
     let libs = env::var_os("LIBGCRYPT_LIBS");
+    println!("cargo:rerun-if-env-changed=LIBGCRYPT_INCLUDE_DIR");
     let include = env::var_os("LIBGCRYPT_INCLUDE_DIR");
     if path.is_some() || libs.is_some() || include.is_some() {
+        println!("cargo:rerun-if-env-changed=LIBGCRYPT_STATIC");
         let mode = match env::var_os("LIBGCRYPT_STATIC") {
             Some(_) => "static",
             _ => "dylib",
@@ -37,148 +50,26 @@ fn main() {
             println!("cargo:rustc-link-search=native={}", path.display());
         }
 
-        let mut includes = Vec::new();
-        for include in include.iter().flat_map(env::split_paths) {
-            includes.push(include)
-        }
-        build_shim(&includes);
+        let includes = include.iter().flat_map(env::split_paths).collect::<Vec<_>>();
+        build_shim(&includes)?;
 
-        match libs {
-            Some(libs) => for lib in env::split_paths(&libs) {
-                println!("cargo:rustc-link-lib={0}={1}", mode, lib.display());
-            },
-            None => {
-                println!("cargo:rustc-link-lib={0}={1}", mode, "gcrypt");
-            }
+        for lib in env::split_paths(libs.as_ref().map(|s| &**s).unwrap_or("gcrypt".as_ref())) {
+            println!("cargo:rustc-link-lib={0}={1}", mode, lib.display());
         }
-        return;
-    } else if let Some(path) = env::var_os("LIBGCRYPT_CONFIG") {
-        if !try_config(path) {
-            process::exit(1);
-        }
-        return;
+        return Ok(());
+    }
+
+    println!("cargo:rerun-if-env-changed=LIBGCRYPT_CONFIG");
+    if let Some(path) = env::var_os("LIBGCRYPT_CONFIG") {
+        return try_config(path);
     }
 
     if !Path::new("libgcrypt/autogen.sh").exists() {
-        run(Command::new("git").args(&["submodule", "update", "--init"]));
+        let _ = run(Command::new("git").args(&["submodule", "update", "--init"]));
     }
 
-    if try_build() || try_config("libgcrypt-config") {
-        return;
-    }
-    process::exit(1);
+    try_build().or_else(|_| try_config("libgcrypt-config"))
 }
-
-fn try_config<S: AsRef<OsStr>>(path: S) -> bool {
-    let path = path.as_ref();
-
-    let mut cmd = path.to_owned();
-    cmd.push(" --version");
-    if let Some(output) = output(Command::new("sh").arg("-c").arg(cmd)) {
-        test_version(&output);
-    } else {
-        return false;
-    }
-
-    let mut cmd = path.to_owned();
-    cmd.push(" --prefix");
-    if let Some(output) = output(Command::new("sh").arg("-c").arg(cmd)) {
-        println!("cargo:root={}", output);
-    }
-
-    let mut cmd = path.to_owned();
-    cmd.push(" --cflags --libs");
-    if let Some(output) = output(Command::new("sh").arg("-c").arg(cmd)) {
-        let mut includes = Vec::new();
-        parse_config_output(&output, &mut includes);
-        build_shim(&includes);
-        return true;
-    }
-    false
-}
-
-fn try_build() -> bool {
-    let src = PathBuf::from(env::current_dir().unwrap()).join("libgcrypt");
-    let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
-    let build = dst.clone().join("build");
-    let target = env::var("TARGET").unwrap();
-    let host = env::var("HOST").unwrap();
-    let gpgerror_root = env::var("DEP_GPG_ERROR_ROOT").unwrap();
-    let compiler = gcc::Build::new().get_compiler();
-    let cflags = compiler.args().iter().fold(OsString::new(), |mut c, a| {
-        c.push(a);
-        c.push(" ");
-        c
-    });
-
-    let _ = fs::create_dir_all(&build);
-
-    if !run(Command::new("sh").current_dir(&src).arg("autogen.sh")) {
-        return false;
-    }
-    if !run(
-        Command::new("sh")
-            .current_dir(&build)
-            .env("CC", compiler.path())
-            .env("CFLAGS", &cflags)
-            .arg(msys_compatible(src.join("configure")))
-            .args(&[
-                "--build",
-                &gnu_target(&host),
-                "--host",
-                &gnu_target(&target),
-                "--enable-static",
-                "--disable-shared",
-                "--disable-doc",
-                &format!(
-                    "--with-libgpg-error-prefix={}",
-                    &msys_compatible(&gpgerror_root)
-                ),
-                &format!("--prefix={}", msys_compatible(&dst)),
-            ]),
-    ) {
-        return false;
-    }
-    if !run(
-        Command::new("make")
-            .current_dir(&build)
-            .arg("-j")
-            .arg(env::var("NUM_JOBS").unwrap()),
-    ) {
-        return false;
-    }
-    if !run(Command::new("make").current_dir(&build).arg("install")) {
-        return false;
-    }
-
-    build_shim(&[
-        PathBuf::from(gpgerror_root).join("include"),
-        PathBuf::from(dst.clone()).join("include"),
-    ]);
-
-    println!(
-        "cargo:rustc-link-search=native={}",
-        dst.clone().join("lib").display()
-    );
-    println!("cargo:rustc-link-lib=static=gcrypt");
-    println!("cargo:root={}", dst.display());
-    true
-}
-
-#[cfg(feature = "shim")]
-fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) {
-    let mut config = gcc::Build::new();
-    for path in include_dirs.iter() {
-        config.include(path);
-    }
-    config
-        .flag("-Wno-deprecated-declarations")
-        .file("shim.c")
-        .compile("libgcrypt_shim.a");
-}
-
-#[cfg(not(feature = "shim"))]
-fn build_shim<P: AsRef<Path>>(_include_dirs: &[P]) {}
 
 fn test_version(version: &str) {
     let version = version.trim();
@@ -198,6 +89,21 @@ fn test_version(version: &str) {
         }
     }
 }
+
+#[cfg(feature = "shim")]
+fn build_shim<P: AsRef<Path>>(include_dirs: &[P]) -> Result<()> {
+    let mut config = gcc::Build::new();
+    for path in include_dirs.iter() {
+        config.include(path);
+    }
+    config
+        .flag("-Wno-deprecated-declarations")
+        .file("shim.c")
+        .try_compile("libgcrypt_shim.a").or(Err(()))
+}
+
+#[cfg(not(feature = "shim"))]
+fn build_shim<P: AsRef<Path>>(_include_dirs: &[P]) -> Result<()> { Ok(()) }
 
 fn parse_config_output(output: &str, include_dirs: &mut Vec<OsString>) {
     let parts = output
@@ -225,67 +131,108 @@ fn parse_config_output(output: &str, include_dirs: &mut Vec<OsString>) {
     }
 }
 
-fn spawn(cmd: &mut Command) -> Option<Child> {
-    println!("running: {:?}", cmd);
-    match cmd.stdin(Stdio::null()).spawn() {
-        Ok(child) => Some(child),
-        Err(e) => {
-            println!("failed to execute command: {:?}\nerror: {}", cmd, e);
-            None
-        }
-    }
+fn try_config<S: Into<OsString>>(path: S) -> Result<()> {
+    let path = path.into();
+    let mut cmd = path.clone();
+    cmd.push(" --version");
+    test_version(&output(Command::new("sh").arg("-c").arg(cmd))?);
+
+    let mut cmd = path;
+    cmd.push(" --cflags --libs");
+    let output = output(Command::new("sh").arg("-c").arg(cmd))?;
+
+    let mut includes = Vec::new();
+    parse_config_output(&output, &mut includes);
+    build_shim(&includes)?;
+    Ok(())
 }
 
-fn run(cmd: &mut Command) -> bool {
-    if let Some(mut child) = spawn(cmd) {
-        match child.wait() {
-            Ok(status) => if !status.success() {
-                println!(
-                    "command did not execute successfully: {:?}\n\
-                     expected success, got: {}",
-                    cmd,
-                    status
-                );
-            } else {
-                return true;
-            },
-            Err(e) => {
-                println!("failed to execute command: {:?}\nerror: {}", cmd, e);
-            }
-        }
+
+fn try_build() -> Result<()> {
+    let target = env::var("TARGET").unwrap();
+    let host = env::var("HOST").unwrap();
+    let src = PathBuf::from(env::current_dir().unwrap()).join("libgcrypt");
+    let dst = PathBuf::from(env::var_os("OUT_DIR").unwrap());
+    let build = dst.join("build");
+    let gpgerror_root = PathBuf::from(env::var("DEP_GPG_ERROR_ROOT").unwrap());
+    let compiler = gcc::Build::new().get_compiler();
+    let cflags = compiler.args().iter().fold(OsString::new(), |mut c, a| {
+        c.push(a);
+        c.push(" ");
+        c
+    });
+
+    if target.contains("msvc") {
+        return Err(());
     }
-    false
+
+    fs::create_dir_all(&build).map_err(|e| eprintln!("unable to create build directory: {}", e))?;
+
+    run(Command::new("sh").current_dir(&src).arg("autogen.sh"))?;
+    run(Command::new("sh")
+        .current_dir(&build)
+        .env("CC", compiler.path())
+        .env("CFLAGS", &cflags)
+        .arg(msys_compatible(src.join("configure"))?)
+        .args(&[
+              "--build",
+              &gnu_target(&host),
+              "--host",
+              &gnu_target(&target),
+              "--enable-static",
+              "--disable-shared",
+              "--disable-doc",
+        ])
+        .arg({
+            let mut s = OsString::from("--with-libgpg-error-prefix=");
+            s.push(msys_compatible(&gpgerror_root)?);
+            s
+        })
+        .arg({
+            let mut s = OsString::from("--prefix=");
+            s.push(msys_compatible(&dst)?);
+            s
+        }))?;
+    run(make().current_dir(&build))?;
+    run(make().current_dir(&build).arg("install"))?;
+
+    build_shim(&[gpgerror_root.join("include"), dst.join("include")])?;
+
+    println!(
+        "cargo:rustc-link-search=native={}",
+        dst.join("lib").display()
+    );
+    println!("cargo:rustc-link-lib=static=gcrypt");
+    println!("cargo:root={}", dst.display());
+    Ok(())
 }
 
-fn output(cmd: &mut Command) -> Option<String> {
-    if let Some(child) = spawn(cmd.stdout(Stdio::piped())) {
-        match child.wait_with_output() {
-            Ok(output) => if !output.status.success() {
-                println!(
-                    "command did not execute successfully: {:?}\n\
-                     expected success, got: {}",
-                    cmd,
-                    output.status
-                );
-            } else {
-                return String::from_utf8(output.stdout).ok();
-            },
-            Err(e) => {
-                println!("failed to execute command: {:?}\nerror: {}", cmd, e);
-            }
-        }
+
+fn make() -> Command {
+    let name = if cfg!(any(target_os = "freebsd", target_os = "dragonfly")) {
+        "gmake"
+    } else {
+        "make"
+    };
+    let mut cmd = Command::new(name);
+    cmd.env_remove("DESTDIR");
+    if cfg!(windows) {
+        cmd.env_remove("MAKEFLAGS").env_remove("MFLAGS");
     }
-    None
+    cmd
 }
 
-fn msys_compatible<P: AsRef<Path>>(path: P) -> String {
+fn msys_compatible<P: AsRef<OsStr>>(path: P) -> Result<OsString> {
     use std::ascii::AsciiExt;
 
-    let mut path = path.as_ref().to_string_lossy().into_owned();
-    if !cfg!(windows) || Path::new(&path).is_relative() {
-        return path;
+    if !cfg!(windows) || Path::new(path.as_ref()).is_relative() {
+        return Ok(path.as_ref().to_owned());
     }
 
+    let mut path = path.as_ref()
+        .to_str()
+        .ok_or_else(|| eprintln!("path is not valid utf-8"))?
+        .to_owned();
     if let Some(b'a'...b'z') = path.as_bytes().first().map(u8::to_ascii_lowercase) {
         if path.split_at(1).1.starts_with(":\\") {
             (&mut path[..1]).make_ascii_lowercase();
@@ -293,13 +240,39 @@ fn msys_compatible<P: AsRef<Path>>(path: P) -> String {
             path.insert(0, '/');
         }
     }
-    path.replace("\\", "/")
+    Ok(path.replace("\\", "/").into())
 }
 
-fn gnu_target(target: &str) -> &str {
+fn gnu_target(target: &str) -> String {
     match target {
-        "i686-pc-windows-gnu" => "i686-w64-mingw32",
-        "x86_64-pc-windows-gnu" => "x86_64-w64-mingw32",
-        s => s,
+        "i686-pc-windows-gnu" => "i686-w64-mingw32".to_string(),
+        "x86_64-pc-windows-gnu" => "x86_64-w64-mingw32".to_string(),
+        s => s.to_string(),
     }
+}
+
+fn run(cmd: &mut Command) -> Result<String> {
+    eprintln!("running: {:?}", cmd);
+    match cmd.stdin(Stdio::null())
+        .spawn()
+        .and_then(|c| c.wait_with_output())
+    {
+        Ok(output) => if output.status.success() {
+            String::from_utf8(output.stdout).or(Err(()))
+        } else {
+            eprintln!(
+                "command did not execute successfully, got: {}",
+                output.status
+            );
+            Err(())
+        },
+        Err(e) => {
+            eprintln!("failed to execute command: {}", e);
+            Err(())
+        }
+    }
+}
+
+fn output(cmd: &mut Command) -> Result<String> {
+    run(cmd.stdout(Stdio::piped()))
 }

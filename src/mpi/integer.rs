@@ -9,7 +9,6 @@ use libc::c_uint;
 use cstr_argument::CStrArgument;
 
 use {Error, NonZero, Result};
-use error;
 use buffer::Buffer;
 use rand::Level;
 
@@ -90,7 +89,7 @@ impl Integer {
             } else if bytes.contains(&0) {
                 0
             } else {
-                return Err(Error::from_code(error::GPG_ERR_INV_ARG));
+                return Err(Error::INV_ARG);
             };
             return_err!(ffi::gcry_mpi_scan(
                 &mut raw,
