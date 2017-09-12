@@ -121,10 +121,10 @@ impl Context {
         let mut raw = ptr::null_mut();
         unsafe {
             return_err!(ffi::gcry_mpi_ec_new(
-                    &mut raw,
-                    ptr::null_mut(),
-                    curve.name.as_ptr()
-                    ));
+                &mut raw,
+                ptr::null_mut(),
+                curve.name.as_ptr()
+            ));
             Ok(Context::from_raw(raw))
         }
     }
@@ -154,10 +154,10 @@ impl Context {
         let name = name.into_cstr();
         unsafe {
             return_err!(ffi::gcry_mpi_ec_set_mpi(
-                    name.as_ref().as_ptr(),
-                    x.as_raw(),
-                    self.as_raw()
-                    ));
+                name.as_ref().as_ptr(),
+                x.as_raw(),
+                self.as_raw()
+            ));
             Ok(())
         }
     }
@@ -177,10 +177,10 @@ impl Context {
         let name = name.into_cstr();
         unsafe {
             return_err!(ffi::gcry_mpi_ec_set_point(
-                    name.as_ref().as_ptr(),
-                    p.as_raw(),
-                    self.as_raw()
-                    ));
+                name.as_ref().as_ptr(),
+                p.as_raw(),
+                self.as_raw()
+            ));
             Ok(())
         }
     }

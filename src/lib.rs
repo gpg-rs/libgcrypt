@@ -16,7 +16,7 @@
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
 #![deny(missing_debug_implementations)]
-#![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero))]
+#![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero, allocator_api))]
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
@@ -44,6 +44,8 @@ pub use buffer::Buffer;
 #[macro_use]
 mod utils;
 mod buffer;
+#[cfg(any(nightly, feature = "nightly"))]
+pub mod alloc;
 pub mod rand;
 pub mod mpi;
 pub mod sexp;
