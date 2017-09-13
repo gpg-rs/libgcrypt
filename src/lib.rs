@@ -43,7 +43,7 @@ pub use buffer::Buffer;
 
 #[macro_use]
 mod utils;
-mod buffer;
+pub mod buffer;
 #[cfg(any(nightly, feature = "nightly"))]
 pub mod alloc;
 pub mod rand;

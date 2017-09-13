@@ -17,6 +17,9 @@ maintenance = { status = "experimental" }
 [features]
 nightly = []
 
+[build-dependencies]
+semver = "0.8"
+
 [dependencies]
 cfg-if = "0.1"
 libc = "0.2"

@@ -19,22 +19,21 @@ impl Drop for Point {
 
 impl Clone for Point {
     #[inline]
-    #[cfg(feature = "v1_8_0")]
     fn clone(&self) -> Point {
-        unsafe { Point::from_raw(ffi::gcry_mpi_point_copy(self.as_raw())) }
-    }
-
-    #[inline]
-    #[cfg(not(feature = "v1_8_0"))]
-    fn clone(&self) -> Point {
-        let (x, y, z) = self.to_coords();
-        unsafe {
-            Point::from_raw(ffi::gcry_mpi_point_snatch_set(
-                ptr::null_mut(),
-                x.into_raw(),
-                y.into_raw(),
-                z.into_raw(),
-            ))
+        require_gcrypt_ver! {
+            (1, 8) => {
+                unsafe { Point::from_raw(ffi::gcry_mpi_point_copy(self.as_raw())) }
+            } else {
+                let (x, y, z) = self.to_coords();
+                unsafe {
+                    Point::from_raw(ffi::gcry_mpi_point_snatch_set(
+                            ptr::null_mut(),
+                            x.into_raw(),
+                            y.into_raw(),
+                            z.into_raw(),
+                            ))
+                }
+            }
         }
     }
 

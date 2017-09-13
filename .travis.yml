@@ -5,36 +5,23 @@ matrix:
   include:
     - os: linux
       rust: stable
+      dist: precise
       addons:
         apt:
           packages:
             - libgcrypt11-dev
       script:
-        - cargo build --no-default-features
-        - cargo test --no-default-features
+        - cargo build --verbose --verbose
+        - cargo test
     - os: linux
       rust: stable
-      before_install:
-        - curl -sL https://ftp.gnu.org/gnu/automake/automake-${AUTOMAKE_VERSION}.tar.gz -o automake-${AUTOMAKE_VERSION}.tar.gz
-        - tar -xf automake-${AUTOMAKE_VERSION}.tar.gz
-        - pushd automake-${AUTOMAKE_VERSION}
-        - ./configure --prefix=${HOME}/.local >/dev/null
-        - make -j2 >/dev/null
-        - make install >/dev/null
-        - popd
-        - curl -sL https://ftp.gnu.org/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext-${GETTEXT_VERSION}.tar.gz
-        - tar -xf gettext-${GETTEXT_VERSION}.tar.gz
-        - pushd gettext-${GETTEXT_VERSION}
-        - ./configure --without-emacs --disable-java --disable-c++ --enable-fast-install --prefix=${HOME}/.local >/dev/null
-        - make -j2 >/dev/null
-        - make install >/dev/null
-        - popd
-        - export PATH=$HOME/.local/bin:$PATH
-        - export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
+      addons:
+        apt:
+          packages:
+            - libgcrypt11-dev
       script:
         - cargo build --verbose --verbose
         - cargo test
-        - cargo doc
     - os: linux
       rust: nightly
       before_install:
@@ -55,9 +42,8 @@ matrix:
         - export PATH=$HOME/.local/bin:$PATH
         - export LD_LIBRARY_PATH=$HOME/.local/lib:$LD_LIBRARY_PATH
       script:
-        - cargo build --features nightly --verbose --verbose
-        - cargo test --features nightly
-        - cargo doc --features nightly
+        - cargo build --features nightly --verbose
+        - cargo test --features nightly --verbose
 env:
   global:
     - AUTOMAKE_VERSION=1.14.1
@@ -65,3 +51,6 @@ env:
 branches:
   except:
     - /^v[0-9]/
+notifications:
+  email:
+    on_success: never

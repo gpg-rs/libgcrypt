@@ -1,3 +1,5 @@
+include!(concat!(env!("OUT_DIR"), "/version.rs"));
+
 macro_rules! impl_wrapper {
     ($Name:ident: $T:ty) => {
         #[inline]

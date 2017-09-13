@@ -100,7 +100,7 @@ fn detect_version<P: AsRef<Path>>(includes_dirs: &[P]) -> Result<Version> {
 }
 
 fn print_version(v: Version) {
-    println!("cargo:version={}", v.major);
+    println!("cargo:version={}", v);
     println!("cargo:version_major={}", v.major);
     println!("cargo:version_minor={}", v.minor);
     println!("cargo:version_patch={}", v.patch);
