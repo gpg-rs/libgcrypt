@@ -1,7 +1,7 @@
 extern crate semver;
 
 use std::env;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
@@ -17,7 +17,7 @@ fn main() {
     writeln!(
         output,
         "#[macro_export]\nmacro_rules! require_gcrypt_ver {{\n\
-         ($ver:pat => {{ $($t:tt)* }}) => (require_gcrypt_ver!($ver => {{ $($t)* }} else {{}}));"
+         ($ver:tt => {{ $($t:tt)* }}) => (require_gcrypt_ver! {{ $ver => {{ $($t)* }} else {{}} }});"
     ).unwrap();
     loop {
         writeln!(
@@ -37,7 +37,7 @@ fn main() {
     loop {
         writeln!(
             output,
-            "(({0},$ver:pat) => {{ $($t:tt)* }} else {{ $($u:tt)* }}) => ($($t)*);",
+            "(({0},$ver:tt) => {{ $($t:tt)* }} else {{ $($u:tt)* }}) => ($($t)*);",
             major
         ).unwrap();
 
@@ -48,6 +48,6 @@ fn main() {
     }
     writeln!(
         output,
-        "($ver:pat => {{ $($t:tt)* }} else {{ $($u:tt)* }}) => ($($u)*);\n}}"
+        "($ver:tt => {{ $($t:tt)* }} else {{ $($u:tt)* }}) => ($($u)*);\n}}"
     ).unwrap();
 }

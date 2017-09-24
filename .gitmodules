@@ -1,3 +1,6 @@
 [submodule "libgcrypt-sys/libgcrypt"]
 	path = libgcrypt-sys/libgcrypt
 	url = git://git.gnupg.org/libgcrypt.git
+[submodule "build_helper"]
+	path = build_helper
+	url = https://github.com/johnschug/build_helper.git

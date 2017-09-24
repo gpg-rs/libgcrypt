@@ -1,6 +1,6 @@
 extern crate gcrypt;
 
-use gcrypt::{Token, Error};
+use gcrypt::{Error, Token};
 use gcrypt::cipher::{self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags,
                      Mode as CipherMode};
 use gcrypt::digest::{self, Algorithm as DigestAlgorithm, Flags as DigestFlags, MessageDigest};
