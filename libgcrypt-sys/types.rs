@@ -25,13 +25,11 @@ pub type gcry_md_hd_t = *mut gcry_md_handle;
 pub enum gcry_mac_handle {}
 pub type gcry_mac_hd_t = *mut gcry_mac_handle;
 
-pub type gcry_prime_check_func_t = Option<
-    unsafe extern "C" fn(*mut c_void, c_int, gcry_mpi_t) -> c_int,
->;
+pub type gcry_prime_check_func_t =
+    Option<unsafe extern "C" fn(*mut c_void, c_int, gcry_mpi_t) -> c_int>;
 
-pub type gcry_handler_progress_t = Option<
-    unsafe extern "C" fn(*mut c_void, *const c_char, c_int, c_int, c_int),
->;
+pub type gcry_handler_progress_t =
+    Option<unsafe extern "C" fn(*mut c_void, *const c_char, c_int, c_int, c_int)>;
 pub type gcry_handler_alloc_t = Option<unsafe extern "C" fn(size_t) -> *mut c_void>;
 pub type gcry_handler_secure_check_t = Option<unsafe extern "C" fn(*const c_void) -> c_int>;
 pub type gcry_handler_realloc_t = Option<unsafe extern "C" fn(*mut c_void, size_t) -> *mut c_void>;

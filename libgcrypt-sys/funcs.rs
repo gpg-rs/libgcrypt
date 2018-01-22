@@ -1,19 +1,19 @@
 use libc::{c_char, c_int, c_uchar, c_uint, c_ulong, c_void, size_t};
 use std::ptr;
 
-pub use libgpg_error_sys::gpg_err_make as gcry_err_make;
 pub use libgpg_error_sys::gpg_err_code as gcry_err_code;
+pub use libgpg_error_sys::gpg_err_code_from_errno as gcry_err_code_from_errno;
+pub use libgpg_error_sys::gpg_err_code_from_syserror as gcry_err_code_from_syserror;
+pub use libgpg_error_sys::gpg_err_code_to_errno as gcry_err_code_to_errno;
+pub use libgpg_error_sys::gpg_err_make as gcry_err_make;
+pub use libgpg_error_sys::gpg_err_make_from_errno as gcry_err_make_from_errno;
+pub use libgpg_error_sys::gpg_err_set_errno as gcry_err_set_errno;
 pub use libgpg_error_sys::gpg_err_source as gcry_err_source;
+pub use libgpg_error_sys::gpg_error_from_errno as gcry_error_from_errno;
+pub use libgpg_error_sys::gpg_error_from_syserror as gcry_error_from_syserror;
 pub use libgpg_error_sys::gpg_strerror as gcry_strerror;
 pub use libgpg_error_sys::gpg_strerror_r as gcry_strerror_r;
 pub use libgpg_error_sys::gpg_strsource as gcry_strsource;
-pub use libgpg_error_sys::gpg_err_code_from_errno as gcry_err_code_from_errno;
-pub use libgpg_error_sys::gpg_err_code_to_errno as gcry_err_code_to_errno;
-pub use libgpg_error_sys::gpg_err_code_from_syserror as gcry_err_code_from_syserror;
-pub use libgpg_error_sys::gpg_err_set_errno as gcry_err_set_errno;
-pub use libgpg_error_sys::gpg_err_make_from_errno as gcry_err_make_from_errno;
-pub use libgpg_error_sys::gpg_error_from_errno as gcry_error_from_errno;
-pub use libgpg_error_sys::gpg_error_from_syserror as gcry_error_from_syserror;
 
 use consts::*;
 use types::*;

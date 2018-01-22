@@ -8,9 +8,12 @@ use std::path::PathBuf;
 use semver::Version;
 
 fn main() {
-    let sys_version = Version::parse(&env::var("DEP_GCRYPT_VERSION").unwrap()).unwrap();
-    let mut major = sys_version.major;
-    let mut minor = sys_version.minor;
+    let (mut major, mut minor) = if let Ok(v) = env::var("DEP_GCRYPT_VERSION") {
+        let sys_version = Version::parse(&v).unwrap();
+        (sys_version.major, sys_version.minor)
+    } else {
+        (1, 5)
+    };
 
     let path = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let mut output = File::create(path.join("version.rs")).unwrap();
@@ -23,8 +26,7 @@ fn main() {
         writeln!(
             output,
             "(({0},{1}) => {{ $($t:tt)* }} else {{ $($u:tt)* }}) => ($($t)*);",
-            major,
-            minor
+            major, minor
         ).unwrap();
 
         if minor == 0 {

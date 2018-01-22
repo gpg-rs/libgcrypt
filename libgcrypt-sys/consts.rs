@@ -1,7 +1,7 @@
 use libc::{c_int, c_uint};
 
-pub use libgpg_error_sys::gpg_err_source_t as gcry_err_source_t;
 pub use libgpg_error_sys::gpg_err_code_t as gcry_err_code_t;
+pub use libgpg_error_sys::gpg_err_source_t as gcry_err_source_t;
 
 pub mod errors {
     pub use libgpg_error_sys::consts::*;
@@ -102,7 +102,6 @@ pub const GCRYMPI_FMT_SSH: gcry_mpi_format = 3;
 pub const GCRYMPI_FMT_HEX: gcry_mpi_format = 4;
 pub const GCRYMPI_FMT_USG: gcry_mpi_format = 5;
 pub const GCRYMPI_FMT_OPAQUE: gcry_mpi_format = 8;
-
 
 pub type gcry_mpi_flag = c_uint;
 pub const GCRYMPI_FLAG_SECURE: gcry_mpi_flag = 1;
