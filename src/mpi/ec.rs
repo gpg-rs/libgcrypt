@@ -3,9 +3,9 @@ use std::ptr;
 use std::result;
 use std::str::{self, Utf8Error};
 
+use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
-use cstr_argument::CStrArgument;
 
 use {NonZero, Result};
 use pkey::Algorithm;

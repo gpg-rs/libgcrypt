@@ -13,7 +13,7 @@ mod build_helper;
 
 use build_helper::*;
 
-const INCLUDED_VERSION: &str = "1.8.1";
+const INCLUDED_VERSION: &str = "1.8.2";
 
 fn main() {
     if let Err(_) = configure() {

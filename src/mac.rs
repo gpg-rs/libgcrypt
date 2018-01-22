@@ -4,8 +4,8 @@ use std::ptr;
 use std::result;
 use std::str::Utf8Error;
 
-use ffi;
 use cstr_argument::CStrArgument;
+use ffi;
 use libc::c_int;
 
 use {NonZero, Result};

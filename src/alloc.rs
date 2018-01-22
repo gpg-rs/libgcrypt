@@ -6,11 +6,11 @@ use std::ptr;
 use ffi;
 
 #[cfg(all(any(target_arch = "x86", target_arch = "arm", target_arch = "mips",
-                  target_arch = "powerpc", target_arch = "powerpc64", target_arch = "asmjs",
-                  target_arch = "wasm32")))]
+              target_arch = "powerpc", target_arch = "powerpc64", target_arch = "asmjs",
+              target_arch = "wasm32")))]
 const MIN_ALIGN: usize = 8;
 #[cfg(all(any(target_arch = "x86_64", target_arch = "aarch64", target_arch = "mips64",
-                  target_arch = "s390x", target_arch = "sparc64")))]
+              target_arch = "s390x", target_arch = "sparc64")))]
 const MIN_ALIGN: usize = 16;
 
 #[repr(C)]
@@ -103,5 +103,29 @@ unsafe impl Alloc for SecureAllocator {
             self.dealloc(ptr, old_layout);
             Ok(new_ptr)
         }
+    }
+}
+
+unsafe impl<'a> Alloc for &'a SecureAllocator {
+    #[inline]
+    unsafe fn alloc(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
+        (**self).alloc(request)
+    }
+
+    #[inline]
+    unsafe fn alloc_zeroed(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
+        (**self).alloc_zeroed(request)
+    }
+
+    #[inline]
+    unsafe fn dealloc(&mut self, mut ptr: *mut u8, layout: Layout) {
+        (**self).dealloc(ptr, layout)
+    }
+
+    #[inline]
+    unsafe fn realloc(
+        &mut self, ptr: *mut u8, old_layout: Layout, new_layout: Layout
+    ) -> Result<*mut u8, AllocErr> {
+        (**self).realloc(ptr, old_layout, new_layout)
     }
 }

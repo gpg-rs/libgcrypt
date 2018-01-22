@@ -4,9 +4,9 @@ use std::ops;
 use std::ptr;
 use std::str;
 
+use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_uint;
-use cstr_argument::CStrArgument;
 
 use {Error, NonZero, Result};
 use buffer::Buffer;
@@ -443,11 +443,13 @@ macro_rules! impl_binary_op {
 impl_binary_op!(Add, add, |x, y| ffi::gcry_mpi_add(x, x, y));
 impl_binary_op!(Sub, sub, |x, y| ffi::gcry_mpi_sub(x, x, y));
 impl_binary_op!(Mul, mul, |x, y| ffi::gcry_mpi_mul(x, x, y));
-impl_binary_op!(
-    Div,
-    div,
-    |x, y| ffi::gcry_mpi_div(x, ptr::null_mut(), x, y, 0)
-);
+impl_binary_op!(Div, div, |x, y| ffi::gcry_mpi_div(
+    x,
+    ptr::null_mut(),
+    x,
+    y,
+    0
+));
 impl_binary_op!(Rem, rem, |x, y| ffi::gcry_mpi_mod(x, x, y));
 
 impl ops::Shl<usize> for Integer {

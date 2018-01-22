@@ -4,8 +4,8 @@ use std::result;
 use std::slice;
 use std::str::{self, FromStr, Utf8Error};
 
-use libc::c_int;
 use ffi;
+use libc::c_int;
 
 use {Error, NonZero, Result};
 use mpi::Integer;
@@ -242,9 +242,10 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
         if self.first < self.last {
             self.last -= 1;
             unsafe {
-                Some(SExpression::from_raw(
-                    ffi::gcry_sexp_nth(self.sexp.as_raw(), self.last),
-                ))
+                Some(SExpression::from_raw(ffi::gcry_sexp_nth(
+                    self.sexp.as_raw(),
+                    self.last,
+                )))
             }
         } else {
             None

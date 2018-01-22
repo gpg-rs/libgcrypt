@@ -1,6 +1,6 @@
 use std::ops;
-use std::slice;
 use std::result;
+use std::slice;
 use std::str;
 
 use ffi;

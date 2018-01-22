@@ -2,8 +2,8 @@ use std::ptr;
 
 use ffi;
 
-use NonZero;
 use super::{Context, Integer};
+use NonZero;
 
 #[derive(Debug)]
 pub struct Point(NonZero<ffi::gcry_mpi_point_t>);

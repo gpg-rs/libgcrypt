@@ -3,8 +3,8 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use error::Result;
 use digest::Algorithm as DigestAlgorithm;
+use error::Result;
 
 ffi_enum_wrapper! {
     pub enum Algorithm: c_int {

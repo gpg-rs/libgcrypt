@@ -3,13 +3,13 @@ use std::ptr;
 use std::result;
 use std::str::Utf8Error;
 
+use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
-use cstr_argument::CStrArgument;
 
 use Result;
-use sexp::SExpression;
 use mpi::ec::{Curve, Curves};
+use sexp::SExpression;
 
 ffi_enum_wrapper! {
     pub enum Algorithm: c_int {
