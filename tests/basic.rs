@@ -1,7 +1,8 @@
 extern crate gcrypt;
 
 use gcrypt::Token;
-use gcrypt::error::{self, ErrorCode};
+use gcrypt::error::{ErrorCode};
+use gcrypt::ffi::errors;
 use gcrypt::cipher::{self, Algorithm as CipherAlgorithm, Cipher, Mode as CipherMode};
 use gcrypt::digest::{self, Algorithm as DigestAlgorithm, MessageDigest};
 use gcrypt::kdf;
@@ -2027,7 +2028,7 @@ fn verify_signature(
         pkey::verify(pkey, bad_hash, sig)
             .err()
             .map_or(0, |e| e.code()),
-        error::GPG_ERR_BAD_SIGNATURE
+        errors::GPG_ERR_BAD_SIGNATURE
     );
 }
 
@@ -2043,7 +2044,7 @@ fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
             b"(data\n (flags oaep)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             None,
-            error::GPG_ERR_CONFLICT,
+            errors::GPG_ERR_CONFLICT,
         ),
         (
             b"(data\n (flags pkcs1)\n\
@@ -2056,13 +2057,13 @@ fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
             b"(data\n (flags )\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             None,
-            error::GPG_ERR_CONFLICT,
+            errors::GPG_ERR_CONFLICT,
         ),
         (
             b"(data\n (flags pkcs1)\n\
             (hash foo #11223344556677889900AABBCCDDEEFF10203040#))\n",
             Some(KeyAlgorithm::Rsa),
-            error::GPG_ERR_DIGEST_ALGO,
+            errors::GPG_ERR_DIGEST_ALGO,
         ),
         (
             b"(data\n (flags )\n (value #11223344556677889900AA#))\n",
@@ -2082,12 +2083,12 @@ fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
         (
             b"(data\n (flags pkcs1)\n (value #11223344556677889900AA#))\n",
             Some(KeyAlgorithm::Rsa),
-            error::GPG_ERR_CONFLICT,
+            errors::GPG_ERR_CONFLICT,
         ),
         (
             b"(data\n (flags raw foo)\n (value #11223344556677889900AA#))\n",
             None,
-            error::GPG_ERR_INV_FLAG,
+            errors::GPG_ERR_INV_FLAG,
         ),
         (
             b"(data\n (flags pss)\n\
@@ -2305,7 +2306,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             b"",
             false,
-            error::GPG_ERR_CONFLICT,
+            errors::GPG_ERR_CONFLICT,
             0,
             false,
         ),
@@ -2315,7 +2316,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203040#))\n",
             b"",
             false,
-            error::GPG_ERR_INV_FLAG,
+            errors::GPG_ERR_INV_FLAG,
             0,
             false,
         ),
@@ -2325,7 +2326,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(flags oaep)",
             true,
             0,
-            error::GPG_ERR_ENCODING_PROBLEM,
+            errors::GPG_ERR_ENCODING_PROBLEM,
             true,
         ),
         (
@@ -2334,7 +2335,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(flags pkcs1)",
             true,
             0,
-            error::GPG_ERR_ENCODING_PROBLEM,
+            errors::GPG_ERR_ENCODING_PROBLEM,
             true,
         ),
         (
@@ -2342,7 +2343,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
             b"(data\n (flags pss)\n (value #11223344556677889900AA#))\n",
             b"",
             false,
-            error::GPG_ERR_CONFLICT,
+            errors::GPG_ERR_CONFLICT,
             0,
             false,
         ),

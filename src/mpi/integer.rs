@@ -6,10 +6,10 @@ use std::ptr;
 use std::str;
 
 use ffi;
+use ffi::errors;
 use libc::c_uint;
 
 use {Error, NonZero, Result};
-use error;
 use buffer::Buffer;
 use rand::Level;
 
@@ -90,7 +90,7 @@ impl Integer {
             } else if bytes.contains(&0) {
                 0
             } else {
-                return Err(Error::from_code(error::GPG_ERR_INV_ARG));
+                return Err(Error::from_code(errors::GPG_ERR_INV_ARG));
             };
             return_err!(ffi::gcry_mpi_scan(
                 &mut raw,
