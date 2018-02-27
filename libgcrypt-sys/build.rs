@@ -103,7 +103,7 @@ fn try_build() -> bool {
     let build = dst.clone().join("build");
     let target = env::var("TARGET").unwrap();
     let host = env::var("HOST").unwrap();
-    let gpgerror_root = env::var("DEP_GPG_ERROR_ROOT").unwrap();
+    let gpgerror_root = env::var("DEP_GPG_ERROR_GEN").unwrap();
     let compiler = gcc::Build::new().get_compiler();
     let cflags = compiler.args().iter().fold(OsString::new(), |mut c, a| {
         c.push(a);

@@ -25,7 +25,7 @@ extern crate core;
 #[macro_use]
 extern crate lazy_static;
 extern crate libc;
-extern crate libgcrypt_sys as ffi;
+pub extern crate libgcrypt_sys as ffi;
 #[macro_use]
 pub extern crate gpg_error as error;
 
