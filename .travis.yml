@@ -1,22 +1,49 @@
 language: rust
 cache: cargo
-sudo: false
 matrix:
   include:
+    - os: osx
+      before_install:
+        - brew install gettext
+        - brew link gettext --force
     - os: linux
       rust: stable
       addons:
         apt:
           packages:
             - libgcrypt11-dev
-      script:
-        - cargo build --verbose --verbose
-        - cargo test
+    - os: linux
+      rust: stable
+      env:
+        - GETTEXT_VERSION=0.19.8.1
+      before_install:
+        - curl -sL https://ftp.gnu.org/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext-${GETTEXT_VERSION}.tar.gz
+        - tar -xf gettext-${GETTEXT_VERSION}.tar.gz
+        - pushd gettext-${GETTEXT_VERSION}
+        - ./configure --without-emacs --disable-java --disable-csharp --disable-c++ --enable-fast-install --prefix=${HOME}/.local >/dev/null
+        - make -j2 install >/dev/null
+        - popd
+        - export PATH=${HOME}/.local/bin:$PATH
+        - export LD_LIBRARY_PATH=${HOME}/.local/lib:$LD_LIBRARY_PATH
     - os: linux
       rust: nightly
+      env:
+        - GETTEXT_VERSION=0.19.8.1
+      before_install:
+        - curl -sL https://ftp.gnu.org/gnu/gettext/gettext-${GETTEXT_VERSION}.tar.gz -o gettext-${GETTEXT_VERSION}.tar.gz
+        - tar -xf gettext-${GETTEXT_VERSION}.tar.gz
+        - pushd gettext-${GETTEXT_VERSION}
+        - ./configure --without-emacs --disable-java --disable-csharp --disable-c++ --enable-fast-install --prefix=${HOME}/.local >/dev/null
+        - make -j2 install >/dev/null
+        - popd
+        - export PATH=${HOME}/.local/bin:$PATH
+        - export LD_LIBRARY_PATH=${HOME}/.local/lib:$LD_LIBRARY_PATH
       script:
         - cargo build --features nightly --verbose --verbose
-        - cargo test --features nightly
+        - cargo test --features nightly --no-fail-fast
+script:
+  - cargo build --verbose --verbose
+  - cargo test --no-fail-fast
 branches:
   except:
     - /^v[0-9]/

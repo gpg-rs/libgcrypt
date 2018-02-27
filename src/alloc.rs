@@ -27,9 +27,44 @@ unsafe fn align_pointer(ptr: *mut u8, align: usize) -> *mut u8 {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub struct SecureAllocator;
+pub struct SecureAllocator {
+    _priv: (),
+}
+
+impl Default for SecureAllocator {
+    fn default() -> Self {
+        ::init(|x| {
+            let _ = x.enable_secure_rndpool().enable_secmem(1);
+        });
+        SecureAllocator { _priv: () }
+    }
+}
 
 unsafe impl Alloc for SecureAllocator {
+    #[inline]
+    unsafe fn alloc(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
+        (&*self).alloc(request)
+    }
+
+    #[inline]
+    unsafe fn alloc_zeroed(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
+        (&*self).alloc_zeroed(request)
+    }
+
+    #[inline]
+    unsafe fn dealloc(&mut self, ptr: *mut u8, layout: Layout) {
+        (&*self).dealloc(ptr, layout)
+    }
+
+    #[inline]
+    unsafe fn realloc(
+        &mut self, ptr: *mut u8, old_layout: Layout, new_layout: Layout
+    ) -> Result<*mut u8, AllocErr> {
+        (&*self).realloc(ptr, old_layout, new_layout)
+    }
+}
+
+unsafe impl<'a> Alloc for &'a SecureAllocator {
     #[inline]
     unsafe fn alloc(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
         let ptr = if request.align() <= MIN_ALIGN {
@@ -103,29 +138,5 @@ unsafe impl Alloc for SecureAllocator {
             self.dealloc(ptr, old_layout);
             Ok(new_ptr)
         }
-    }
-}
-
-unsafe impl<'a> Alloc for &'a SecureAllocator {
-    #[inline]
-    unsafe fn alloc(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
-        (**self).alloc(request)
-    }
-
-    #[inline]
-    unsafe fn alloc_zeroed(&mut self, request: Layout) -> Result<*mut u8, AllocErr> {
-        (**self).alloc_zeroed(request)
-    }
-
-    #[inline]
-    unsafe fn dealloc(&mut self, mut ptr: *mut u8, layout: Layout) {
-        (**self).dealloc(ptr, layout)
-    }
-
-    #[inline]
-    unsafe fn realloc(
-        &mut self, ptr: *mut u8, old_layout: Layout, new_layout: Layout
-    ) -> Result<*mut u8, AllocErr> {
-        (**self).realloc(ptr, old_layout, new_layout)
     }
 }

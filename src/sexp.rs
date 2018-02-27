@@ -7,7 +7,7 @@ use std::str::{self, FromStr, Utf8Error};
 use ffi;
 use libc::c_int;
 
-use {Error, NonZero, Result};
+use {Error, NonNull, Result};
 use mpi::Integer;
 use mpi::integer::Format as IntegerFormat;
 
@@ -19,7 +19,7 @@ pub enum Format {
     Advanced = ffi::GCRYSEXP_FMT_ADVANCED as isize,
 }
 
-pub struct SExpression(NonZero<ffi::gcry_sexp_t>);
+pub struct SExpression(NonNull<ffi::gcry_sexp_t>);
 
 impl Drop for SExpression {
     #[inline]

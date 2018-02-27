@@ -7,7 +7,7 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use {NonZero, Result};
+use {NonNull, Result};
 use pkey::Algorithm;
 use sexp::SExpression;
 
@@ -102,7 +102,7 @@ impl<'a> Iterator for Curves<'a> {
 }
 
 #[derive(Debug)]
-pub struct Context(NonZero<ffi::gcry_ctx_t>);
+pub struct Context(NonNull<ffi::gcry_ctx_t>);
 
 impl Drop for Context {
     #[inline]

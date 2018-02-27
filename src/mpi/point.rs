@@ -3,10 +3,10 @@ use std::ptr;
 use ffi;
 
 use super::{Context, Integer};
-use NonZero;
+use NonNull;
 
 #[derive(Debug)]
-pub struct Point(NonZero<ffi::gcry_mpi_point_t>);
+pub struct Point(NonNull<ffi::gcry_mpi_point_t>);
 
 impl Drop for Point {
     #[inline]

@@ -9,7 +9,7 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use {NonZero, Result};
+use {NonNull, Result};
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -101,7 +101,7 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct MessageDigest(NonZero<ffi::gcry_md_hd_t>);
+pub struct MessageDigest(NonNull<ffi::gcry_md_hd_t>);
 
 impl Drop for MessageDigest {
     #[inline]

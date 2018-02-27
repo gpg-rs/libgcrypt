@@ -4,17 +4,17 @@ macro_rules! impl_wrapper {
     ($Name:ident: $T:ty) => {
         #[inline]
         pub unsafe fn from_raw(raw: $T) -> Self {
-            $Name(NonZero::new(raw).unwrap())
+            $Name(NonNull::<$T>::new(raw).unwrap())
         }
 
         #[inline]
         pub fn as_raw(&self) -> $T {
-            self.0.get()
+            self.0.as_ptr()
         }
 
         #[inline]
         pub fn into_raw(self) -> $T {
-            let raw = self.0.get();
+            let raw = self.as_raw();
             ::std::mem::forget(self);
             raw
         }
@@ -75,43 +75,55 @@ macro_rules! ffi_enum_wrapper {
     };
 }
 
-cfg_if! {
-    if #[cfg(any(nightly, feature = "nightly"))] {
-        pub use core::nonzero::NonZero;
-    } else {
-        pub unsafe trait Zeroable {
-            fn is_zero(&self) -> bool;
-        }
+pub(crate) trait Ptr {
+    type Inner;
+}
 
-        unsafe impl<T: ?Sized> Zeroable for *mut T {
-            #[inline]
-            fn is_zero(&self) -> bool {
-                (*self as *mut u8).is_null()
-            }
-        }
+impl<T> Ptr for *mut T {
+    type Inner = T;
+}
 
-        unsafe impl<T: ?Sized> Zeroable for *const T {
-            #[inline]
-            fn is_zero(&self) -> bool {
-                (*self as *mut u8).is_null()
-            }
-        }
+impl<T> Ptr for *const T {
+    type Inner = T;
+}
 
-        #[derive(Debug, Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash)]
-        pub struct NonZero<T: Zeroable>(T);
+pub(crate) type NonNull<T> = details::NonNull<<T as Ptr>::Inner>;
 
-        impl<T: Zeroable> NonZero<T> {
-            #[inline(always)]
-            pub fn new(inner: T) -> Option<Self> {
-                if inner.is_zero() {
-                    None
-                } else {
-                    Some(NonZero(inner))
+mod details {
+    cfg_if! {
+        if #[cfg(any(nightly, feature = "nightly"))] {
+            pub type NonNull<T> = ::std::ptr::NonNull<T>;
+        } else {
+            use std::fmt;
+
+            pub struct NonNull<T>(*const T);
+
+            impl<T> NonNull<T> {
+                #[inline(always)]
+                pub fn new(inner: *mut T) -> Option<Self> {
+                    if inner.is_null() {
+                        None
+                    } else {
+                        Some(NonNull(inner))
+                    }
+                }
+
+                pub fn as_ptr(&self) -> *mut T {
+                    self.0 as *mut T
                 }
             }
 
-            pub fn get(self) -> T {
-                self.0
+            impl<T> Copy for NonNull<T> {}
+            impl<T> Clone for NonNull<T> {
+                fn clone(&self) -> Self {
+                    *self
+                }
+            }
+
+            impl<T> fmt::Debug for NonNull<T> {
+                fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                    fmt::Pointer::fmt(&self.as_ptr(), f)
+                }
             }
         }
     }

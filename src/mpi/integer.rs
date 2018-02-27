@@ -8,7 +8,7 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_uint;
 
-use {Error, NonZero, Result};
+use {Error, NonNull, Result};
 use buffer::Buffer;
 use rand::Level;
 
@@ -22,7 +22,7 @@ pub enum Format {
     Hex = ffi::GCRYMPI_FMT_HEX as usize,
 }
 
-pub struct Integer(NonZero<ffi::gcry_mpi_t>);
+pub struct Integer(NonNull<ffi::gcry_mpi_t>);
 
 impl Drop for Integer {
     #[inline]

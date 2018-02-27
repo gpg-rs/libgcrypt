@@ -5,12 +5,12 @@ use std::str;
 
 use ffi;
 
-use {Error, NonZero, Result};
+use {Error, NonNull, Result};
 use rand::Level;
 
 #[derive(Debug)]
 pub struct Buffer {
-    buf: NonZero<*mut u8>,
+    buf: NonNull<*mut u8>,
     len: usize,
 }
 
@@ -18,7 +18,7 @@ impl Drop for Buffer {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_free(self.buf.get() as *mut _);
+            ffi::gcry_free(self.buf.as_ptr() as *mut _);
         }
     }
 }
@@ -27,7 +27,7 @@ impl Buffer {
     #[inline]
     pub unsafe fn from_raw(buf: *mut u8, len: usize) -> Buffer {
         Buffer {
-            buf: NonZero::new(buf).unwrap(),
+            buf: NonNull::<*mut u8>::new(buf).unwrap(),
             len: len,
         }
     }
@@ -89,17 +89,17 @@ impl Buffer {
 
     #[inline]
     pub fn is_secure(&self) -> bool {
-        unsafe { ffi::gcry_is_secure(self.buf.get() as *const _) != 0 }
+        unsafe { ffi::gcry_is_secure(self.buf.as_ptr() as *const _) != 0 }
     }
 
     #[inline]
     pub fn as_bytes(&self) -> &[u8] {
-        unsafe { slice::from_raw_parts(self.buf.get(), self.len) }
+        unsafe { slice::from_raw_parts(self.buf.as_ptr(), self.len) }
     }
 
     #[inline]
     pub fn as_mut_bytes(&mut self) -> &mut [u8] {
-        unsafe { slice::from_raw_parts_mut(self.buf.get(), self.len) }
+        unsafe { slice::from_raw_parts_mut(self.buf.as_ptr(), self.len) }
     }
 
     #[inline]

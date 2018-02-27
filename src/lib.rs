@@ -16,7 +16,7 @@
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
 #![deny(missing_debug_implementations)]
-#![cfg_attr(any(nightly, feature = "nightly"), feature(nonzero, allocator_api))]
+#![cfg_attr(any(nightly, feature = "nightly"), feature(allocator_api))]
 #[macro_use]
 extern crate bitflags;
 #[macro_use]
@@ -24,11 +24,11 @@ extern crate cfg_if;
 extern crate core;
 extern crate cstr_argument;
 #[macro_use]
+pub extern crate gpg_error as error;
+#[macro_use]
 extern crate lazy_static;
 extern crate libc;
 extern crate libgcrypt_sys as ffi;
-#[macro_use]
-pub extern crate gpg_error as error;
 
 use std::ffi::CStr;
 use std::ptr;
@@ -38,8 +38,8 @@ use std::sync::atomic::{AtomicBool, Ordering, ATOMIC_BOOL_INIT};
 use cstr_argument::CStrArgument;
 use libc::c_int;
 
-pub use error::{Error, Result};
 pub use buffer::Buffer;
+pub use error::{Error, Result};
 
 #[macro_use]
 mod utils;
@@ -161,12 +161,11 @@ pub fn is_initialized() -> bool {
     if INITIALIZED.load(Ordering::Acquire) {
         return true;
     }
-
     let _lock = CONTROL_LOCK.lock().unwrap();
     is_init_finished()
 }
 
-pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
+fn init_internal<F: FnOnce(&mut Initializer)>(fips: bool, f: F) -> Token {
     if INITIALIZED.load(Ordering::Acquire) {
         return Token(());
     }
@@ -180,32 +179,9 @@ pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
                     ffi::gcry_threads_pthread_shim(),
                 );
             }
-            assert!(!ffi::gcry_check_version(ptr::null()).is_null());
-        }
-        f(&mut Initializer(()));
-        unsafe {
-            ffi::gcry_control(ffi::GCRYCTL_INITIALIZATION_FINISHED, 0);
-        }
-    }
-    INITIALIZED.store(true, Ordering::Release);
-    Token(())
-}
-
-pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
-    if INITIALIZED.load(Ordering::Acquire) {
-        return Token(());
-    }
-
-    let _lock = CONTROL_LOCK.lock().unwrap();
-    if !is_init_finished() {
-        unsafe {
-            if cfg!(unix) {
-                ffi::gcry_control(
-                    ffi::GCRYCTL_SET_THREAD_CBS,
-                    ffi::gcry_threads_pthread_shim(),
-                );
+            if fips {
+                ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
             }
-            ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
             assert!(!ffi::gcry_check_version(ptr::null()).is_null());
         }
         f(&mut Initializer(()));
@@ -218,10 +194,19 @@ pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
 }
 
 #[inline]
+pub fn init<F: FnOnce(&mut Initializer)>(f: F) -> Token {
+    init_internal(false, f)
+}
+
+pub fn init_fips_mode<F: FnOnce(&mut Initializer)>(f: F) -> Token {
+    init_internal(true, f)
+}
+
+#[inline]
 pub fn get_token() -> Token {
     init(|x| {
-        x.disable_secmem();
+        x.enable_secure_rndpool().disable_secmem();
     })
 }
 
-type NonZero<T> = utils::NonZero<T>;
+type NonNull<T> = utils::NonNull<T>;

@@ -6,7 +6,7 @@ use std::str::Utf8Error;
 use ffi;
 use libc::c_int;
 
-use {NonZero, Result};
+use {NonNull, Result};
 use cstr_argument::CStrArgument;
 
 ffi_enum_wrapper! {
@@ -132,7 +132,7 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct Cipher(NonZero<ffi::gcry_cipher_hd_t>);
+pub struct Cipher(NonNull<ffi::gcry_cipher_hd_t>);
 
 impl Drop for Cipher {
     #[inline]

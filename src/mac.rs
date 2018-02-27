@@ -8,7 +8,7 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use {NonZero, Result};
+use {NonNull, Result};
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -103,7 +103,7 @@ bitflags! {
 }
 
 #[derive(Debug)]
-pub struct Mac(NonZero<ffi::gcry_mac_hd_t>);
+pub struct Mac(NonNull<ffi::gcry_mac_hd_t>);
 
 impl Drop for Mac {
     #[inline]
