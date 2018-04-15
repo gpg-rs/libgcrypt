@@ -6,8 +6,8 @@ use std::str::Utf8Error;
 use ffi;
 use libc::c_int;
 
-use {NonNull, Result};
 use cstr_argument::CStrArgument;
+use {NonNull, Result};
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -60,7 +60,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { ffi::gcry_cipher_test_algo(self.raw()) == 0 }
     }
 
@@ -153,7 +153,7 @@ impl Cipher {
 
     #[inline]
     pub fn with_flags(algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_cipher_open(

@@ -56,13 +56,13 @@ impl Point {
 
     #[inline]
     pub fn new(nbits: u32) -> Point {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits.into())) }
     }
 
     #[inline]
-    pub fn from(x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) -> Point {
-        let _ = ::get_token();
+    pub fn from_coords(x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) -> Point {
+        let _ = ::init_default();
         unsafe {
             let x = x.map_or(ptr::null_mut(), |v| v.into_raw());
             let y = y.map_or(ptr::null_mut(), |v| v.into_raw());
@@ -136,5 +136,26 @@ impl Point {
             ffi::gcry_mpi_ec_mul(self.as_raw(), n.as_raw(), self.as_raw(), ctx.as_raw());
         }
         self
+    }
+}
+
+impl Default for Point {
+    #[inline]
+    fn default() -> Self {
+        Self::zero()
+    }
+}
+
+impl From<(Integer, Integer, Integer)> for Point {
+    #[inline]
+    fn from((x, y, z): (Integer, Integer, Integer)) -> Self {
+        Self::from_coords(Some(x), Some(y), Some(z))
+    }
+}
+
+impl Into<(Integer, Integer, Integer)> for Point {
+    #[inline]
+    fn into(self) -> (Integer, Integer, Integer) {
+        self.into_coords()
     }
 }

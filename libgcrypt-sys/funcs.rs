@@ -26,14 +26,14 @@ extern "C" {
     pub fn gcry_control(cmd: gcry_ctl_cmds, ...) -> gcry_error_t;
 
     pub fn gcry_sexp_new(
-        retsexp: *mut gcry_sexp_t, buffer: *const c_void, length: size_t, autodetect: c_int
+        retsexp: *mut gcry_sexp_t, buffer: *const c_void, length: size_t, autodetect: c_int,
     ) -> gcry_error_t;
     pub fn gcry_sexp_create(
         retsexp: *mut gcry_sexp_t, buffer: *mut c_void, length: size_t, autodetect: c_int,
         freefnc: extern "C" fn(*mut c_void),
     ) -> gcry_error_t;
     pub fn gcry_sexp_sscan(
-        retsexp: *mut gcry_sexp_t, erroff: *mut size_t, buffer: *const c_char, length: size_t
+        retsexp: *mut gcry_sexp_t, erroff: *mut size_t, buffer: *const c_char, length: size_t,
     ) -> gcry_error_t;
     pub fn gcry_sexp_build(
         retsexp: *mut gcry_sexp_t, erroff: *mut size_t, format: *const c_char, ...
@@ -44,10 +44,10 @@ extern "C" {
     ) -> gcry_error_t;
     pub fn gcry_sexp_release(sexp: gcry_sexp_t);
     pub fn gcry_sexp_canon_len(
-        buffer: *const c_uchar, length: size_t, erroff: *mut size_t, errcode: *mut gcry_error_t
+        buffer: *const c_uchar, length: size_t, erroff: *mut size_t, errcode: *mut gcry_error_t,
     ) -> size_t;
     pub fn gcry_sexp_sprint(
-        sexp: gcry_sexp_t, mode: c_int, buffer: *mut c_void, maxlength: size_t
+        sexp: gcry_sexp_t, mode: c_int, buffer: *mut c_void, maxlength: size_t,
     ) -> size_t;
     pub fn gcry_sexp_dump(a: gcry_sexp_t);
     pub fn gcry_sexp_cons(a: gcry_sexp_t, b: gcry_sexp_t) -> gcry_sexp_t;
@@ -56,7 +56,7 @@ extern "C" {
     pub fn gcry_sexp_append(a: gcry_sexp_t, n: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_prepend(a: gcry_sexp_t, n: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_find_token(
-        list: gcry_sexp_t, tok: *const c_char, toklen: size_t
+        list: gcry_sexp_t, tok: *const c_char, toklen: size_t,
     ) -> gcry_sexp_t;
     pub fn gcry_sexp_length(list: gcry_sexp_t) -> c_int;
     pub fn gcry_sexp_nth(list: gcry_sexp_t, number: c_int) -> gcry_sexp_t;
@@ -64,10 +64,10 @@ extern "C" {
     pub fn gcry_sexp_cdr(list: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_cadr(list: gcry_sexp_t) -> gcry_sexp_t;
     pub fn gcry_sexp_nth_data(
-        list: gcry_sexp_t, number: c_int, datalen: *mut size_t
+        list: gcry_sexp_t, number: c_int, datalen: *mut size_t,
     ) -> *const c_char;
     pub fn gcry_sexp_nth_buffer(
-        list: gcry_sexp_t, number: c_int, rlength: *mut size_t
+        list: gcry_sexp_t, number: c_int, rlength: *mut size_t,
     ) -> *mut c_void;
     pub fn gcry_sexp_nth_string(list: gcry_sexp_t, number: c_int) -> *mut c_char;
     pub fn gcry_sexp_nth_mpi(list: gcry_sexp_t, number: c_int, mpifmt: c_int) -> gcry_mpi_t;
@@ -97,7 +97,7 @@ extern "C" {
         a: gcry_mpi_t,
     ) -> gcry_error_t;
     pub fn gcry_mpi_aprint(
-        format: gcry_mpi_format, buffer: *mut *mut c_uchar, nwritten: *mut size_t, a: gcry_mpi_t
+        format: gcry_mpi_format, buffer: *mut *mut c_uchar, nwritten: *mut size_t, a: gcry_mpi_t,
     ) -> gcry_error_t;
     pub fn gcry_mpi_dump(a: gcry_mpi_t);
     pub fn gcry_mpi_add(w: gcry_mpi_t, u: gcry_mpi_t, v: gcry_mpi_t);
@@ -111,7 +111,7 @@ extern "C" {
     pub fn gcry_mpi_mulm(w: gcry_mpi_t, u: gcry_mpi_t, v: gcry_mpi_t, m: gcry_mpi_t);
     pub fn gcry_mpi_mul_2exp(w: gcry_mpi_t, u: gcry_mpi_t, cnt: c_ulong);
     pub fn gcry_mpi_div(
-        q: gcry_mpi_t, r: gcry_mpi_t, dividend: gcry_mpi_t, divisor: gcry_mpi_t, round: c_int
+        q: gcry_mpi_t, r: gcry_mpi_t, dividend: gcry_mpi_t, divisor: gcry_mpi_t, round: c_int,
     );
     pub fn gcry_mpi_mod(r: gcry_mpi_t, dividend: gcry_mpi_t, divisor: gcry_mpi_t);
     pub fn gcry_mpi_powm(w: gcry_mpi_t, b: gcry_mpi_t, e: gcry_mpi_t, m: gcry_mpi_t);
@@ -122,42 +122,42 @@ extern "C" {
     pub fn gcry_mpi_point_copy(point: gcry_mpi_point_t) -> gcry_mpi_point_t;
     pub fn gcry_mpi_point_get(x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t, point: gcry_mpi_point_t);
     pub fn gcry_mpi_point_snatch_get(
-        x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t, point: gcry_mpi_point_t
+        x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t, point: gcry_mpi_point_t,
     );
     pub fn gcry_mpi_point_set(
-        point: gcry_mpi_point_t, x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t
+        point: gcry_mpi_point_t, x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t,
     ) -> gcry_mpi_point_t;
     pub fn gcry_mpi_point_snatch_set(
-        point: gcry_mpi_point_t, x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t
+        point: gcry_mpi_point_t, x: gcry_mpi_t, y: gcry_mpi_t, z: gcry_mpi_t,
     ) -> gcry_mpi_point_t;
     pub fn gcry_mpi_ec_new(
-        r_ctx: *mut gcry_ctx_t, keyparam: gcry_sexp_t, curvename: *const c_char
+        r_ctx: *mut gcry_ctx_t, keyparam: gcry_sexp_t, curvename: *const c_char,
     ) -> gcry_error_t;
     pub fn gcry_mpi_ec_get_mpi(name: *const c_char, ctx: gcry_ctx_t, copy: c_int) -> gcry_mpi_t;
     pub fn gcry_mpi_ec_get_point(
-        name: *const c_char, ctx: gcry_ctx_t, copy: c_int
+        name: *const c_char, ctx: gcry_ctx_t, copy: c_int,
     ) -> gcry_mpi_point_t;
     pub fn gcry_mpi_ec_set_mpi(
-        name: *const c_char, newvalue: gcry_mpi_t, ctx: gcry_ctx_t
+        name: *const c_char, newvalue: gcry_mpi_t, ctx: gcry_ctx_t,
     ) -> gcry_error_t;
     pub fn gcry_mpi_ec_set_point(
-        name: *const c_char, newvalue: gcry_mpi_point_t, ctx: gcry_ctx_t
+        name: *const c_char, newvalue: gcry_mpi_point_t, ctx: gcry_ctx_t,
     ) -> gcry_error_t;
     pub fn gcry_mpi_ec_decode_point(
-        result: gcry_mpi_point_t, value: gcry_mpi_t, ctx: gcry_ctx_t
+        result: gcry_mpi_point_t, value: gcry_mpi_t, ctx: gcry_ctx_t,
     ) -> gcry_error_t;
     pub fn gcry_mpi_ec_get_affine(
-        x: gcry_mpi_t, y: gcry_mpi_t, point: gcry_mpi_point_t, ctx: gcry_ctx_t
+        x: gcry_mpi_t, y: gcry_mpi_t, point: gcry_mpi_point_t, ctx: gcry_ctx_t,
     ) -> c_int;
     pub fn gcry_mpi_ec_dup(w: gcry_mpi_point_t, u: gcry_mpi_point_t, ctx: gcry_ctx_t);
     pub fn gcry_mpi_ec_add(
-        w: gcry_mpi_point_t, u: gcry_mpi_point_t, v: gcry_mpi_point_t, ctx: gcry_ctx_t
+        w: gcry_mpi_point_t, u: gcry_mpi_point_t, v: gcry_mpi_point_t, ctx: gcry_ctx_t,
     );
     pub fn gcry_mpi_ec_sub(
-        w: gcry_mpi_point_t, u: gcry_mpi_point_t, v: gcry_mpi_point_t, ctx: gcry_ctx_t
+        w: gcry_mpi_point_t, u: gcry_mpi_point_t, v: gcry_mpi_point_t, ctx: gcry_ctx_t,
     );
     pub fn gcry_mpi_ec_mul(
-        w: gcry_mpi_point_t, n: gcry_mpi_t, u: gcry_mpi_point_t, ctx: gcry_ctx_t
+        w: gcry_mpi_point_t, n: gcry_mpi_t, u: gcry_mpi_point_t, ctx: gcry_ctx_t,
     );
     pub fn gcry_mpi_ec_curve_point(w: gcry_mpi_point_t, ctx: gcry_ctx_t) -> c_int;
     pub fn gcry_mpi_get_nbits(a: gcry_mpi_t) -> c_uint;
@@ -176,17 +176,17 @@ extern "C" {
     pub fn gcry_mpi_get_flag(a: gcry_mpi_t, flag: gcry_mpi_flag) -> c_int;
 
     pub fn gcry_cipher_open(
-        handle: *mut gcry_cipher_hd_t, algo: c_int, mode: c_int, flags: c_uint
+        handle: *mut gcry_cipher_hd_t, algo: c_int, mode: c_int, flags: c_uint,
     ) -> gcry_error_t;
     pub fn gcry_cipher_close(handle: gcry_cipher_hd_t);
     pub fn gcry_cipher_ctl(
-        handle: gcry_cipher_hd_t, cmd: c_int, buffer: *mut c_void, buflen: size_t
+        handle: gcry_cipher_hd_t, cmd: c_int, buffer: *mut c_void, buflen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_info(
-        handle: gcry_cipher_hd_t, what: c_int, buffer: *mut c_void, nbytes: *mut size_t
+        handle: gcry_cipher_hd_t, what: c_int, buffer: *mut c_void, nbytes: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_algo_info(
-        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t
+        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_algo_name(algo: c_int) -> *const c_char;
     pub fn gcry_cipher_map_name(name: *const c_char) -> c_int;
@@ -202,52 +202,52 @@ extern "C" {
         inlen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_setkey(
-        handle: gcry_cipher_hd_t, key: *const c_void, keylen: size_t
+        handle: gcry_cipher_hd_t, key: *const c_void, keylen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_setiv(
-        handle: gcry_cipher_hd_t, iv: *const c_void, ivlen: size_t
+        handle: gcry_cipher_hd_t, iv: *const c_void, ivlen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_setctr(
-        handle: gcry_cipher_hd_t, ctr: *const c_void, ctrlen: size_t
+        handle: gcry_cipher_hd_t, ctr: *const c_void, ctrlen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_authenticate(
-        handle: gcry_cipher_hd_t, abuf: *const c_void, abuflen: size_t
+        handle: gcry_cipher_hd_t, abuf: *const c_void, abuflen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_gettag(
-        handle: gcry_cipher_hd_t, outtag: *mut c_void, taglen: size_t
+        handle: gcry_cipher_hd_t, outtag: *mut c_void, taglen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_cipher_checktag(
-        handle: gcry_cipher_hd_t, in_tag: *const c_void, taglen: size_t
+        handle: gcry_cipher_hd_t, in_tag: *const c_void, taglen: size_t,
     ) -> gcry_error_t;
 
     pub fn gcry_pk_encrypt(
-        result: *mut gcry_sexp_t, data: gcry_sexp_t, pkey: gcry_sexp_t
+        result: *mut gcry_sexp_t, data: gcry_sexp_t, pkey: gcry_sexp_t,
     ) -> gcry_error_t;
     pub fn gcry_pk_decrypt(
-        result: *mut gcry_sexp_t, data: gcry_sexp_t, skey: gcry_sexp_t
+        result: *mut gcry_sexp_t, data: gcry_sexp_t, skey: gcry_sexp_t,
     ) -> gcry_error_t;
     pub fn gcry_pk_sign(
-        result: *mut gcry_sexp_t, data: gcry_sexp_t, skey: gcry_sexp_t
+        result: *mut gcry_sexp_t, data: gcry_sexp_t, skey: gcry_sexp_t,
     ) -> gcry_error_t;
     pub fn gcry_pk_verify(
-        sigval: gcry_sexp_t, data: gcry_sexp_t, pkey: gcry_sexp_t
+        sigval: gcry_sexp_t, data: gcry_sexp_t, pkey: gcry_sexp_t,
     ) -> gcry_error_t;
     pub fn gcry_pk_testkey(key: gcry_sexp_t) -> gcry_error_t;
     pub fn gcry_pk_genkey(r_key: *mut gcry_sexp_t, s_parms: gcry_sexp_t) -> gcry_error_t;
     pub fn gcry_pk_ctl(cmd: c_int, buffer: *mut c_void, buflen: size_t) -> gcry_error_t;
     pub fn gcry_pk_algo_info(
-        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t
+        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_pk_algo_name(algorithm: c_int) -> *const c_char;
     pub fn gcry_pk_map_name(name: *const c_char) -> c_int;
     pub fn gcry_pk_get_nbits(key: gcry_sexp_t) -> c_uint;
     pub fn gcry_pk_get_keygrip(key: gcry_sexp_t, array: *mut c_uchar) -> *mut c_uchar;
     pub fn gcry_pk_get_curve(
-        key: gcry_sexp_t, iterator: c_int, r_nbits: *mut c_uint
+        key: gcry_sexp_t, iterator: c_int, r_nbits: *mut c_uint,
     ) -> *const c_char;
     pub fn gcry_pk_get_param(algo: c_int, name: *const c_char) -> gcry_sexp_t;
     pub fn gcry_pubkey_get_sexp(
-        r_sexp: *mut gcry_sexp_t, mode: c_int, ctx: gcry_ctx_t
+        r_sexp: *mut gcry_sexp_t, mode: c_int, ctx: gcry_ctx_t,
     ) -> gcry_error_t;
 
     pub fn gcry_md_open(h: *mut gcry_md_hd_t, algo: c_int, flags: c_uint) -> gcry_error_t;
@@ -256,45 +256,45 @@ extern "C" {
     pub fn gcry_md_copy(new: *mut gcry_md_hd_t, old: gcry_md_hd_t) -> gcry_error_t;
     pub fn gcry_md_reset(h: gcry_md_hd_t);
     pub fn gcry_md_ctl(
-        h: gcry_md_hd_t, cmd: c_int, buffer: *mut c_void, buflen: size_t
+        h: gcry_md_hd_t, cmd: c_int, buffer: *mut c_void, buflen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_md_write(h: gcry_md_hd_t, buffer: *const c_void, length: size_t);
     pub fn gcry_md_read(h: gcry_md_hd_t, algo: c_int) -> *mut u8;
     pub fn gcry_md_extract(
-        hd: gcry_md_hd_t, algo: c_int, buffer: *mut c_void, length: size_t
+        hd: gcry_md_hd_t, algo: c_int, buffer: *mut c_void, length: size_t,
     ) -> gcry_error_t;
     pub fn gcry_md_hash_buffer(
-        algo: c_int, digest: *mut c_void, buffer: *const c_void, length: size_t
+        algo: c_int, digest: *mut c_void, buffer: *const c_void, length: size_t,
     );
     pub fn gcry_md_get_algo(h: gcry_md_hd_t) -> c_int;
     pub fn gcry_md_get_algo_dlen(algo: c_int) -> c_uint;
     pub fn gcry_md_is_enabled(a: gcry_md_hd_t, algo: c_int) -> c_int;
     pub fn gcry_md_is_secure(a: gcry_md_hd_t) -> c_int;
     pub fn gcry_md_info(
-        h: gcry_md_hd_t, what: c_int, buffer: *mut c_void, nbytes: *mut size_t
+        h: gcry_md_hd_t, what: c_int, buffer: *mut c_void, nbytes: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_md_algo_info(
-        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t
+        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_md_algo_name(algo: c_int) -> *const c_char;
     pub fn gcry_md_map_name(name: *const c_char) -> c_int;
     pub fn gcry_md_setkey(h: gcry_md_hd_t, key: *const c_void, keylen: size_t) -> gcry_error_t;
 
     pub fn gcry_mac_open(
-        handle: *mut gcry_mac_hd_t, algo: c_int, flags: c_uint, ctx: gcry_ctx_t
+        handle: *mut gcry_mac_hd_t, algo: c_int, flags: c_uint, ctx: gcry_ctx_t,
     ) -> gcry_error_t;
     pub fn gcry_mac_close(h: gcry_mac_hd_t);
     pub fn gcry_mac_ctl(
-        h: gcry_mac_hd_t, cmd: c_int, buffer: *mut c_void, buflen: size_t
+        h: gcry_mac_hd_t, cmd: c_int, buffer: *mut c_void, buflen: size_t,
     ) -> gcry_error_t;
     pub fn gcry_mac_algo_info(
-        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t
+        algo: c_int, what: c_int, buffer: *mut c_void, nbytes: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_mac_setkey(h: gcry_mac_hd_t, key: *const c_void, keylen: size_t) -> gcry_error_t;
     pub fn gcry_mac_setiv(h: gcry_mac_hd_t, iv: *const c_void, ivlen: size_t) -> gcry_error_t;
     pub fn gcry_mac_write(h: gcry_mac_hd_t, buffer: *const c_void, length: size_t) -> gcry_error_t;
     pub fn gcry_mac_read(
-        h: gcry_mac_hd_t, buffer: *mut c_void, buflen: *mut size_t
+        h: gcry_mac_hd_t, buffer: *mut c_void, buflen: *mut size_t,
     ) -> gcry_error_t;
     pub fn gcry_mac_verify(h: gcry_mac_hd_t, buffer: *const c_void, buflen: size_t)
         -> gcry_error_t;
@@ -312,7 +312,7 @@ extern "C" {
 
     pub fn gcry_randomize(buffer: *mut c_void, length: size_t, level: gcry_random_level_t);
     pub fn gcry_random_add_bytes(
-        buffer: *const c_void, length: size_t, quality: c_int
+        buffer: *const c_void, length: size_t, quality: c_int,
     ) -> gcry_error_t;
     pub fn gcry_random_bytes(nbytes: size_t, level: gcry_random_level_t) -> *mut c_void;
     pub fn gcry_random_bytes_secure(nbytes: size_t, level: gcry_random_level_t) -> *mut c_void;
@@ -325,7 +325,7 @@ extern "C" {
         random_level: gcry_random_level_t, flags: c_uint,
     ) -> gcry_error_t;
     pub fn gcry_prime_group_generator(
-        r_g: *mut gcry_mpi_t, prime: gcry_mpi_t, factors: *mut gcry_mpi_t, start_g: gcry_mpi_t
+        r_g: *mut gcry_mpi_t, prime: gcry_mpi_t, factors: *mut gcry_mpi_t, start_g: gcry_mpi_t,
     ) -> gcry_error_t;
     pub fn gcry_prime_release_factors(factors: *mut gcry_mpi_t);
     pub fn gcry_prime_check(x: gcry_mpi_t, flags: c_uint) -> gcry_error_t;

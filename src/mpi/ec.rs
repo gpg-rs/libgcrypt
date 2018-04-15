@@ -7,9 +7,9 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use {NonNull, Result};
 use pkey::Algorithm;
 use sexp::SExpression;
+use {NonNull, Result};
 
 use super::{Integer, Point};
 
@@ -54,7 +54,7 @@ pub struct Curves<'a> {
 impl<'a> Curves<'a> {
     #[inline]
     pub fn all() -> Curves<'static> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         Curves { key: None, idx: 0 }
     }
 

@@ -66,7 +66,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { ffi::gcry_md_test_algo(self.raw()) == 0 }
     }
 
@@ -122,7 +122,7 @@ impl MessageDigest {
 
     #[inline]
     pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_md_open(&mut handle, algo.raw(), flags.bits()));
@@ -231,7 +231,7 @@ impl Write for MessageDigest {
 pub fn hash(algo: Algorithm, src: &[u8], dst: &mut [u8]) {
     assert!(algo.is_available());
     assert!(dst.len() >= algo.digest_len());
-    let _ = ::get_token();
+    let _ = ::init_default();
     unsafe {
         ffi::gcry_md_hash_buffer(
             algo.raw(),

@@ -8,9 +8,9 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_uint;
 
-use {Error, NonNull, Result};
 use buffer::Buffer;
 use rand::Level;
+use {Error, NonNull, Result};
 
 #[repr(usize)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -62,26 +62,26 @@ impl Integer {
 
     #[inline]
     pub fn new(nbits: u32) -> Integer {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { Integer::from_raw(ffi::gcry_mpi_new(nbits.into())) }
     }
 
     #[inline]
     pub fn new_secure(nbits: u32) -> Integer {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { Integer::from_raw(ffi::gcry_mpi_snew(nbits.into())) }
     }
 
     #[inline]
     pub fn from_uint(n: u32) -> Integer {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n.into())) }
     }
 
     #[inline]
     pub fn from_bytes<B: AsRef<[u8]>>(format: Format, bytes: B) -> Result<Integer> {
         let bytes = bytes.as_ref();
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             let mut raw = ptr::null_mut();
             let len = if format != Format::Hex {
@@ -314,6 +314,20 @@ impl Integer {
     #[inline]
     pub fn lcm(self, other: &Integer) -> Integer {
         (self.clone() * other) / self.gcd(other)
+    }
+}
+
+impl Default for Integer {
+    #[inline]
+    fn default() -> Self {
+        Self::zero()
+    }
+}
+
+impl From<u32> for Integer {
+    #[inline]
+    fn from(x: u32) -> Self {
+        Self::from_uint(x)
     }
 }
 

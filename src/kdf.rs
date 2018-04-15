@@ -19,9 +19,9 @@ ffi_enum_wrapper! {
 
 #[inline]
 pub fn derive(
-    algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8]
+    algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8],
 ) -> Result<()> {
-    let _ = ::get_token();
+    let _ = ::init_default();
     unsafe {
         let salt = salt.map_or((ptr::null(), 0), |s| (s.as_ptr(), s.len()));
         return_err!(ffi::gcry_kdf_derive(
@@ -41,7 +41,7 @@ pub fn derive(
 
 #[inline]
 pub fn s2k_derive(
-    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8]
+    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8],
 ) -> Result<()> {
     match (iter, salt.is_some()) {
         (x, true) if x != 0 => derive(
@@ -73,7 +73,7 @@ pub fn s2k_derive(
 
 #[inline]
 pub fn pbkdf1_derive(
-    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8]
+    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8],
 ) -> Result<()> {
     derive(
         Algorithm::Pbkdf1,
@@ -87,7 +87,7 @@ pub fn pbkdf1_derive(
 
 #[inline]
 pub fn pbkdf2_derive(
-    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8]
+    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8],
 ) -> Result<()> {
     derive(
         Algorithm::Pbkdf2,

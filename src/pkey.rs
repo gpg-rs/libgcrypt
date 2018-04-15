@@ -7,9 +7,9 @@ use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use Result;
 use mpi::ec::{Curve, Curves};
 use sexp::SExpression;
+use Result;
 
 ffi_enum_wrapper! {
     pub enum Algorithm: c_int {
@@ -40,7 +40,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { ffi::gcry_pk_test_algo(self.raw()) == 0 }
     }
 

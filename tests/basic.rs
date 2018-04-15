@@ -1,21 +1,24 @@
 extern crate gcrypt;
 
-use gcrypt::{Error, Token};
-use gcrypt::cipher::{self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags, Mode as CipherMode};
+use gcrypt::cipher::{
+    self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags, Mode as CipherMode,
+};
 use gcrypt::digest::{self, Algorithm as DigestAlgorithm, Flags as DigestFlags, MessageDigest};
 use gcrypt::kdf;
 use gcrypt::pkey::{self, Algorithm as KeyAlgorithm};
 use gcrypt::sexp::{self, SExpression};
+use gcrypt::{Error, Gcrypt};
 
-fn setup() -> Token {
-    gcrypt::init(|x| {
+fn setup() -> Gcrypt {
+    gcrypt::init::<(), _>(|x| {
         x.disable_secmem().enable_quick_random();
-    })
+        Ok(())
+    }).unwrap()
 }
 
 #[test]
 fn test_self_tests() {
-    assert!(setup().run_self_tests());
+    assert_eq!(setup().run_self_tests(), Ok(()));
 }
 
 fn check_cipher(algo: CipherAlgorithm, mode: CipherMode, flags: cipher::Flags) {
@@ -1751,7 +1754,7 @@ const FLAG_SIGN: usize = 2;
 const FLAG_GRIP: usize = 4;
 
 fn verify_signature(
-    pkey: &SExpression, hash: &SExpression, bad_hash: &SExpression, sig: &SExpression
+    pkey: &SExpression, hash: &SExpression, bad_hash: &SExpression, sig: &SExpression,
 ) {
     assert_eq!(pkey::verify(pkey, hash, sig), Ok(()));
     assert_eq!(
@@ -2130,7 +2133,7 @@ fn check_pkey_crypt(algo: pkey::Algorithm, skey: &SExpression, pkey: &SExpressio
 }
 
 fn check_pkey(
-    algo: pkey::Algorithm, flags: usize, skey: &SExpression, pkey: &SExpression, grip: &[u8]
+    algo: pkey::Algorithm, flags: usize, skey: &SExpression, pkey: &SExpression, grip: &[u8],
 ) {
     if (flags & FLAG_SIGN) == FLAG_SIGN {
         if algo == KeyAlgorithm::Ecdsa {

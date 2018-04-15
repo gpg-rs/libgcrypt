@@ -5,8 +5,8 @@ use std::str;
 
 use ffi;
 
-use {Error, NonNull, Result};
 use rand::Level;
+use {Error, NonNull, Result};
 
 #[derive(Debug)]
 pub struct Buffer {
@@ -34,7 +34,7 @@ impl Buffer {
 
     #[inline]
     pub fn new(len: usize) -> Result<Buffer> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             ffi::gcry_malloc(len)
                 .as_mut()
@@ -45,7 +45,7 @@ impl Buffer {
 
     #[inline]
     pub fn new_secure(len: usize) -> Result<Buffer> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             ffi::gcry_malloc_secure(len)
                 .as_mut()
@@ -67,7 +67,7 @@ impl Buffer {
 
     #[inline]
     pub fn random(len: usize, level: Level) -> Result<Buffer> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             ffi::gcry_random_bytes(len, level.raw())
                 .as_mut()
@@ -78,7 +78,7 @@ impl Buffer {
 
     #[inline]
     pub fn random_secure(len: usize, level: Level) -> Result<Buffer> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             ffi::gcry_random_bytes_secure(len, level.raw())
                 .as_mut()
@@ -98,7 +98,7 @@ impl Buffer {
     }
 
     #[inline]
-    pub fn as_mut_bytes(&mut self) -> &mut [u8] {
+    pub fn as_bytes_mut(&mut self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.buf.as_ptr(), self.len) }
     }
 
@@ -120,7 +120,7 @@ impl ops::Deref for Buffer {
 impl ops::DerefMut for Buffer {
     #[inline]
     fn deref_mut(&mut self) -> &mut [u8] {
-        self.as_mut_bytes()
+        self.as_bytes_mut()
     }
 }
 
@@ -134,6 +134,6 @@ impl AsRef<[u8]> for Buffer {
 impl AsMut<[u8]> for Buffer {
     #[inline]
     fn as_mut(&mut self) -> &mut [u8] {
-        self.as_mut_bytes()
+        self.as_bytes_mut()
     }
 }

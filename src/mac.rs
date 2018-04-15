@@ -65,7 +65,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe { ffi::gcry_mac_test_algo(self.raw()) == 0 }
     }
 
@@ -124,7 +124,7 @@ impl Mac {
 
     #[inline]
     pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<Mac> {
-        let _ = ::get_token();
+        let _ = ::init_default();
         unsafe {
             let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_mac_open(

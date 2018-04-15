@@ -7,9 +7,9 @@ use std::str::{self, FromStr, Utf8Error};
 use ffi;
 use libc::c_int;
 
-use {Error, NonNull, Result};
-use mpi::Integer;
 use mpi::integer::Format as IntegerFormat;
+use mpi::Integer;
+use {Error, NonNull, Result};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Format {
@@ -35,8 +35,8 @@ impl SExpression {
 
     #[inline]
     pub fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Result<SExpression> {
+        let _ = ::init_default();
         let bytes = bytes.as_ref();
-        let _ = ::get_token();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
             return_err!(ffi::gcry_sexp_sscan(
@@ -221,7 +221,7 @@ impl<'a> Iterator for Elements<'a> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.first = if (n as u64) < (self.last as u64) {
+        self.first = if (n as u64) < ((self.last - self.first) as u64) {
             self.first + (n as c_int)
         } else {
             self.last
@@ -252,3 +252,5 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
         }
     }
 }
+
+impl<'a> ExactSizeIterator for Elements<'a> {}
