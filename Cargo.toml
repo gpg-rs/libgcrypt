@@ -24,7 +24,7 @@ semver = "0.9"
 libc = "0.2"
 bitflags = "1"
 lazy_static = "1"
-cstr-argument = "0.0.2"
+cstr-argument = "0.1"
 gpg-error = "0.3.1"
 
 [dependencies.libgcrypt-sys]
