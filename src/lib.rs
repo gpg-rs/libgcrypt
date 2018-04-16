@@ -17,7 +17,6 @@
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
 #![deny(missing_debug_implementations)]
-#![cfg_attr(any(nightly, feature = "nightly"), feature(allocator_api))]
 #[macro_use]
 extern crate bitflags;
 extern crate cstr_argument;
@@ -42,8 +41,6 @@ pub use error::{Error, Result};
 
 #[macro_use]
 mod utils;
-#[cfg(any(nightly, feature = "nightly"))]
-pub mod alloc;
 pub mod buffer;
 pub mod cipher;
 pub mod digest;
@@ -151,7 +148,7 @@ where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
     let _lock = CONTROL_LOCK.lock();
     if !is_init_finished() {
         unsafe {
-            if is_init_started() {
+            if !is_init_started() {
                 if cfg!(unix) {
                     ffi::gcry_control(
                         ffi::GCRYCTL_SET_THREAD_CBS,
