@@ -3,16 +3,16 @@ name = "libgcrypt-sys"
 version = "0.5.4"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
-description = "Raw bindings for libgcrypt"
-repository = "https://github.com/johnschug/rust-gcrypt"
+repository = "https://github.com/gpg-rs/libgcrypt/libgcrypt-sys"
 documentation = "https://docs.rs/libgcrypt-sys"
 categories = ["cryptography", "external-ffi-bindings"]
 keywords = ["crypto", "cryptography"]
+description = "Raw bindings for libgcrypt"
 links = "gcrypt"
 build = "build.rs"
 
 [badges]
-travis-ci = { repository = "johnschug/rust-gcrypt" }
+travis-ci = { repository = "gpg-rs/libgcrypt" }
 appveyor = { repository = "johnschug/rust-gcrypt" }
 maintenance = { status = "experimental" }
 

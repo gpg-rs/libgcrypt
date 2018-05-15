@@ -3,14 +3,14 @@ name = "gcrypt"
 version = "0.5.4"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
-repository = "https://github.com/johnschug/rust-gcrypt"
+repository = "https://github.com/gpg-rs/libgcrypt"
 documentation = "https://docs.rs/gcrypt"
 categories = ["cryptography", "api-bindings"]
 keywords = ["crypto", "cryptography"]
 description = "Libgcrypt bindings for Rust"
 
 [badges]
-travis-ci = { repository = "johnschug/rust-gcrypt" }
+travis-ci = { repository = "gpg-rs/libgcrypt" }
 appveyor = { repository = "johnschug/rust-gcrypt" }
 maintenance = { status = "experimental" }
 
@@ -31,5 +31,9 @@ gpg-error = "0.3.1"
 path = "libgcrypt-sys"
 version = "0.5.4"
 features = ["shim"]
+
+[patch.crates-io]
+gpg-error = { git = "https://github.com/gpg-rs/libgpg-error.git" }
+libgpg-error-sys = { git = "https://github.com/gpg-rs/libgpg-error.git" }
 
 [workspace]
