@@ -1,5 +1,5 @@
 environment:
-  PATH: '%PATH%;%USERPROFILE%\.cargo\bin'
+  PATH: '%PATH%;C:\msys64\usr\bin;%USERPROFILE%\.cargo\bin'
   matrix:
     - TARGET: x86_64-pc-windows-gnu
       MSYS2_BITS: 64
