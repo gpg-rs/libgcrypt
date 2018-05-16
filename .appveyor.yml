@@ -1,0 +1,19 @@
+environment:
+  PATH: '%PATH%;%USERPROFILE%\.cargo\bin'
+  matrix:
+    - TARGET: x86_64-pc-windows-gnu
+      MSYS2_BITS: 64
+    - TARGET: i686-pc-windows-gnu
+      MSYS2_BITS: 32
+skip_tags: true
+install:
+  - git submodule update --init --recursive
+  - appveyor-retry appveyor DownloadFile https://win.rustup.rs/ -FileName rustup-init.exe
+  - rustup-init.exe -y --default-host %TARGET%
+  - if defined MSYS2_BITS set PATH=%PATH%;C:\msys64\mingw%MSYS2_BITS%\bin
+  - rustc -V
+  - cargo -V
+build: false
+test_script:
+  - cargo build --verbose --verbose
+  - cargo test --verbose --no-fail-fast

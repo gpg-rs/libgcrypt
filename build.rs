@@ -1,22 +1,22 @@
-extern crate semver;
-
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
 use std::path::PathBuf;
 
-use semver::Version;
-
 fn main() {
     let (mut major, mut minor) = if let Ok(v) = env::var("DEP_GCRYPT_VERSION") {
-        let sys_version = Version::parse(&v).unwrap();
-        (sys_version.major, sys_version.minor)
+        let mut components = v.trim().split('.').scan((), |_, x| x.parse::<u8>().ok()).fuse();
+        match (components.next(), components.next()) {
+            (Some(major), Some(minor)) => (major, minor),
+            _ => (1, 5),
+        }
     } else {
         (1, 5)
     };
 
     let path = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let mut output = File::create(path.join("version.rs")).unwrap();
+    writeln!(output, "pub const MIN_VERSION: &str = \"{}.{}.0\\0\";", major, minor).unwrap();
     writeln!(
         output,
         "#[macro_export]\nmacro_rules! require_gcrypt_ver {{\n\

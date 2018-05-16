@@ -158,8 +158,11 @@ where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
                 if fips {
                     ffi::gcry_control(ffi::GCRYCTL_FORCE_FIPS_MODE, 0);
                 }
-                assert!(!ffi::gcry_check_version(ptr::null()).is_null());
             }
+            assert!(
+                !ffi::gcry_check_version(utils::MIN_VERSION.as_ptr() as *const _).is_null(),
+                "The library linked is not the correct version"
+                );
         }
         f(&mut Initializer(()))?;
         unsafe {

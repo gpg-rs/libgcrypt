@@ -6,30 +6,28 @@ matrix:
       before_install:
         - brew install gettext
         - brew link gettext --force
-    - os: linux
-      rust: stable
+    - env:
+        - CARGO_FLAGS=--no-default-features
       addons:
         apt:
           packages:
             - libgcrypt11-dev
-    - os: linux
-      rust: stable
-      env:
+    - env:
         - GETTEXT_VERSION=0.19.8.1
       before_install:
         - .travis/install-gettext.sh $GETTEXT_VERSION
-    - os: linux
-      rust: nightly
+    - rust: nightly
       env:
         - GETTEXT_VERSION=0.19.8.1
+        - CARGO_FLAGS="--features nightly"
       before_install:
         - .travis/install-gettext.sh $GETTEXT_VERSION
-      script:
-        - cargo build --features nightly --verbose --verbose
-        - cargo test --features nightly --no-fail-fast
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
 script:
-  - cargo build --verbose --verbose
-  - cargo test --no-fail-fast
+  - cargo build --verbose --verbose $CARGO_FLAGS
+  - cargo test --verbose --no-fail-fast $CARGO_FLAGS
 branches:
   except:
     - /^v[0-9]/

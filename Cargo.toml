@@ -15,22 +15,22 @@ appveyor = { repository = "johnschug/rust-gcrypt" }
 maintenance = { status = "experimental" }
 
 [features]
+default = ["bundled"]
+bundled = ["libgcrypt-sys/bundled", "gpg-error/bundled"]
 nightly = []
-
-[build-dependencies]
-semver = "0.9"
 
 [dependencies]
 libc = "0.2"
 bitflags = "1"
 lazy_static = "1"
 cstr-argument = "0.1"
-gpg-error = "0.3.1"
+gpg-error = { version = "0.3.1", default-features = false }
 
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"
 version = "0.5.4"
 features = ["shim"]
+default-features = false
 
 [patch.crates-io]
 gpg-error = { git = "https://github.com/gpg-rs/libgpg-error.git" }
