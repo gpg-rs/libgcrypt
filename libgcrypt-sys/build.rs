@@ -34,13 +34,15 @@ fn main() {
 fn build_shim(config: &Config) -> Result<()> {
     let mut build = cc::Build::new();
     for path in &config.include_dir {
-        build.include(path);
+        if path.exists() {
+            build.include(path);
+        }
     }
     build
         .flag("-Wno-deprecated-declarations")
         .file("shim.c")
         .try_compile("libgcrypt_shim.a")
-        .or(Err(()))
+        .context("unable to build shim")
 }
 
 #[cfg(not(feature = "shim"))]
