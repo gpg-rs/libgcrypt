@@ -39,8 +39,8 @@ fn build_shim(config: &Config) -> Result<()> {
         }
     }
     build
-        .flag("-Wno-deprecated-declarations")
         .file("shim.c")
+        .flag_if_supported("-Wno-deprecated-declarations")
         .try_compile("libgcrypt_shim.a")
         .context("unable to build shim")
 }
@@ -86,6 +86,7 @@ fn build(proj: &Project) -> Result<Config> {
     let mut config = build.config();
     config.parse_libtool_file(proj.out_dir.join("lib/libgcrypt.la"))?;
     config.try_detect_version("gcrypt.h", "GCRYPT_VERSION")?;
+    config.include_dir.insert(gpgerror_root.join("include"));
     build_shim(&config)?;
     Ok(config)
 }
