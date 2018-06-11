@@ -30,7 +30,7 @@ Put this in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-gcrypt = "0.5"
+gcrypt = "0.6"
 ```
 
 And this in your crate root:
