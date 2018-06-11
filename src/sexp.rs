@@ -176,7 +176,8 @@ impl fmt::Debug for SExpression {
         use std::fmt::Write;
 
         write!(f, "SExpression(\"")?;
-        for b in self.to_bytes(Format::Advanced)
+        for b in self
+            .to_bytes(Format::Advanced)
             .into_iter()
             .flat_map(|b| ascii::escape_default(b))
         {

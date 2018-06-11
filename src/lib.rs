@@ -162,7 +162,7 @@ where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
             assert!(
                 !ffi::gcry_check_version(utils::MIN_VERSION.as_ptr() as *const _).is_null(),
                 "The library linked is not the correct version"
-                );
+            );
         }
         f(&mut Initializer(()))?;
         unsafe {

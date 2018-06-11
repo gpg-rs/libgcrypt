@@ -18,7 +18,7 @@ fn main() {
             }
         }
 
-        if let Some(path) = get_env(proj.prefix.clone() + "CONFIG") {
+        if let Some(path) = get_env(proj.prefix.clone() + "_CONFIG") {
             return try_config(&proj, path);
         }
 
@@ -69,16 +69,16 @@ fn build(proj: &Project) -> Result<Config> {
         return Err(());
     }
 
-    let gpgerror_root = PathBuf::from(env::var_os("DEP_GPG_ERROR_ROOT").ok_or(())?);
+    let gpgerror_root = env::var_os("DEP_GPG_ERROR_ROOT").map(PathBuf::from);
     let build = proj.new_build("libgcrypt")?;
     run(Command::new("sh").current_dir(&build.src).arg("autogen.sh"))?;
     let mut cmd = build.configure_cmd()?;
     cmd.arg("--disable-doc");
-    cmd.arg({
+    if let Some(p) = gpgerror_root.as_ref() {
         let mut s = OsString::from("--with-libgpg-error-prefix=");
-        s.push(msys_compatible(&gpgerror_root)?);
-        s
-    });
+        s.push(msys_path(&p)?);
+        cmd.arg(s);
+    }
     run(cmd)?;
     run(build.make_cmd())?;
     run(build.make_cmd().arg("install"))?;
@@ -86,7 +86,9 @@ fn build(proj: &Project) -> Result<Config> {
     let mut config = build.config();
     config.parse_libtool_file(proj.out_dir.join("lib/libgcrypt.la"))?;
     config.try_detect_version("gcrypt.h", "GCRYPT_VERSION")?;
-    config.include_dir.insert(gpgerror_root.join("include"));
+    if let Some(p) = gpgerror_root {
+        config.include_dir.insert(p.join("include"));
+    }
     build_shim(&config)?;
     Ok(config)
 }
