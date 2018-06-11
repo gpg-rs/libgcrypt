@@ -78,7 +78,7 @@ impl SExpression {
     }
 
     #[inline]
-    pub fn elements(&self) -> Elements {
+    pub fn elements(&self) -> Elements<'_> {
         unsafe {
             Elements {
                 sexp: self,
@@ -255,3 +255,4 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
 }
 
 impl<'a> ExactSizeIterator for Elements<'a> {}
+impl<'a> ::std::iter::FusedIterator for Elements<'a> {}

@@ -96,10 +96,14 @@ impl<'a> Iterator for Curves<'a> {
 
     #[inline]
     fn nth(&mut self, n: usize) -> Option<Curve> {
-        self.idx = self.idx.saturating_add(n as c_int);
+        if self.idx >= 0 {
+            self.idx = self.idx.saturating_add(n as c_int);
+        }
         self.next()
     }
 }
+
+impl<'a> ::std::iter::FusedIterator for Curves<'a> {}
 
 #[derive(Debug)]
 pub struct Context(NonNull<ffi::gcry_ctx_t>);
