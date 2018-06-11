@@ -1,7 +1,6 @@
 # libgcrypt-rs
 
 [![Build Status](https://travis-ci.org/gpg-rs/libgcrypt.svg?branch=master)](https://travis-ci.org/gpg-rs/libgcrypt)
-[![Build status](https://ci.appveyor.com/api/projects/status/bbdwaqw7xo6hbp76/branch/master?svg=true)](https://ci.appveyor.com/project/johnschug/rust-gcrypt/branch/master)
 [![LGPL-2.1 licensed](https://img.shields.io/badge/license-LGPL--2.1-blue.svg)](./COPYING)
 [![crates.io](https://meritbadge.herokuapp.com/gcrypt)](https://crates.io/crates/gcrypt)
 
