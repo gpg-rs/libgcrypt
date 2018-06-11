@@ -11,7 +11,6 @@ description = "Libgcrypt bindings for Rust"
 
 [badges]
 travis-ci = { repository = "gpg-rs/libgcrypt" }
-appveyor = { repository = "johnschug/rust-gcrypt" }
 maintenance = { status = "experimental" }
 
 [features]
@@ -24,16 +23,12 @@ libc = "0.2"
 bitflags = "1"
 lazy_static = "1"
 cstr-argument = "0.1"
-gpg-error = { version = "0.3.1", default-features = false }
+gpg-error = { version = "0.4", default-features = false }
 
 [dependencies.libgcrypt-sys]
 path = "libgcrypt-sys"
 version = "0.5.4"
 features = ["shim"]
 default-features = false
-
-[patch.crates-io]
-gpg-error = { git = "https://github.com/gpg-rs/libgpg-error.git" }
-libgpg-error-sys = { git = "https://github.com/gpg-rs/libgpg-error.git" }
 
 [workspace]
