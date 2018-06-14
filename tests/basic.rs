@@ -10,9 +10,9 @@ use gcrypt::sexp::{self, SExpression};
 use gcrypt::{Error, Gcrypt};
 
 fn setup() -> Gcrypt {
-    gcrypt::init::<(), _>(|x| {
+    gcrypt::init(|x| {
         x.disable_secmem().enable_quick_random();
-        Ok(())
+        Ok::<(), ()>(())
     }).unwrap()
 }
 

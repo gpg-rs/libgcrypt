@@ -79,7 +79,7 @@ impl Integer {
     }
 
     #[inline]
-    pub fn from_bytes<B: AsRef<[u8]>>(format: Format, bytes: B) -> Result<Integer> {
+    pub fn from_bytes(format: Format, bytes: impl AsRef<[u8]>) -> Result<Integer> {
         let bytes = bytes.as_ref();
         let _ = ::init_default();
         unsafe {
@@ -103,7 +103,7 @@ impl Integer {
     }
 
     #[inline]
-    pub fn from_str<S: CStrArgument>(s: S) -> Result<Integer> {
+    pub fn from_str(s: impl CStrArgument) -> Result<Integer> {
         let s = s.into_cstr();
         Integer::from_bytes(Format::Hex, s.as_ref().to_bytes_with_nul())
     }
@@ -332,7 +332,7 @@ impl From<u32> for Integer {
 }
 
 impl fmt::Debug for Integer {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let mut s = f.debug_struct("Integer");
         s.field("raw", &self.0);
         if let Ok(bytes) = self.to_bytes(Format::Hex) {

@@ -144,7 +144,7 @@ impl Context {
     }
 
     #[inline]
-    pub fn get_integer<S: CStrArgument>(&self, name: S) -> Option<Integer> {
+    pub fn get_integer(&self, name: impl CStrArgument) -> Option<Integer> {
         let name = name.into_cstr();
         unsafe {
             ffi::gcry_mpi_ec_get_mpi(name.as_ref().as_ptr(), self.as_raw(), 1)
@@ -154,7 +154,7 @@ impl Context {
     }
 
     #[inline]
-    pub fn set_integer<S: CStrArgument>(&mut self, name: S, x: &Integer) -> Result<()> {
+    pub fn set_integer(&mut self, name: impl CStrArgument, x: &Integer) -> Result<()> {
         let name = name.into_cstr();
         unsafe {
             return_err!(ffi::gcry_mpi_ec_set_mpi(

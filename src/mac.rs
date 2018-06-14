@@ -53,7 +53,7 @@ ffi_enum_wrapper! {
 
 impl Algorithm {
     #[inline]
-    pub fn from_name<S: CStrArgument>(name: S) -> Option<Algorithm> {
+    pub fn from_name(name: impl CStrArgument) -> Option<Algorithm> {
         let name = name.into_cstr();
         let result = unsafe { ffi::gcry_mac_map_name(name.as_ref().as_ptr()) };
         if result != 0 {
@@ -138,7 +138,7 @@ impl Mac {
     }
 
     #[inline]
-    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
+    pub fn set_key(&mut self, key: impl AsRef<[u8]>) -> Result<()> {
         let key = key.as_ref();
         unsafe {
             return_err!(ffi::gcry_mac_setkey(
@@ -151,7 +151,7 @@ impl Mac {
     }
 
     #[inline]
-    pub fn set_iv<B: AsRef<[u8]>>(&mut self, iv: B) -> Result<()> {
+    pub fn set_iv(&mut self, iv: impl AsRef<[u8]>) -> Result<()> {
         let iv = iv.as_ref();
         unsafe {
             return_err!(ffi::gcry_mac_setiv(

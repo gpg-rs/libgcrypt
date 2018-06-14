@@ -7,9 +7,9 @@
 //! An example:
 //!
 //! ```rust
-//! let gcrypt = gcrypt::init::<(), _>(|x| {
+//! let gcrypt = gcrypt::init(|x| {
 //!     x.disable_secmem();
-//!     Ok(())
+//!     Ok::<_, ()>(())
 //! });
 //! ```
 //!
@@ -63,7 +63,7 @@ pub struct Initializer(());
 
 impl Initializer {
     #[inline]
-    pub fn check_version<S: CStrArgument>(&mut self, version: S) -> bool {
+    pub fn check_version(&mut self, version: impl CStrArgument) -> bool {
         let version = version.into_cstr();
         unsafe { !ffi::gcry_check_version(version.as_ref().as_ptr()).is_null() }
     }
@@ -139,8 +139,9 @@ pub fn is_initialized() -> bool {
     is_init_finished()
 }
 
-fn init_internal<E, F>(fips: bool, f: F) -> result::Result<Gcrypt, E>
-where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
+fn init_internal<E>(
+    fips: bool, f: impl FnOnce(&mut Initializer) -> result::Result<(), E>,
+) -> result::Result<Gcrypt, E> {
     if INITIALIZED.load(Ordering::Acquire) {
         return Ok(Gcrypt(()));
     }
@@ -174,22 +175,24 @@ where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
 }
 
 #[inline]
-pub fn init<E, F>(f: F) -> result::Result<Gcrypt, E>
-where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
+pub fn init<E>(
+    f: impl FnOnce(&mut Initializer) -> result::Result<(), E>,
+) -> result::Result<Gcrypt, E> {
     init_internal(false, f)
 }
 
 #[inline]
-pub fn init_fips_mode<E, F>(f: F) -> result::Result<Gcrypt, E>
-where F: FnOnce(&mut Initializer) -> result::Result<(), E> {
+pub fn init_fips_mode<E>(
+    f: impl FnOnce(&mut Initializer) -> result::Result<(), E>,
+) -> result::Result<Gcrypt, E> {
     init_internal(true, f)
 }
 
 #[inline]
 pub fn init_default() -> Gcrypt {
-    let _ = init::<(), _>(|x| {
+    let _ = init(|x| {
         x.enable_secure_rndpool().disable_secmem();
-        Ok(())
+        Ok::<_, ()>(())
     });
     Gcrypt(())
 }
@@ -204,7 +207,7 @@ impl Gcrypt {
     }
 
     #[inline]
-    pub fn check_version<S: CStrArgument>(&self, version: S) -> bool {
+    pub fn check_version(&self, version: impl CStrArgument) -> bool {
         let version = version.into_cstr();
         unsafe { !ffi::gcry_check_version(version.as_ref().as_ptr()).is_null() }
     }

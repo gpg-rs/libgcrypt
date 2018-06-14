@@ -52,7 +52,7 @@ macro_rules! ffi_enum_wrapper {
         }
 
         impl ::std::fmt::Debug for $Name {
-            fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
                 match *self {
                     $($Name::$Item => {
                         write!(f, concat!(stringify!($Name), "::",

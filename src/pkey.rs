@@ -28,7 +28,7 @@ ffi_enum_wrapper! {
 
 impl Algorithm {
     #[inline]
-    pub fn from_name<S: CStrArgument>(name: S) -> Option<Algorithm> {
+    pub fn from_name(name: impl CStrArgument) -> Option<Algorithm> {
         let name = name.into_cstr();
         let result = unsafe { ffi::gcry_pk_map_name(name.as_ref().as_ptr()) };
         if result != 0 {

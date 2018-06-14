@@ -5,19 +5,20 @@ use std::io::prelude::*;
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<Error>> {
-    let (major, minor) = if let Ok(v) = env::var("DEP_GCRYPT_VERSION") {
-        let mut components = v
-            .trim()
-            .split('.')
-            .scan((), |_, x| x.parse::<u8>().ok())
-            .fuse();
-        match (components.next(), components.next()) {
-            (Some(major), Some(minor)) => (major, minor),
-            _ => (1, 5),
-        }
-    } else {
-        (1, 5)
-    };
+    let (major, minor) = env::var("DEP_GCRYPT_VERSION")
+        .ok()
+        .and_then(|v| {
+            let mut components = v
+                .trim()
+                .split('.')
+                .scan((), |_, x| x.parse::<u8>().ok())
+                .fuse();
+            match (components.next(), components.next()) {
+                (Some(major), Some(minor)) => Some((major, minor)),
+                _ => None,
+            }
+        })
+        .unwrap_or((1, 5));
 
     let path = PathBuf::from(env::var_os("OUT_DIR").unwrap());
     let mut output = File::create(path.join("version.rs"))?;

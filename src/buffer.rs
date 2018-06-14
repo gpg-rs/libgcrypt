@@ -28,7 +28,7 @@ impl Buffer {
     pub unsafe fn from_raw(buf: *mut u8, len: usize) -> Buffer {
         Buffer {
             buf: NonNull::<*mut u8>::new(buf).unwrap(),
-            len: len,
+            len,
         }
     }
 

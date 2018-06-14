@@ -34,7 +34,7 @@ impl SExpression {
     impl_wrapper!(SExpression: ffi::gcry_sexp_t);
 
     #[inline]
-    pub fn from_bytes<B: AsRef<[u8]>>(bytes: B) -> Result<SExpression> {
+    pub fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<SExpression> {
         let _ = ::init_default();
         let bytes = bytes.as_ref();
         unsafe {
@@ -117,7 +117,7 @@ impl SExpression {
     }
 
     #[inline]
-    pub fn find_token<B: AsRef<[u8]>>(&self, token: B) -> Option<SExpression> {
+    pub fn find_token(&self, token: impl AsRef<[u8]>) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
             ffi::gcry_sexp_find_token(self.as_raw(), token.as_ptr() as *const _, token.len())
@@ -171,11 +171,11 @@ impl FromStr for SExpression {
 }
 
 impl fmt::Debug for SExpression {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         use std::ascii;
         use std::fmt::Write;
 
-        write!(f, "SExpression(\"")?;
+        f.write_str("SExpression(\"")?;
         for b in self
             .to_bytes(Format::Advanced)
             .into_iter()
@@ -183,7 +183,7 @@ impl fmt::Debug for SExpression {
         {
             f.write_char(b as char)?;
         }
-        write!(f, "\")")
+        f.write_str("\")")
     }
 }
 
