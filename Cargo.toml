@@ -3,6 +3,7 @@ name = "gcrypt"
 version = "0.6.1"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
+readme = "README.md"
 repository = "https://github.com/gpg-rs/libgcrypt"
 documentation = "https://docs.rs/gcrypt"
 categories = ["cryptography", "api-bindings"]
@@ -32,3 +33,4 @@ features = ["shim"]
 default-features = false
 
 [workspace]
+members = ["systest"]

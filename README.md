@@ -1,8 +1,8 @@
 # libgcrypt-rs
 
 [![Build Status](https://travis-ci.org/gpg-rs/libgcrypt.svg?branch=master)](https://travis-ci.org/gpg-rs/libgcrypt)
-[![LGPL-2.1 licensed](https://img.shields.io/badge/license-LGPL--2.1-blue.svg)](./COPYING)
-[![crates.io](https://meritbadge.herokuapp.com/gcrypt)](https://crates.io/crates/gcrypt)
+[![LGPL-2.1 licensed](https://img.shields.io/crates/l/gcrypt.svg)](./COPYING)
+[![Crates.io](https://img.shields.io/crates/v/gcrypt.svg)](https://crates.io/crates/gcrypt)
 
 [Libgcrypt][upstream] bindings for Rust.
 
@@ -16,9 +16,9 @@ a more recent version.
 By default, the libgcrypt-sys crate will attempt to build the bundled version
 of the library from source using autoconf, automake and various C build tools.
 The `bundled` feature flag controls this functionality and can be disabled by
-using `no-default-features` in dependent crates and/or overridden by setting
-the environment variable `LIBGCRYPT_USE_BUNDLED` to the empty string, `no`,
-`off`, or `false` to disable or anything else to enable. An existing
+using `default-features = false` in dependent crates and/or overridden by
+setting the environment variable `LIBGCRYPT_USE_BUNDLED` to the empty string,
+`no`, `off`, or `false` to disable or anything else to enable. An existing
 installation may be specified using `LIBGCRYPT_LIB_DIR`, `LIBGCRYPT_LIBS`,
 `LIBGCRYPT_STATIC` (optional) and `LIBGCRYPT_INCLUDE`. Alternatively the path
 to the libgcrypt configuration program (`libgcrypt-config`) may be specified
@@ -43,8 +43,7 @@ The library requires initialization before first use. The functions `init`,
 `init_fips`, and `init_default` can be used to initialize the library. The
 closure passed to the first two functions is used to configure the library. For
 the third function a default configuration is used. More information on
-configuration options can be found in the libgcrypt [documentation][upstream
-docs].
+configuration options can be found in the libgcrypt [documentation][upstream docs].
 
 An example:
 

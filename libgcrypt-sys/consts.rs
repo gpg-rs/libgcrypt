@@ -1,4 +1,4 @@
-use libc::{c_int, c_uint};
+use libc::c_uint;
 
 pub use libgpg_error_sys::gpg_err_code_t as gcry_err_code_t;
 pub use libgpg_error_sys::gpg_err_source_t as gcry_err_source_t;
@@ -15,8 +15,10 @@ pub const GCRY_THREAD_OPTION_PTH: c_uint = 2;
 pub const GCRY_THREAD_OPTION_PTHREAD: c_uint = 3;
 pub const GCRY_THREAD_OPTION_VERSION: c_uint = 1;
 
-pub type gcry_ctl_cmds = c_int;
+pub type gcry_ctl_cmds = c_uint;
+#[cfg(not(ctest))]
 pub const GCRYCTL_SET_KEY: gcry_ctl_cmds = 1;
+#[cfg(not(ctest))]
 pub const GCRYCTL_SET_IV: gcry_ctl_cmds = 2;
 pub const GCRYCTL_CFB_SYNC: gcry_ctl_cmds = 3;
 pub const GCRYCTL_RESET: gcry_ctl_cmds = 4;
@@ -57,6 +59,7 @@ pub const GCRYCTL_INITIALIZATION_FINISHED_P: gcry_ctl_cmds = 39;
 pub const GCRYCTL_ANY_INITIALIZATION_P: gcry_ctl_cmds = 40;
 pub const GCRYCTL_SET_CBC_CTS: gcry_ctl_cmds = 41;
 pub const GCRYCTL_SET_CBC_MAC: gcry_ctl_cmds = 42;
+#[cfg(not(ctest))]
 pub const GCRYCTL_SET_CTR: gcry_ctl_cmds = 43;
 pub const GCRYCTL_ENABLE_QUICK_RANDOM: gcry_ctl_cmds = 44;
 pub const GCRYCTL_SET_RANDOM_SEED_FILE: gcry_ctl_cmds = 45;
@@ -292,10 +295,12 @@ pub const GCRY_KDF_PBKDF1: gcry_kdf_algos = 33;
 pub const GCRY_KDF_PBKDF2: gcry_kdf_algos = 34;
 pub const GCRY_KDF_SCRYPT: gcry_kdf_algos = 48;
 
-pub type gcry_random_level_t = c_uint;
-pub const GCRY_WEAK_RANDOM: gcry_random_level_t = 0;
-pub const GCRY_STRONG_RANDOM: gcry_random_level_t = 1;
-pub const GCRY_VERY_STRONG_RANDOM: gcry_random_level_t = 2;
+pub type gcry_random_level = c_uint;
+pub type gcry_random_level_t = gcry_random_level;
+pub const GCRY_WEAK_RANDOM: gcry_random_level = 0;
+pub const GCRY_STRONG_RANDOM: gcry_random_level = 1;
+pub const GCRY_VERY_STRONG_RANDOM: gcry_random_level = 2;
+
 
 pub const GCRY_PRIME_CHECK_AT_FINISH: c_uint = 0;
 pub const GCRY_PRIME_CHECK_AT_GOT_PRIME: c_uint = 1;

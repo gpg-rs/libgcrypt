@@ -17,3 +17,4 @@ build: false
 test_script:
   - cargo build --verbose --verbose
   - cargo test --verbose --no-fail-fast
+  - cargo run -p systest

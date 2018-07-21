@@ -365,7 +365,8 @@ extern "C" {
     pub fn gcry_free(a: *mut c_void);
     pub fn gcry_is_secure(a: *const c_void) -> c_int;
 
-    fn _gcry_mpi_get_const(n: c_int) -> gcry_mpi_t;
+    #[doc(hidden)]
+    pub fn _gcry_mpi_get_const(n: c_int) -> gcry_mpi_t;
 }
 
 #[inline]
@@ -379,59 +380,59 @@ pub unsafe fn gcry_fast_random_poll() -> gcry_error_t {
 
 #[inline]
 pub unsafe fn gcry_cipher_test_algo(a: c_int) -> gcry_error_t {
-    gcry_cipher_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
+    gcry_cipher_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
 }
 #[inline]
 pub unsafe fn gcry_md_test_algo(a: c_int) -> gcry_error_t {
-    gcry_md_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
+    gcry_md_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
 }
 #[inline]
 pub unsafe fn gcry_mac_test_algo(a: c_int) -> gcry_error_t {
-    gcry_mac_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
+    gcry_mac_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
 }
 #[inline]
 pub unsafe fn gcry_pk_test_algo(a: c_int) -> gcry_error_t {
-    gcry_pk_algo_info(a, GCRYCTL_TEST_ALGO, ptr::null_mut(), ptr::null_mut())
+    gcry_pk_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
 }
 
 #[inline]
 pub unsafe fn gcry_cipher_reset(h: gcry_cipher_hd_t) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_RESET, ptr::null_mut(), 0)
+    gcry_cipher_ctl(h, GCRYCTL_RESET as c_int, ptr::null_mut(), 0)
 }
 #[inline]
 pub unsafe fn gcry_cipher_sync(h: gcry_cipher_hd_t) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_CFB_SYNC, ptr::null_mut(), 0)
+    gcry_cipher_ctl(h, GCRYCTL_CFB_SYNC as c_int, ptr::null_mut(), 0)
 }
 #[inline]
 pub unsafe fn gcry_cipher_cts(h: gcry_cipher_hd_t, on: bool) -> gcry_error_t {
     gcry_cipher_ctl(
         h,
-        GCRYCTL_SET_CBC_CTS,
+        GCRYCTL_SET_CBC_CTS as c_int,
         ptr::null_mut(),
         if on { 1 } else { 0 },
     )
 }
 #[inline]
 pub unsafe fn gcry_cipher_set_sbox(h: gcry_cipher_hd_t, oid: *const c_char) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_SET_SBOX, oid as *mut _, 0)
+    gcry_cipher_ctl(h, GCRYCTL_SET_SBOX as c_int, oid as *mut _, 0)
 }
 #[inline]
 pub unsafe fn gcry_cipher_final(h: gcry_cipher_hd_t) -> gcry_error_t {
-    gcry_cipher_ctl(h, GCRYCTL_FINALIZE, ptr::null_mut(), 0)
+    gcry_cipher_ctl(h, GCRYCTL_FINALIZE as c_int, ptr::null_mut(), 0)
 }
 
 #[inline]
 pub unsafe fn gcry_md_final(h: gcry_md_hd_t) -> gcry_error_t {
-    gcry_md_ctl(h, GCRYCTL_FINALIZE, ptr::null_mut(), 0)
+    gcry_md_ctl(h, GCRYCTL_FINALIZE as c_int, ptr::null_mut(), 0)
 }
 #[inline]
 pub unsafe fn gcry_md_get_asnoid(a: c_int, b: *mut c_void, n: &mut size_t) -> gcry_error_t {
-    gcry_md_algo_info(a, GCRYCTL_GET_ASNOID, b, n)
+    gcry_md_algo_info(a, GCRYCTL_GET_ASNOID as c_int, b, n)
 }
 
 #[inline]
 pub unsafe fn gcry_mac_reset(h: gcry_mac_hd_t) -> gcry_error_t {
-    gcry_mac_ctl(h, GCRYCTL_RESET, ptr::null_mut(), 0)
+    gcry_mac_ctl(h, GCRYCTL_RESET as c_int, ptr::null_mut(), 0)
 }
 
 #[inline]
