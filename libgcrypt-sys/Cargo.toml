@@ -20,8 +20,6 @@ name = "libgcrypt_sys"
 path = "lib.rs"
 
 [features]
-default = ["bundled"]
-bundled = ["libgpg-error-sys/bundled"]
 shim = []
 
 [build-dependencies]
@@ -30,4 +28,4 @@ cc = "1.0.2"
 
 [dependencies]
 libc = "0.2"
-libgpg-error-sys = { version = "0.4", default-features = false }
+libgpg-error-sys = "0.5"

@@ -13,7 +13,8 @@ fn setup() -> Gcrypt {
     gcrypt::init(|x| {
         x.disable_secmem().enable_quick_random();
         Ok::<(), ()>(())
-    }).unwrap()
+    })
+    .unwrap()
 }
 
 #[test]
@@ -1695,7 +1696,8 @@ fn check_pbkdf2() {
             tv.0.as_bytes(),
             tv.1.as_bytes(),
             &mut key[..tv.3.len()],
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(tv.3, &key[..tv.3.len()]);
     }
 }
@@ -1733,7 +1735,8 @@ fn check_scrypt() {
             tv.0.as_bytes(),
             tv.1.as_bytes(),
             &mut key[..tv.4.len()],
-        ).unwrap();
+        )
+        .unwrap();
         assert_eq!(tv.4, &key[..tv.4.len()]);
     }
 }
@@ -1839,7 +1842,8 @@ fn check_pkey_sign(algo: KeyAlgorithm, skey: &SExpression, pkey: &SExpression) {
     let bad_hash = SExpression::from_bytes(
         &b"(data\n (flags pkcs1)\n\
             (hash sha1 #11223344556677889900AABBCCDDEEFF10203041#))\n"[..],
-    ).unwrap();
+    )
+    .unwrap();
 
     for spec in specs {
         if spec.1.is_some() && (spec.1 != Some(algo)) {

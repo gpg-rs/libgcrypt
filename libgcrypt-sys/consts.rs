@@ -301,7 +301,6 @@ pub const GCRY_WEAK_RANDOM: gcry_random_level = 0;
 pub const GCRY_STRONG_RANDOM: gcry_random_level = 1;
 pub const GCRY_VERY_STRONG_RANDOM: gcry_random_level = 2;
 
-
 pub const GCRY_PRIME_CHECK_AT_FINISH: c_uint = 0;
 pub const GCRY_PRIME_CHECK_AT_GOT_PRIME: c_uint = 1;
 pub const GCRY_PRIME_CHECK_AT_MAYBE_PRIME: c_uint = 2;

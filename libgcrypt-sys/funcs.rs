@@ -380,19 +380,39 @@ pub unsafe fn gcry_fast_random_poll() -> gcry_error_t {
 
 #[inline]
 pub unsafe fn gcry_cipher_test_algo(a: c_int) -> gcry_error_t {
-    gcry_cipher_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_cipher_algo_info(
+        a,
+        GCRYCTL_TEST_ALGO as c_int,
+        ptr::null_mut(),
+        ptr::null_mut(),
+    )
 }
 #[inline]
 pub unsafe fn gcry_md_test_algo(a: c_int) -> gcry_error_t {
-    gcry_md_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_md_algo_info(
+        a,
+        GCRYCTL_TEST_ALGO as c_int,
+        ptr::null_mut(),
+        ptr::null_mut(),
+    )
 }
 #[inline]
 pub unsafe fn gcry_mac_test_algo(a: c_int) -> gcry_error_t {
-    gcry_mac_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_mac_algo_info(
+        a,
+        GCRYCTL_TEST_ALGO as c_int,
+        ptr::null_mut(),
+        ptr::null_mut(),
+    )
 }
 #[inline]
 pub unsafe fn gcry_pk_test_algo(a: c_int) -> gcry_error_t {
-    gcry_pk_algo_info(a, GCRYCTL_TEST_ALGO as c_int, ptr::null_mut(), ptr::null_mut())
+    gcry_pk_algo_info(
+        a,
+        GCRYCTL_TEST_ALGO as c_int,
+        ptr::null_mut(),
+        ptr::null_mut(),
+    )
 }
 
 #[inline]
