@@ -1,15 +1,15 @@
-use std::ffi::CStr;
-use std::ptr;
-use std::result;
-use std::str::Utf8Error;
+use std::{ffi::CStr, ptr, result, str::Utf8Error};
 
 use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use mpi::ec::{Curve, Curves};
-use sexp::SExpression;
-use Result;
+use crate::{
+    error::return_err,
+    mpi::ec::{Curve, Curves},
+    sexp::SExpression,
+    Result,
+};
 
 ffi_enum_wrapper! {
     pub enum Algorithm: c_int {
@@ -40,7 +40,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { ffi::gcry_pk_test_algo(self.raw()) == 0 }
     }
 

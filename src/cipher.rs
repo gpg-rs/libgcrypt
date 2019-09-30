@@ -1,13 +1,11 @@
-use std::ffi::CStr;
-use std::ptr;
-use std::result;
-use std::str::Utf8Error;
+use std::{ffi::CStr, ptr, result, str::Utf8Error};
 
+use bitflags::bitflags;
+use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use cstr_argument::CStrArgument;
-use {NonNull, Result};
+use crate::{error::return_err, NonNull, Result};
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -60,7 +58,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { ffi::gcry_cipher_test_algo(self.raw()) == 0 }
     }
 
@@ -153,7 +151,7 @@ impl Cipher {
 
     #[inline]
     pub fn with_flags(algo: Algorithm, mode: Mode, flags: Flags) -> Result<Cipher> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             let mut handle: ffi::gcry_cipher_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_cipher_open(
@@ -172,7 +170,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_setkey(
                 self.as_raw(),
-                key.as_ptr() as *const _,
+                key.as_ptr().cast(),
                 key.len()
             ));
         }
@@ -185,7 +183,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_setiv(
                 self.as_raw(),
-                iv.as_ptr() as *const _,
+                iv.as_ptr().cast(),
                 iv.len()
             ));
         }
@@ -198,7 +196,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_setctr(
                 self.as_raw(),
-                ctr.as_ptr() as *const _,
+                ctr.as_ptr().cast(),
                 ctr.len()
             ));
         }
@@ -218,7 +216,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_authenticate(
                 self.as_raw(),
-                bytes.as_ptr() as *const _,
+                bytes.as_ptr().cast(),
                 bytes.len()
             ));
         }
@@ -230,7 +228,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_gettag(
                 self.as_raw(),
-                tag.as_mut_ptr() as *mut _,
+                tag.as_mut_ptr().cast(),
                 tag.len()
             ));
         }
@@ -242,7 +240,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_checktag(
                 self.as_raw(),
-                tag.as_ptr() as *const _,
+                tag.as_ptr().cast(),
                 tag.len()
             ));
         }
@@ -254,9 +252,9 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_encrypt(
                 self.as_raw(),
-                output.as_mut_ptr() as *mut _,
+                output.as_mut_ptr().cast(),
                 output.len(),
-                input.as_ptr() as *const _,
+                input.as_ptr().cast(),
                 input.len()
             ));
         }
@@ -268,9 +266,9 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_decrypt(
                 self.as_raw(),
-                output.as_mut_ptr() as *mut _,
+                output.as_mut_ptr().cast(),
                 output.len(),
-                input.as_ptr() as *const _,
+                input.as_ptr().cast(),
                 input.len()
             ));
         }
@@ -282,7 +280,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_encrypt(
                 self.as_raw(),
-                buffer.as_mut_ptr() as *mut _,
+                buffer.as_mut_ptr().cast(),
                 buffer.len(),
                 ptr::null(),
                 0
@@ -296,7 +294,7 @@ impl Cipher {
         unsafe {
             return_err!(ffi::gcry_cipher_decrypt(
                 self.as_raw(),
-                buffer.as_mut_ptr() as *mut _,
+                buffer.as_mut_ptr().cast(),
                 buffer.len(),
                 ptr::null(),
                 0

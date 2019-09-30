@@ -1,15 +1,16 @@
-use std::ffi::CStr;
-use std::io::{self, Write};
-use std::ptr;
-use std::result;
-use std::slice;
-use std::str::Utf8Error;
+use std::{
+    ffi::CStr,
+    io::{self, Write},
+    ptr, result, slice,
+    str::Utf8Error,
+};
 
+use bitflags::bitflags;
 use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use {NonNull, Result};
+use crate::{error::return_err, NonNull, Result};
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -66,7 +67,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { ffi::gcry_md_test_algo(self.raw()) == 0 }
     }
 
@@ -122,7 +123,7 @@ impl MessageDigest {
 
     #[inline]
     pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<MessageDigest> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             let mut handle: ffi::gcry_md_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_md_open(&mut handle, algo.raw(), flags.bits()));
@@ -158,12 +159,12 @@ impl MessageDigest {
     }
 
     #[inline]
-    pub fn set_key<B: AsRef<[u8]>>(&mut self, key: B) -> Result<()> {
+    pub fn set_key(&mut self, key: impl AsRef<[u8]>) -> Result<()> {
         let key = key.as_ref();
         unsafe {
             return_err!(ffi::gcry_md_setkey(
                 self.as_raw(),
-                key.as_ptr() as *const _,
+                key.as_ptr().cast(),
                 key.len()
             ));
         }
@@ -178,7 +179,7 @@ impl MessageDigest {
     #[inline]
     pub fn update(&mut self, bytes: &[u8]) {
         unsafe {
-            ffi::gcry_md_write(self.as_raw(), bytes.as_ptr() as *const _, bytes.len());
+            ffi::gcry_md_write(self.as_raw(), bytes.as_ptr().cast(), bytes.len());
         }
     }
 
@@ -231,12 +232,12 @@ impl Write for MessageDigest {
 pub fn hash(algo: Algorithm, src: &[u8], dst: &mut [u8]) {
     assert!(algo.is_available());
     assert!(dst.len() >= algo.digest_len());
-    let _ = ::init_default();
+    let _ = crate::init_default();
     unsafe {
         ffi::gcry_md_hash_buffer(
             algo.raw(),
-            dst.as_mut_ptr() as *mut _,
-            src.as_ptr() as *const _,
+            dst.as_mut_ptr().cast(),
+            src.as_ptr().cast(),
             src.len().into(),
         );
     }

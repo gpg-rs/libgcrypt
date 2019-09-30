@@ -1,4 +1,4 @@
-extern crate ctest;
+use ctest;
 
 use std::env;
 

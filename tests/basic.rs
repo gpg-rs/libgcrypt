@@ -1,13 +1,15 @@
-extern crate gcrypt;
+use gcrypt;
 
-use gcrypt::cipher::{
-    self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags, Mode as CipherMode,
+use gcrypt::{
+    cipher::{
+        self, Algorithm as CipherAlgorithm, Cipher, Flags as CipherFlags, Mode as CipherMode,
+    },
+    digest::{self, Algorithm as DigestAlgorithm, Flags as DigestFlags, MessageDigest},
+    kdf,
+    pkey::{self, Algorithm as KeyAlgorithm},
+    sexp::{self, SExpression},
+    Error, Gcrypt,
 };
-use gcrypt::digest::{self, Algorithm as DigestAlgorithm, Flags as DigestFlags, MessageDigest};
-use gcrypt::kdf;
-use gcrypt::pkey::{self, Algorithm as KeyAlgorithm};
-use gcrypt::sexp::{self, SExpression};
-use gcrypt::{Error, Gcrypt};
 
 fn setup() -> Gcrypt {
     gcrypt::init(|x| {

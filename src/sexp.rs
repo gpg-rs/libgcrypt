@@ -1,15 +1,17 @@
-use std::fmt;
-use std::ptr;
-use std::result;
-use std::slice;
-use std::str::{self, FromStr, Utf8Error};
+use std::{
+    convert::TryFrom,
+    fmt, ptr, result, slice,
+    str::{self, FromStr, Utf8Error},
+};
 
 use ffi;
 use libc::c_int;
 
-use mpi::integer::Format as IntegerFormat;
-use mpi::Integer;
-use {Error, NonNull, Result};
+use crate::{
+    error::return_err,
+    mpi::{integer::Format as IntegerFormat, Integer},
+    Error, NonNull, Result,
+};
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum Format {
@@ -35,14 +37,14 @@ impl SExpression {
 
     #[inline]
     pub fn from_bytes(bytes: impl AsRef<[u8]>) -> Result<SExpression> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         let bytes = bytes.as_ref();
         unsafe {
             let mut result: ffi::gcry_sexp_t = ptr::null_mut();
             return_err!(ffi::gcry_sexp_sscan(
                 &mut result,
                 ptr::null_mut(),
-                bytes.as_ptr() as *const _,
+                bytes.as_ptr().cast(),
                 bytes.len()
             ));
             Ok(SExpression::from_raw(result))
@@ -68,7 +70,7 @@ impl SExpression {
             match ffi::gcry_sexp_sprint(
                 self.as_raw(),
                 format as c_int,
-                buf.as_mut_ptr() as *mut _,
+                buf.as_mut_ptr().cast(),
                 buf.len(),
             ) {
                 0 => None,
@@ -120,7 +122,7 @@ impl SExpression {
     pub fn find_token(&self, token: impl AsRef<[u8]>) -> Option<SExpression> {
         let token = token.as_ref();
         unsafe {
-            ffi::gcry_sexp_find_token(self.as_raw(), token.as_ptr() as *const _, token.len())
+            ffi::gcry_sexp_find_token(self.as_raw(), token.as_ptr().cast(), token.len())
                 .as_mut()
                 .map(|x| SExpression::from_raw(x))
         }
@@ -161,19 +163,27 @@ impl SExpression {
     }
 }
 
+impl TryFrom<&[u8]> for SExpression {
+    type Error = Error;
+
+    #[inline]
+    fn try_from(b: &[u8]) -> Result<Self> {
+        SExpression::from_bytes(b)
+    }
+}
+
 impl FromStr for SExpression {
     type Err = Error;
 
     #[inline]
-    fn from_str(s: &str) -> Result<SExpression> {
+    fn from_str(s: &str) -> Result<Self> {
         SExpression::from_bytes(s)
     }
 }
 
 impl fmt::Debug for SExpression {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        use std::ascii;
-        use std::fmt::Write;
+        use std::{ascii, fmt::Write};
 
         f.write_str("SExpression(\"")?;
         for b in self
@@ -204,7 +214,7 @@ pub struct Elements<'a> {
     last: c_int,
 }
 
-impl<'a> Iterator for Elements<'a> {
+impl Iterator for Elements<'_> {
     type Item = SExpression;
 
     #[inline]
@@ -237,7 +247,7 @@ impl<'a> Iterator for Elements<'a> {
     }
 }
 
-impl<'a> DoubleEndedIterator for Elements<'a> {
+impl DoubleEndedIterator for Elements<'_> {
     #[inline]
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.first < self.last {
@@ -254,5 +264,5 @@ impl<'a> DoubleEndedIterator for Elements<'a> {
     }
 }
 
-impl<'a> ExactSizeIterator for Elements<'a> {}
-impl<'a> ::std::iter::FusedIterator for Elements<'a> {}
+impl ExactSizeIterator for Elements<'_> {}
+impl ::std::iter::FusedIterator for Elements<'_> {}

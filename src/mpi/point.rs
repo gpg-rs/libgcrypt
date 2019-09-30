@@ -3,7 +3,7 @@ use std::ptr;
 use ffi;
 
 use super::{Context, Integer};
-use NonNull;
+use crate::{require_gcrypt_ver, NonNull};
 
 #[derive(Debug)]
 pub struct Point(NonNull<ffi::gcry_mpi_point_t>);
@@ -56,13 +56,13 @@ impl Point {
 
     #[inline]
     pub fn new(nbits: u32) -> Point {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { Point::from_raw(ffi::gcry_mpi_point_new(nbits.into())) }
     }
 
     #[inline]
     pub fn from_coords(x: Option<Integer>, y: Option<Integer>, z: Option<Integer>) -> Point {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             let x = x.map_or(ptr::null_mut(), |v| v.into_raw());
             let y = y.map_or(ptr::null_mut(), |v| v.into_raw());

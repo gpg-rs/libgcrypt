@@ -3,8 +3,7 @@ use std::ptr;
 use ffi;
 use libc::c_int;
 
-use digest::Algorithm as DigestAlgorithm;
-use error::Result;
+use crate::{digest::Algorithm as DigestAlgorithm, error::return_err, Result};
 
 ffi_enum_wrapper! {
     pub enum Algorithm: c_int {
@@ -19,21 +18,21 @@ ffi_enum_wrapper! {
 
 #[inline]
 pub fn derive(
-    algo: Algorithm, subalgo: i32, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8],
+    algo: Algorithm, subalgo: i32, iter: u32, secret: &[u8], salt: Option<&[u8]>, key: &mut [u8],
 ) -> Result<()> {
-    let _ = ::init_default();
+    let _ = crate::init_default();
     unsafe {
         let salt = salt.map_or((ptr::null(), 0), |s| (s.as_ptr(), s.len()));
         return_err!(ffi::gcry_kdf_derive(
-            pass.as_ptr() as *const _,
-            pass.len(),
+            secret.as_ptr().cast(),
+            secret.len(),
             algo.raw(),
             subalgo as c_int,
-            salt.0 as *const _,
+            salt.0.cast(),
             salt.1,
             iter.into(),
             key.len(),
-            key.as_mut_ptr() as *mut _
+            key.as_mut_ptr().cast(),
         ));
     }
     Ok(())
@@ -41,45 +40,25 @@ pub fn derive(
 
 #[inline]
 pub fn s2k_derive(
-    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: Option<&[u8]>, key: &mut [u8],
+    digest: DigestAlgorithm, iter: u32, secret: &[u8], salt: Option<&[u8]>, key: &mut [u8],
 ) -> Result<()> {
-    match (iter, salt.is_some()) {
-        (x, true) if x != 0 => derive(
-            Algorithm::IteratedSaltedS2K,
-            algo.raw() as i32,
-            iter,
-            pass,
-            salt,
-            key,
-        ),
-        (_, true) => derive(
-            Algorithm::SaltedS2K,
-            algo.raw() as i32,
-            iter,
-            pass,
-            salt,
-            key,
-        ),
-        _ => derive(
-            Algorithm::SimpleS2K,
-            algo.raw() as i32,
-            iter,
-            pass,
-            salt,
-            key,
-        ),
-    }
+    let variant = match (iter, salt.is_some()) {
+        (0, true) => Algorithm::SaltedS2K,
+        (_, true) => Algorithm::IteratedSaltedS2K,
+        _ => Algorithm::SimpleS2K,
+    };
+    derive(variant, digest.raw(), iter, secret, salt, key)
 }
 
 #[inline]
 pub fn pbkdf1_derive(
-    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8],
+    digest: DigestAlgorithm, iter: u32, secret: &[u8], salt: &[u8], key: &mut [u8],
 ) -> Result<()> {
     derive(
         Algorithm::Pbkdf1,
-        algo.raw() as i32,
+        digest.raw(),
         iter,
-        pass,
+        secret,
         Some(salt),
         key,
     )
@@ -87,19 +66,19 @@ pub fn pbkdf1_derive(
 
 #[inline]
 pub fn pbkdf2_derive(
-    algo: DigestAlgorithm, iter: u32, pass: &[u8], salt: &[u8], key: &mut [u8],
+    digest: DigestAlgorithm, iter: u32, secret: &[u8], salt: &[u8], key: &mut [u8],
 ) -> Result<()> {
     derive(
         Algorithm::Pbkdf2,
-        algo.raw() as i32,
+        digest.raw(),
         iter,
-        pass,
+        secret,
         Some(salt),
         key,
     )
 }
 
 #[inline]
-pub fn scrypt_derive(n: u32, p: u32, pass: &[u8], salt: &[u8], key: &mut [u8]) -> Result<()> {
-    derive(Algorithm::Scrypt, n as i32, p, pass, Some(salt), key)
+pub fn scrypt_derive(n: u32, p: u32, secret: &[u8], salt: &[u8], key: &mut [u8]) -> Result<()> {
+    derive(Algorithm::Scrypt, n as i32, p, secret, Some(salt), key)
 }

@@ -1,12 +1,8 @@
-use std::ops;
-use std::result;
-use std::slice;
-use std::str;
+use std::{ops, result, slice, str};
 
 use ffi;
 
-use rand::Level;
-use {Error, NonNull, Result};
+use crate::{rand::Level, Error, NonNull, Result};
 
 #[derive(Debug)]
 pub struct Buffer {
@@ -18,7 +14,7 @@ impl Drop for Buffer {
     #[inline]
     fn drop(&mut self) {
         unsafe {
-            ffi::gcry_free(self.buf.as_ptr() as *mut _);
+            ffi::gcry_free(self.buf.as_ptr().cast());
         }
     }
 }
@@ -34,7 +30,7 @@ impl Buffer {
 
     #[inline]
     pub fn new(len: usize) -> Result<Buffer> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             ffi::gcry_malloc(len)
                 .as_mut()
@@ -45,7 +41,7 @@ impl Buffer {
 
     #[inline]
     pub fn new_secure(len: usize) -> Result<Buffer> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             ffi::gcry_malloc_secure(len)
                 .as_mut()
@@ -67,7 +63,7 @@ impl Buffer {
 
     #[inline]
     pub fn random(len: usize, level: Level) -> Result<Buffer> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             ffi::gcry_random_bytes(len, level.raw())
                 .as_mut()
@@ -78,7 +74,7 @@ impl Buffer {
 
     #[inline]
     pub fn random_secure(len: usize, level: Level) -> Result<Buffer> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             ffi::gcry_random_bytes_secure(len, level.raw())
                 .as_mut()
@@ -89,7 +85,7 @@ impl Buffer {
 
     #[inline]
     pub fn is_secure(&self) -> bool {
-        unsafe { ffi::gcry_is_secure(self.buf.as_ptr() as *const _) != 0 }
+        unsafe { ffi::gcry_is_secure(self.buf.as_ptr().cast()) != 0 }
     }
 
     #[inline]

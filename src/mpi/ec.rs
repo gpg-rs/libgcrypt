@@ -1,15 +1,14 @@
-use std::ffi::CStr;
-use std::ptr;
-use std::result;
-use std::str::{self, Utf8Error};
+use std::{
+    ffi::CStr,
+    ptr, result,
+    str::{self, Utf8Error},
+};
 
 use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use pkey::Algorithm;
-use sexp::SExpression;
-use {NonNull, Result};
+use crate::{error::return_err, pkey::Algorithm, sexp::SExpression, NonNull, Result};
 
 use super::{Integer, Point};
 
@@ -51,15 +50,15 @@ pub struct Curves<'a> {
     idx: c_int,
 }
 
-impl<'a> Curves<'a> {
+impl Curves<'_> {
     #[inline]
     pub fn all() -> Curves<'static> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         Curves { key: None, idx: 0 }
     }
 
     #[inline]
-    pub fn from(key: &SExpression) -> Curves {
+    pub fn from(key: &SExpression) -> Curves<'_> {
         Curves {
             key: Some(key),
             idx: 0,
@@ -74,7 +73,7 @@ impl<'a> Curves<'a> {
     }
 }
 
-impl<'a> Iterator for Curves<'a> {
+impl Iterator for Curves<'_> {
     type Item = Curve;
 
     #[inline]
@@ -103,7 +102,7 @@ impl<'a> Iterator for Curves<'a> {
     }
 }
 
-impl<'a> ::std::iter::FusedIterator for Curves<'a> {}
+impl ::std::iter::FusedIterator for Curves<'_> {}
 
 #[derive(Debug)]
 pub struct Context(NonNull<ffi::gcry_ctx_t>);

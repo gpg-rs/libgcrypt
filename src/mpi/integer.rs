@@ -1,16 +1,10 @@
-use std::cmp::Ordering;
-use std::fmt;
-use std::ops;
-use std::ptr;
-use std::str;
+use std::{cmp::Ordering, fmt, ops, ptr, str};
 
 use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_uint;
 
-use buffer::Buffer;
-use rand::Level;
-use {Error, NonNull, Result};
+use crate::{buffer::Buffer, error::return_err, rand::Level, Error, NonNull, Result};
 
 #[repr(usize)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -62,26 +56,26 @@ impl Integer {
 
     #[inline]
     pub fn new(nbits: u32) -> Integer {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { Integer::from_raw(ffi::gcry_mpi_new(nbits.into())) }
     }
 
     #[inline]
     pub fn new_secure(nbits: u32) -> Integer {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { Integer::from_raw(ffi::gcry_mpi_snew(nbits.into())) }
     }
 
     #[inline]
     pub fn from_uint(n: u32) -> Integer {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { Integer::from_raw(ffi::gcry_mpi_set_ui(ptr::null_mut(), n.into())) }
     }
 
     #[inline]
     pub fn from_bytes(format: Format, bytes: impl AsRef<[u8]>) -> Result<Integer> {
         let bytes = bytes.as_ref();
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             let mut raw = ptr::null_mut();
             let len = if format != Format::Hex {
@@ -94,7 +88,7 @@ impl Integer {
             return_err!(ffi::gcry_mpi_scan(
                 &mut raw,
                 format as ffi::gcry_mpi_format,
-                bytes.as_ptr() as *const _,
+                bytes.as_ptr().cast(),
                 len,
                 ptr::null_mut()
             ));
@@ -119,7 +113,7 @@ impl Integer {
                 &mut len,
                 self.as_raw()
             ));
-            Ok(Buffer::from_raw(buffer as *mut u8, len))
+            Ok(Buffer::from_raw(buffer.cast(), len))
         }
     }
 
@@ -144,7 +138,7 @@ impl Integer {
             let mut written = 0;
             return_err!(ffi::gcry_mpi_print(
                 format as ffi::gcry_mpi_format,
-                buf.as_mut_ptr() as *mut _,
+                buf.as_mut_ptr().cast(),
                 buf.len(),
                 &mut written,
                 self.as_raw()
@@ -413,7 +407,7 @@ impl ops::Neg for Integer {
     }
 }
 
-impl<'a> ops::Neg for &'a Integer {
+impl ops::Neg for &'_ Integer {
     type Output = Integer;
 
     #[inline]

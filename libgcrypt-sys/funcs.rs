@@ -15,8 +15,8 @@ pub use libgpg_error_sys::gpg_strerror as gcry_strerror;
 pub use libgpg_error_sys::gpg_strerror_r as gcry_strerror_r;
 pub use libgpg_error_sys::gpg_strsource as gcry_strsource;
 
-use consts::*;
-use types::*;
+use crate::consts::*;
+use crate::types::*;
 
 extern "C" {
     #[cfg(feature = "shim")]

@@ -1,14 +1,16 @@
-use std::ffi::CStr;
-use std::io::{self, Write};
-use std::ptr;
-use std::result;
-use std::str::Utf8Error;
+use std::{
+    ffi::CStr,
+    io::{self, Write},
+    ptr, result,
+    str::Utf8Error,
+};
 
+use bitflags::bitflags;
 use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_int;
 
-use {NonNull, Result};
+use crate::{error::return_err, NonNull, Result};
 
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
@@ -65,7 +67,7 @@ impl Algorithm {
 
     #[inline]
     pub fn is_available(&self) -> bool {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe { ffi::gcry_mac_test_algo(self.raw()) == 0 }
     }
 
@@ -124,7 +126,7 @@ impl Mac {
 
     #[inline]
     pub fn with_flags(algo: Algorithm, flags: Flags) -> Result<Mac> {
-        let _ = ::init_default();
+        let _ = crate::init_default();
         unsafe {
             let mut handle: ffi::gcry_mac_hd_t = ptr::null_mut();
             return_err!(ffi::gcry_mac_open(
@@ -143,7 +145,7 @@ impl Mac {
         unsafe {
             return_err!(ffi::gcry_mac_setkey(
                 self.as_raw(),
-                key.as_ptr() as *const _,
+                key.as_ptr().cast(),
                 key.len()
             ));
         }
@@ -156,7 +158,7 @@ impl Mac {
         unsafe {
             return_err!(ffi::gcry_mac_setiv(
                 self.as_raw(),
-                iv.as_ptr() as *const _,
+                iv.as_ptr().cast(),
                 iv.len()
             ));
         }
@@ -176,7 +178,7 @@ impl Mac {
         unsafe {
             return_err!(ffi::gcry_mac_write(
                 self.as_raw(),
-                bytes.as_ptr() as *const _,
+                bytes.as_ptr().cast(),
                 bytes.len()
             ));
         }
@@ -189,7 +191,7 @@ impl Mac {
         unsafe {
             return_err!(ffi::gcry_mac_read(
                 self.as_raw(),
-                buf.as_mut_ptr() as *mut _,
+                buf.as_mut_ptr().cast(),
                 &mut len
             ));
         }
@@ -201,7 +203,7 @@ impl Mac {
         unsafe {
             return_err!(ffi::gcry_mac_verify(
                 self.as_raw(),
-                buf.as_ptr() as *mut _,
+                buf.as_ptr().cast(),
                 buf.len()
             ));
         }

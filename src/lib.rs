@@ -17,27 +17,29 @@
 //! are called will cause the wrapper to attempt to initialize the library with a default
 //! configuration.
 #![deny(missing_debug_implementations)]
-#[macro_use]
-extern crate bitflags;
-extern crate cstr_argument;
-#[macro_use]
-pub extern crate gpg_error as error;
-#[macro_use]
-extern crate lazy_static;
-extern crate libc;
-extern crate libgcrypt_sys as ffi;
 
-use std::ffi::CStr;
-use std::ptr;
-use std::result;
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::Mutex;
+use std::{
+    ffi::CStr,
+    ptr, result,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
+};
 
 use cstr_argument::CStrArgument;
 use libc::c_int;
+use once_cell::sync::Lazy;
 
-pub use buffer::Buffer;
-pub use error::{Error, Result};
+use self::error::return_err;
+
+pub use crate::{
+    buffer::Buffer,
+    error::{Error, Result},
+};
+
+pub use ffi::{require_gcrypt_ver, MIN_GCRYPT_VERSION};
+pub use gpg_error as error;
 
 #[macro_use]
 mod utils;
@@ -54,9 +56,7 @@ pub mod sexp;
 type NonNull<T> = ptr::NonNull<<T as utils::Ptr>::Inner>;
 
 static INITIALIZED: AtomicBool = AtomicBool::new(false);
-lazy_static! {
-    static ref CONTROL_LOCK: Mutex<()> = Mutex::new(());
-}
+static CONTROL_LOCK: Lazy<Mutex<()>> = Lazy::new(Mutex::default);
 
 #[derive(Debug)]
 pub struct Initializer(());
@@ -146,7 +146,7 @@ fn init_internal<E>(
         return Ok(Gcrypt(()));
     }
 
-    let _lock = CONTROL_LOCK.lock();
+    let _lock = CONTROL_LOCK.lock().unwrap();
     if !is_init_finished() {
         unsafe {
             if !is_init_started() {
@@ -161,8 +161,8 @@ fn init_internal<E>(
                 }
             }
             assert!(
-                !ffi::gcry_check_version(utils::MIN_VERSION.as_ptr() as *const _).is_null(),
-                "The library linked is not the correct version"
+                !ffi::gcry_check_version(MIN_GCRYPT_VERSION.as_ptr().cast()).is_null(),
+                "the library linked is not the correct version"
             );
         }
         f(&mut Initializer(()))?;

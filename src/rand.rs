@@ -10,16 +10,16 @@ ffi_enum_wrapper! {
 
 #[inline]
 pub fn make_nonce(buf: &mut [u8]) {
-    let _ = ::init_default();
+    let _ = crate::init_default();
     unsafe {
-        ffi::gcry_create_nonce(buf.as_mut_ptr() as *mut _, buf.len());
+        ffi::gcry_create_nonce(buf.as_mut_ptr().cast(), buf.len());
     }
 }
 
 #[inline]
 pub fn randomize(level: Level, buf: &mut [u8]) {
-    let _ = ::init_default();
+    let _ = crate::init_default();
     unsafe {
-        ffi::gcry_randomize(buf.as_mut_ptr() as *mut _, buf.len(), level.raw());
+        ffi::gcry_randomize(buf.as_mut_ptr().cast(), buf.len(), level.raw());
     }
 }
