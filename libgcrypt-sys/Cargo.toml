@@ -1,6 +1,6 @@
 [package]
 name = "libgcrypt-sys"
-version = "0.6.1"
+version = "0.7.0"
 edition = "2018"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
