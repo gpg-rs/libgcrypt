@@ -1,10 +1,12 @@
-use std::{cmp::Ordering, fmt, ops, ptr, str};
+use std::{cmp::Ordering, convert::TryFrom, fmt, ops, ptr, str};
 
 use cstr_argument::CStrArgument;
 use ffi;
 use libc::c_uint;
 
-use crate::{buffer::Buffer, error::return_err, rand::Level, Error, NonNull, Result};
+use crate::{
+    buffer::Buffer, error::return_err, rand::Level, require_gcrypt_ver, Error, NonNull, Result,
+};
 
 #[repr(usize)]
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -322,6 +324,59 @@ impl From<u32> for Integer {
     #[inline]
     fn from(x: u32) -> Self {
         Self::from_uint(x)
+    }
+}
+
+require_gcrypt_ver! {
+    (1, 9) => {
+        macro_rules! impl_try_from {
+            () => {};
+            ($t:ty $(, $ts:ty)*) => {
+                impl TryFrom<&Integer> for $t {
+                    type Error = Error;
+
+                    #[inline]
+                    fn try_from(x: &Integer) -> Result<Self> {
+                        Self::try_from(u32::try_from(x)?).map_err(|_| Error::ERANGE)
+                    }
+                }
+
+                impl TryFrom<Integer> for $t {
+                    type Error = Error;
+
+                    #[inline]
+                    fn try_from(x: Integer) -> Result<Self> {
+                        Self::try_from(&x)
+                    }
+                }
+
+                impl_try_from!($($ts),*);
+            };
+        }
+
+        impl TryFrom<&Integer> for u32 {
+            type Error = Error;
+
+            #[inline]
+            fn try_from(x: &Integer) -> Result<Self> {
+                let mut r: c_uint = 0;
+                unsafe {
+                    return_err!(ffi::gcry_mpi_get_ui(&mut r, x.as_raw()));
+                }
+                Self::try_from(r).map_err(|_| Error::ERANGE)
+            }
+        }
+
+        impl TryFrom<Integer> for u32 {
+            type Error = Error;
+
+            #[inline]
+            fn try_from(x: Integer) -> Result<Self> {
+                Self::try_from(&x)
+            }
+        }
+
+        impl_try_from!(u8, u16);
     }
 }
 

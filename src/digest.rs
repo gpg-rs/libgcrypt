@@ -50,6 +50,9 @@ ffi_enum_wrapper! {
         Blake2S224    = ffi::GCRY_MD_BLAKE2S_224,
         Blake2S160    = ffi::GCRY_MD_BLAKE2S_160,
         Blake2S128    = ffi::GCRY_MD_BLAKE2S_128,
+        Sm3           = ffi::GCRY_MD_SM3,
+        Sha512_256    = ffi::GCRY_MD_SHA512_256,
+        Sha512_224    = ffi::GCRY_MD_SHA512_224,
     }
 }
 

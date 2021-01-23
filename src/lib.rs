@@ -28,7 +28,6 @@ use std::{
 };
 
 use cstr_argument::CStrArgument;
-use libc::c_int;
 use once_cell::sync::Lazy;
 
 use self::error::return_err;
@@ -95,7 +94,21 @@ impl Initializer {
     #[inline]
     pub fn enable_secmem(&mut self, amt: usize) -> Result<&mut Self> {
         unsafe {
-            return_err!(ffi::gcry_control(ffi::GCRYCTL_INIT_SECMEM, amt as c_int));
+            return_err!(ffi::gcry_control(
+                ffi::GCRYCTL_INIT_SECMEM,
+                amt as libc::c_uint
+            ));
+        }
+        Ok(self)
+    }
+
+    #[inline]
+    pub fn enable_auto_expand_secmem(&mut self, amt: usize) -> Result<&mut Self> {
+        unsafe {
+            return_err!(ffi::gcry_control(
+                ffi::GCRYCTL_AUTO_EXPAND_SECMEM,
+                amt as libc::c_uint
+            ));
         }
         Ok(self)
     }

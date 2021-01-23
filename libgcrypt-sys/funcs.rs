@@ -82,6 +82,7 @@ extern "C" {
     pub fn gcry_mpi_snatch(w: gcry_mpi_t, u: gcry_mpi_t);
     pub fn gcry_mpi_set(w: gcry_mpi_t, u: gcry_mpi_t) -> gcry_mpi_t;
     pub fn gcry_mpi_set_ui(w: gcry_mpi_t, u: c_ulong) -> gcry_mpi_t;
+    pub fn gcry_mpi_get_ui(w: *mut c_uint, u: gcry_mpi_t) -> gcry_error_t;
     pub fn gcry_mpi_swap(a: gcry_mpi_t, b: gcry_mpi_t);
     pub fn gcry_mpi_is_neg(a: gcry_mpi_t) -> c_int;
     pub fn gcry_mpi_neg(w: gcry_mpi_t, u: gcry_mpi_t);
@@ -248,6 +249,11 @@ extern "C" {
     pub fn gcry_pk_get_param(algo: c_int, name: *const c_char) -> gcry_sexp_t;
     pub fn gcry_pubkey_get_sexp(
         r_sexp: *mut gcry_sexp_t, mode: c_int, ctx: gcry_ctx_t,
+    ) -> gcry_error_t;
+
+    pub fn gcry_ecc_get_algo_keylen(curveid: c_int) -> c_uint;
+    pub fn gcry_ecc_mul_point(
+        curveid: c_int, result: *mut c_uchar, scalar: *const c_uchar, point: *const c_uchar,
     ) -> gcry_error_t;
 
     pub fn gcry_md_open(h: *mut gcry_md_hd_t, algo: c_int, flags: c_uint) -> gcry_error_t;

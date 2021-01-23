@@ -41,6 +41,8 @@ ffi_enum_wrapper! {
         Salsa20r12       = ffi::GCRY_CIPHER_SALSA20R12,
         Gost28147        = ffi::GCRY_CIPHER_GOST28147,
         Chacha20         = ffi::GCRY_CIPHER_CHACHA20,
+        Gost28147Mesh    = ffi::GCRY_CIPHER_GOST28147_MESH,
+        Sm4              = ffi::GCRY_CIPHER_SM4,
     }
 }
 
@@ -103,6 +105,7 @@ ffi_enum_wrapper! {
         Ocb      = ffi::GCRY_CIPHER_MODE_OCB,
         Cfb8     = ffi::GCRY_CIPHER_MODE_CFB8,
         Xts      = ffi::GCRY_CIPHER_MODE_XTS,
+        Eax      = ffi::GCRY_CIPHER_MODE_EAX,
     }
 }
 

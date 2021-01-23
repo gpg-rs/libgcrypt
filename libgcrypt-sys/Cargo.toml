@@ -24,7 +24,7 @@ path = "lib.rs"
 shim = []
 
 [build-dependencies]
-cfg-if = "0.1"
+cfg-if = "1"
 cc = "1.0.2"
 
 [dependencies]

@@ -90,6 +90,8 @@ pub const GCRYCTL_DRBG_REINIT: gcry_ctl_cmds = 74;
 pub const GCRYCTL_SET_TAGLEN: gcry_ctl_cmds = 75;
 pub const GCRYCTL_GET_TAGLEN: gcry_ctl_cmds = 76;
 pub const GCRYCTL_REINIT_SYSCALL_CLAMP: gcry_ctl_cmds = 77;
+pub const GCRYCTL_AUTO_EXPAND_SECMEM: gcry_ctl_cmds = 78;
+pub const GCRYCTL_SET_ALLOW_WEAK_KEY: gcry_ctl_cmds = 79;
 
 pub type gcry_sexp_format = c_uint;
 pub const GCRYSEXP_FMT_DEFAULT: gcry_sexp_format = 0;
@@ -144,6 +146,9 @@ pub const GCRY_CIPHER_SALSA20: gcry_cipher_algos = 313;
 pub const GCRY_CIPHER_SALSA20R12: gcry_cipher_algos = 314;
 pub const GCRY_CIPHER_GOST28147: gcry_cipher_algos = 315;
 pub const GCRY_CIPHER_CHACHA20: gcry_cipher_algos = 316;
+pub const GCRY_CIPHER_GOST28147_MESH: gcry_cipher_algos = 317;
+pub const GCRY_CIPHER_SM4: gcry_cipher_algos = 318;
+
 pub const GCRY_CIPHER_AES128: gcry_cipher_algos = GCRY_CIPHER_AES;
 pub const GCRY_CIPHER_RIJNDAEL: gcry_cipher_algos = GCRY_CIPHER_AES;
 pub const GCRY_CIPHER_RIJNDAEL128: gcry_cipher_algos = GCRY_CIPHER_AES128;
@@ -165,6 +170,7 @@ pub const GCRY_CIPHER_MODE_POLY1305: gcry_cipher_modes = 10;
 pub const GCRY_CIPHER_MODE_OCB: gcry_cipher_modes = 11;
 pub const GCRY_CIPHER_MODE_CFB8: gcry_cipher_modes = 12;
 pub const GCRY_CIPHER_MODE_XTS: gcry_cipher_modes = 13;
+pub const GCRY_CIPHER_MODE_EAX: gcry_cipher_modes = 14;
 
 pub type gcry_cipher_flags = c_uint;
 pub const GCRY_CIPHER_SECURE: gcry_cipher_flags = 1;
@@ -196,6 +202,10 @@ pub const GCRY_PK_USAGE_UNKN: c_uint = 128;
 
 pub const GCRY_PK_GET_PUBKEY: c_uint = 1;
 pub const GCRY_PK_GET_SECKEY: c_uint = 2;
+
+pub type gcry_ecc_curves = c_uint;
+pub const GCRY_ECC_CURVE25519: gcry_ecc_curves = 1;
+pub const GCRY_ECC_CURVE448: gcry_ecc_curves = 2;
 
 pub type gcry_md_algos = c_uint;
 pub const GCRY_MD_NONE: gcry_md_algos = 0;
@@ -234,6 +244,9 @@ pub const GCRY_MD_BLAKE2S_256: gcry_md_algos = 322;
 pub const GCRY_MD_BLAKE2S_224: gcry_md_algos = 323;
 pub const GCRY_MD_BLAKE2S_160: gcry_md_algos = 324;
 pub const GCRY_MD_BLAKE2S_128: gcry_md_algos = 325;
+pub const GCRY_MD_SM3: gcry_md_algos = 326;
+pub const GCRY_MD_SHA512_256: gcry_md_algos = 327;
+pub const GCRY_MD_SHA512_224: gcry_md_algos = 328;
 
 pub type gcry_md_flags = c_uint;
 pub const GCRY_MD_FLAG_SECURE: gcry_md_flags = 1;
@@ -242,6 +255,8 @@ pub const GCRY_MD_FLAG_BUGEMU1: gcry_md_flags = 0x0100;
 
 pub type gcry_mac_algos = c_uint;
 pub const GCRY_MAC_NONE: gcry_mac_algos = 0;
+pub const GCRY_MAC_GOST28147_IMIT: gcry_mac_algos = 1;
+
 pub const GCRY_MAC_HMAC_SHA256: gcry_mac_algos = 101;
 pub const GCRY_MAC_HMAC_SHA224: gcry_mac_algos = 102;
 pub const GCRY_MAC_HMAC_SHA512: gcry_mac_algos = 103;
@@ -260,6 +275,19 @@ pub const GCRY_MAC_HMAC_SHA3_224: gcry_mac_algos = 115;
 pub const GCRY_MAC_HMAC_SHA3_256: gcry_mac_algos = 116;
 pub const GCRY_MAC_HMAC_SHA3_384: gcry_mac_algos = 117;
 pub const GCRY_MAC_HMAC_SHA3_512: gcry_mac_algos = 118;
+pub const GCRY_MAC_HMAC_GOSTR3411_CP: gcry_mac_algos = 119;
+pub const GCRY_MAC_HMAC_BLAKE2B_512: gcry_mac_algos = 120;
+pub const GCRY_MAC_HMAC_BLAKE2B_384: gcry_mac_algos = 121;
+pub const GCRY_MAC_HMAC_BLAKE2B_256: gcry_mac_algos = 122;
+pub const GCRY_MAC_HMAC_BLAKE2B_160: gcry_mac_algos = 123;
+pub const GCRY_MAC_HMAC_BLAKE2S_256: gcry_mac_algos = 124;
+pub const GCRY_MAC_HMAC_BLAKE2S_224: gcry_mac_algos = 125;
+pub const GCRY_MAC_HMAC_BLAKE2S_160: gcry_mac_algos = 126;
+pub const GCRY_MAC_HMAC_BLAKE2S_128: gcry_mac_algos = 127;
+pub const GCRY_MAC_HMAC_SM3: gcry_mac_algos = 128;
+pub const GCRY_MAC_HMAC_SHA512_256: gcry_mac_algos = 129;
+pub const GCRY_MAC_HMAC_SHA512_224: gcry_mac_algos = 130;
+
 pub const GCRY_MAC_CMAC_AES: gcry_mac_algos = 201;
 pub const GCRY_MAC_CMAC_3DES: gcry_mac_algos = 202;
 pub const GCRY_MAC_CMAC_CAMELLIA: gcry_mac_algos = 203;
@@ -271,11 +299,14 @@ pub const GCRY_MAC_CMAC_SEED: gcry_mac_algos = 208;
 pub const GCRY_MAC_CMAC_RFC2268: gcry_mac_algos = 209;
 pub const GCRY_MAC_CMAC_IDEA: gcry_mac_algos = 210;
 pub const GCRY_MAC_CMAC_GOST28147: gcry_mac_algos = 211;
+pub const GCRY_MAC_CMAC_SM4: gcry_mac_algos = 212;
+
 pub const GCRY_MAC_GMAC_AES: gcry_mac_algos = 401;
 pub const GCRY_MAC_GMAC_CAMELLIA: gcry_mac_algos = 402;
 pub const GCRY_MAC_GMAC_TWOFISH: gcry_mac_algos = 403;
 pub const GCRY_MAC_GMAC_SERPENT: gcry_mac_algos = 404;
 pub const GCRY_MAC_GMAC_SEED: gcry_mac_algos = 405;
+
 pub const GCRY_MAC_POLY1305: gcry_mac_algos = 501;
 pub const GCRY_MAC_POLY1305_AES: gcry_mac_algos = 502;
 pub const GCRY_MAC_POLY1305_CAMELLIA: gcry_mac_algos = 503;

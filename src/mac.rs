@@ -15,6 +15,8 @@ use crate::{error::return_err, NonNull, Result};
 ffi_enum_wrapper! {
     #[allow(non_camel_case_types)]
     pub enum Algorithm: c_int {
+        Gost28147Imit     = ffi::GCRY_MAC_GOST28147_IMIT,
+
         HmacSha256        = ffi::GCRY_MAC_HMAC_SHA256,
         HmacSha224        = ffi::GCRY_MAC_HMAC_SHA224,
         HmacSha512        = ffi::GCRY_MAC_HMAC_SHA512,
@@ -28,6 +30,24 @@ ffi_enum_wrapper! {
         HmacGostR3411_94  = ffi::GCRY_MAC_HMAC_GOSTR3411_94,
         HmacStribog256    = ffi::GCRY_MAC_HMAC_STRIBOG256,
         HmacStribog512    = ffi::GCRY_MAC_HMAC_STRIBOG512,
+        HmacMd2           = ffi::GCRY_MAC_HMAC_MD2,
+        HmacSha3_224      = ffi::GCRY_MAC_HMAC_SHA3_224,
+        HmacSha3_256      = ffi::GCRY_MAC_HMAC_SHA3_256,
+        HmacSha3_384      = ffi::GCRY_MAC_HMAC_SHA3_384,
+        HmacSha3_512      = ffi::GCRY_MAC_HMAC_SHA3_512,
+        HmacGostR3411Cp   = ffi::GCRY_MAC_HMAC_GOSTR3411_CP,
+        HmacBlake2b512    = ffi::GCRY_MAC_HMAC_BLAKE2B_512,
+        HmacBlake2b384    = ffi::GCRY_MAC_HMAC_BLAKE2B_384,
+        HmacBlake2b256    = ffi::GCRY_MAC_HMAC_BLAKE2B_256,
+        HmacBlake2b160    = ffi::GCRY_MAC_HMAC_BLAKE2B_160,
+        HmacBlake2s256    = ffi::GCRY_MAC_HMAC_BLAKE2S_256,
+        HmacBlake2s224    = ffi::GCRY_MAC_HMAC_BLAKE2S_224,
+        HmacBlake2s160    = ffi::GCRY_MAC_HMAC_BLAKE2S_160,
+        HmacBlake2s128    = ffi::GCRY_MAC_HMAC_BLAKE2S_128,
+        HmacSm3           = ffi::GCRY_MAC_HMAC_SM3,
+        HmacSha512_256    = ffi::GCRY_MAC_HMAC_SHA512_256,
+        HmacSha512_224    = ffi::GCRY_MAC_HMAC_SHA512_224,
+
         CmacAes           = ffi::GCRY_MAC_CMAC_AES,
         Cmac3des          = ffi::GCRY_MAC_CMAC_3DES,
         CmacCamellia      = ffi::GCRY_MAC_CMAC_CAMELLIA,
@@ -39,11 +59,14 @@ ffi_enum_wrapper! {
         CmacRfc2268       = ffi::GCRY_MAC_CMAC_RFC2268,
         CmacIdea          = ffi::GCRY_MAC_CMAC_IDEA,
         CmacGost28147     = ffi::GCRY_MAC_CMAC_GOST28147,
+        CmacSm4           = ffi::GCRY_MAC_CMAC_SM4,
+
         GmacAes           = ffi::GCRY_MAC_GMAC_AES,
         GmacCamellia      = ffi::GCRY_MAC_GMAC_CAMELLIA,
         GmacTwofish       = ffi::GCRY_MAC_GMAC_TWOFISH,
         GmacSerpent       = ffi::GCRY_MAC_GMAC_SERPENT,
         GmacSeed          = ffi::GCRY_MAC_GMAC_SEED,
+
         Poly1305          = ffi::GCRY_MAC_POLY1305,
         Poly1305Aes       = ffi::GCRY_MAC_POLY1305_AES,
         Poly1305Camellia  = ffi::GCRY_MAC_POLY1305_CAMELLIA,
