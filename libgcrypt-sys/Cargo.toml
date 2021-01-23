@@ -1,6 +1,6 @@
 [package]
 name = "libgcrypt-sys"
-version = "0.7.0"
+version = "0.7.1"
 edition = "2018"
 authors = ["John Schug <john.ips.schug@gmail.com>"]
 license = "LGPL-2.1"
@@ -24,9 +24,11 @@ path = "lib.rs"
 shim = []
 
 [build-dependencies]
-cfg-if = "1"
 cc = "1.0.2"
 
 [dependencies]
 libc = "0.2"
 libgpg-error-sys = "0.5"
+
+[target.'cfg(windows)'.build-dependencies]
+winreg = "0.7"

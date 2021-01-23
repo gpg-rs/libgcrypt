@@ -57,8 +57,8 @@ the initialization functions has been called will cause the wrapper to attempt
 to initialize the library with a call to `init_default`.
 
 [crate]: https://crates.io/crates/gcrypt
-[ci]: https://travis-ci.org/gpg-rs/libgcrypt
-[build]: https://img.shields.io/travis/gpg-rs/libgcrypt/master?style=flat-square
+[ci]: https://github.com/gpg-rs/libgcrypt/actions?query=branch%3Amaster
+[build]: https://img.shields.io/github/workflow/status/gpg-rs/libgcrypt/ci?style=flat-square
 [version]: https://img.shields.io/crates/v/gcrypt?style=flat-square
 [license]: https://img.shields.io/crates/l/gcrypt?style=flat-square
 [downloads]: https://img.shields.io/crates/d/gcrypt?style=flat-square
